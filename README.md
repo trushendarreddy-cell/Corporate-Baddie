@@ -58,4 +58,4 @@ T. Rushendar Reddy
 
 AI/ML, Hyderabad
 
-Contact: trrushendarreddy
+trrushendarreddy@gmail.com
