@@ -1,0 +1,347 @@
+@import "tailwindcss";
+
+/* ============================================================================
+   CORPORATEBADDIE — Decision Command Center Design System
+   Philosophy: Complex intelligence underneath. Radical simplicity on top.
+   Palette: near-black charcoal, warm amber primary, semantic accents only.
+   ============================================================================ */
+
+@layer base {
+  body {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: #07080c;
+    color: #e2e8f0;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  code, pre, .font-mono {
+    font-family: 'JetBrains Mono', monospace;
+  }
+}
+
+/* ----------------------------------------------------------------------------
+   Ambient background: layered radial lighting over deep charcoal
+   ---------------------------------------------------------------------------- */
+.cb-ambient {
+  background:
+    radial-gradient(1100px 520px at 18% -8%, rgba(245, 158, 11, 0.05), transparent 60%),
+    radial-gradient(900px 480px at 88% 4%, rgba(99, 102, 241, 0.045), transparent 62%),
+    radial-gradient(760px 620px at 50% 118%, rgba(245, 158, 11, 0.03), transparent 58%),
+    #07080c;
+}
+
+/* Subtle noise texture to kill banding on gradients (very cheap, static) */
+.cb-noise::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.028;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ----------------------------------------------------------------------------
+   Glass surfaces — depth-aware layered panels
+   ---------------------------------------------------------------------------- */
+.cb-glass {
+  background: linear-gradient(160deg, rgba(21, 25, 36, 0.72), rgba(11, 13, 20, 0.82));
+  border: 1px solid rgba(148, 163, 184, 0.10);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.04) inset,
+    0 18px 40px -18px rgba(0, 0, 0, 0.75),
+    0 2px 10px -4px rgba(0, 0, 0, 0.5);
+}
+
+.cb-glass-raised {
+  background: linear-gradient(160deg, rgba(26, 31, 44, 0.85), rgba(13, 16, 24, 0.9));
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.05) inset,
+    0 28px 60px -24px rgba(0, 0, 0, 0.85),
+    0 4px 16px -6px rgba(0, 0, 0, 0.55);
+}
+
+.cb-glass-hero {
+  background:
+    radial-gradient(720px 300px at 82% -20%, rgba(245, 158, 11, 0.07), transparent 60%),
+    linear-gradient(165deg, rgba(24, 28, 40, 0.88), rgba(10, 12, 18, 0.94));
+  border: 1px solid rgba(245, 158, 11, 0.16);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.05) inset,
+    0 40px 90px -30px rgba(0, 0, 0, 0.9);
+}
+
+/* Depth-aware top edge highlight used on premium cards */
+.cb-edge::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 12%;
+  right: 12%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(245, 158, 11, 0.35), transparent);
+  pointer-events: none;
+}
+
+/* ----------------------------------------------------------------------------
+   3D card micro-interaction: lift + subtle perspective + border illumination
+   Applied via .cb-lift on interactive cards
+   ---------------------------------------------------------------------------- */
+.cb-lift {
+  transition:
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 280ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 220ms ease;
+  will-change: transform;
+}
+
+.cb-lift:hover {
+  transform: translateY(-4px) rotateX(1.6deg) rotateY(-0.8deg) scale(1.006);
+  border-color: rgba(245, 158, 11, 0.28);
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.06) inset,
+    0 34px 70px -26px rgba(0, 0, 0, 0.9),
+    0 6px 22px -8px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(245, 158, 11, 0.06);
+}
+
+.cb-press:active {
+  transform: translateY(-1px) scale(0.985);
+  transition-duration: 100ms;
+}
+
+/* Buttons: magnetic-leaning press depth (keyboard/tap friendly) */
+.cb-btn {
+  transition:
+    transform 160ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 200ms ease,
+    background-color 200ms ease,
+    border-color 200ms ease;
+}
+
+.cb-btn:hover {
+  transform: translateY(-1px);
+}
+
+.cb-btn:active {
+  transform: translateY(1px) scale(0.98);
+  transition-duration: 90ms;
+}
+
+/* ----------------------------------------------------------------------------
+   Navigation: sliding active indicator pill
+   ---------------------------------------------------------------------------- */
+.cb-nav-pill {
+  position: relative;
+  isolation: isolate;
+}
+
+.cb-nav-pill::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: linear-gradient(180deg, rgba(245, 158, 11, 0.14), rgba(245, 158, 11, 0.07));
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  box-shadow: 0 0 18px -6px rgba(245, 158, 11, 0.35), 0 1px 0 rgba(255,255,255,0.05) inset;
+  opacity: 0;
+  transform: scale(0.94);
+  transition: opacity 220ms cubic-bezier(0.22, 1, 0.36, 1), transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.cb-nav-pill[data-active='true']::after,
+.cb-nav-pill:hover::after {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.cb-nav-pill[data-active='true'] {
+  color: #fcd34d;
+}
+
+/* Underline sweep variant for desktop nav */
+.cb-nav-underline {
+  position: relative;
+}
+
+.cb-nav-underline::after {
+  content: '';
+  position: absolute;
+  left: 14%;
+  right: 14%;
+  bottom: -1px;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, transparent, #f59e0b, transparent);
+  opacity: 0;
+  transform: scaleX(0.4);
+  transition: opacity 200ms ease, transform 240ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.cb-nav-underline[data-active='true']::after {
+  opacity: 1;
+  transform: scaleX(1);
+}
+
+/* ----------------------------------------------------------------------------
+   Decision Core — orbital system
+   ---------------------------------------------------------------------------- */
+.cb-orbit-ring {
+  border-radius: 9999px;
+  border: 1px dashed rgba(148, 163, 184, 0.14);
+  position: absolute;
+  inset: 0;
+}
+
+@keyframes cb-orbit-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.cb-orbit-slow {
+  animation: cb-orbit-spin 90s linear infinite;
+}
+
+.cb-orbit-reverse {
+  animation: cb-orbit-spin 140s linear infinite reverse;
+}
+
+/* Gentle float for satellite nodes — communicates life, not distraction */
+@keyframes cb-node-float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-4px); }
+}
+
+.cb-node-float {
+  animation: cb-node-float 7s ease-in-out infinite;
+}
+
+/* Animated data-flow dashes along the connector lines */
+@keyframes cb-dash-flow {
+  to { stroke-dashoffset: -18; }
+}
+
+.cb-flow-line {
+  stroke-dasharray: 3 15;
+  animation: cb-dash-flow 1.4s linear infinite;
+}
+
+/* Soft breathing glow behind the core confidence value */
+@keyframes cb-core-breathe {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 0.9; }
+}
+
+.cb-core-breathe {
+  animation: cb-core-breathe 5.5s ease-in-out infinite;
+}
+
+/* ----------------------------------------------------------------------------
+   Confidence ring — animated sweep
+   ---------------------------------------------------------------------------- */
+@keyframes cb-ring-draw {
+  from { stroke-dashoffset: var(--cb-ring-circ, 377); }
+  to { stroke-dashoffset: var(--cb-ring-offset, 68); }
+}
+
+.cb-ring-arc {
+  animation: cb-ring-draw 900ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* ----------------------------------------------------------------------------
+   Evidence propagation pulse for the Evidence Graph
+   ---------------------------------------------------------------------------- */
+@keyframes cb-node-pulse {
+  0% { transform: scale(0.6); opacity: 0.9; }
+  100% { transform: scale(2.1); opacity: 0; }
+}
+
+.cb-node-ping {
+  animation: cb-node-pulse 2.4s cubic-bezier(0, 0, 0.2, 1) forwards;
+}
+
+/* ----------------------------------------------------------------------------
+   Entrance choreography (staggered fade-up; class-based, one-shot)
+   ---------------------------------------------------------------------------- */
+@keyframes cb-rise-in {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.cb-rise {
+  opacity: 0;
+  animation: cb-rise-in 480ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* ----------------------------------------------------------------------------
+   Typographic helpers
+   ---------------------------------------------------------------------------- */
+.cb-display {
+  letter-spacing: -0.025em;
+  font-weight: 800;
+}
+
+.cb-meta {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.cb-kicker {
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  font-weight: 800;
+}
+
+/* ----------------------------------------------------------------------------
+   Custom scrollbar (retained)
+   ---------------------------------------------------------------------------- */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0a0c12;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1f293d;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #334155;
+}
+
+/* ----------------------------------------------------------------------------
+   Reduced motion: strip all decorative animation, keep instant state
+   ---------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .cb-lift:hover {
+    transform: none;
+  }
+
+  .cb-rise {
+    opacity: 1;
+  }
+}
