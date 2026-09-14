@@ -5,15 +5,49 @@ export interface IntroExperienceProps {
   onEnter: () => void;
 }
 
-type NodeKey = 'DATA' | 'MARKET' | 'EVIDENCE' | 'RISK' | 'DECISION';
+type NodeKey = 'DATA' | 'ANALYSIS' | 'MARKET' | 'EVIDENCE' | 'RISK' | 'DECISION';
 
-const NODE_ORDER: NodeKey[] = ['DATA', 'MARKET', 'EVIDENCE', 'RISK', 'DECISION'];
-const NODE_COPY: Record<NodeKey, { title: string; detail: string }> = {
-  DATA: { title: 'Your business data', detail: 'What the company already knows' },
-  MARKET: { title: 'Market signals', detail: 'What is happening outside' },
-  EVIDENCE: { title: 'Evidence', detail: 'What supports the conclusion' },
-  RISK: { title: 'Risk', detail: 'What could go wrong' },
-  DECISION: { title: 'Decision', detail: 'What management can act on' },
+const NODE_ORDER: NodeKey[] = ['DATA', 'ANALYSIS', 'MARKET', 'EVIDENCE', 'RISK', 'DECISION'];
+const NODE_COPY: Record<NodeKey, { title: string; detail: string; description: string }> = {
+  DATA: { 
+    title: 'DATA', 
+    detail: 'Your business data',
+    description: 'Internal records and analytics.'
+  },
+  ANALYSIS: { 
+    title: 'ANALYSIS', 
+    detail: 'Pattern recognition',
+    description: 'Statistical analysis and trends.'
+  },
+  MARKET: { 
+    title: 'MARKET', 
+    detail: "What's happening outside",
+    description: 'External market conditions.'
+  },
+  EVIDENCE: { 
+    title: 'EVIDENCE', 
+    detail: 'What supports the decision',
+    description: 'Sources and claims.'
+  },
+  RISK: { 
+    title: 'RISK', 
+    detail: 'What could go wrong',
+    description: 'Uncertainty and downside.'
+  },
+  DECISION: { 
+    title: 'DECISION', 
+    detail: 'What we should do',
+    description: 'Recommended action.'
+  },
+};
+
+const NODE_COLORS: Record<NodeKey, number> = {
+  DATA: 0x9aa39b,
+  ANALYSIS: 0xa0a8a1,
+  MARKET: 0xaab0a8,
+  EVIDENCE: 0x8eb397,
+  RISK: 0xb47d78,
+  DECISION: 0x8eb397,
 };
 
 export const IntroExperience: React.FC<IntroExperienceProps> = ({ onEnter }) => {
@@ -22,13 +56,24 @@ export const IntroExperience: React.FC<IntroExperienceProps> = ({ onEnter }) => 
   const [activeNode, setActiveNode] = useState<NodeKey | null>(null);
   const [ready, setReady] = useState(false);
   const [exiting, setExiting] = useState(false);
+  const [convergenceActive, setConvergenceActive] = useState(false);
+  const [labelPositions, setLabelPositions] = useState<Record<NodeKey, { x: number; y: number; z: number }>>({} as any);
+  const convergenceStateRef = useRef({ active: false, progress: 0, duration: 1200 });
 
   useEffect(() => { onEnterRef.current = onEnter; }, [onEnter]);
 
-  const enter = () => {
+  const handleSkip = () => {
     if (exiting) return;
     setExiting(true);
-    window.setTimeout(() => onEnterRef.current(), 520);
+    window.setTimeout(() => onEnterRef.current(), 300);
+  };
+
+  const enter = () => {
+    if (exiting || convergenceActive) return;
+    setExiting(true);
+    setConvergenceActive(true);
+    convergenceStateRef.current = { active: true, progress: 0, duration: 1200 };
+    window.setTimeout(() => onEnterRef.current(), 1400);
   };
 
   useEffect(() => {
@@ -39,10 +84,14 @@ export const IntroExperience: React.FC<IntroExperienceProps> = ({ onEnter }) => 
     const width = Math.max(1, mount.clientWidth);
     const height = Math.max(1, mount.clientHeight);
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(38, width / height, 0.1, 100);
-    camera.position.set(0, 0.45, 11.5);
+    const camera = new THREE.PerspectiveCamera(42, width / height, 0.1, 100);
+    camera.position.set(0, 0.8, 12);
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'low-power' });
+    const renderer = new THREE.WebGLRenderer({ 
+      antialias: true, 
+      alpha: true, 
+      powerPreference: 'low-power' 
+    });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(width, height);
     renderer.setClearColor(0x000000, 0);
@@ -50,121 +99,334 @@ export const IntroExperience: React.FC<IntroExperienceProps> = ({ onEnter }) => 
 
     const world = new THREE.Group();
     scene.add(world);
-    scene.add(new THREE.AmbientLight(0xb8c4bb, 0.52));
-    const keyLight = new THREE.DirectionalLight(0xffffff, 1.15);
-    keyLight.position.set(4, 5, 8);
+
+    // Lighting - soft and analytical
+    scene.add(new THREE.AmbientLight(0xb0bab4, 0.6));
+    const keyLight = new THREE.DirectionalLight(0xffffff, 1.2);
+    keyLight.position.set(5, 7, 9);
     scene.add(keyLight);
-    const fillLight = new THREE.DirectionalLight(0x78957e, 0.32);
-    fillLight.position.set(-5, 1, 3);
+    const fillLight = new THREE.DirectionalLight(0x7ea889, 0.4);
+    fillLight.position.set(-6, -2, 5);
     scene.add(fillLight);
+    const backLight = new THREE.DirectionalLight(0x94a3b8, 0.3);
+    backLight.position.set(0, -3, -6);
+    scene.add(backLight);
 
-    const core = new THREE.Group();
-    world.add(core);
-    core.add(new THREE.Mesh(
-      new THREE.BoxGeometry(1.7, 1.7, 1.7),
-      new THREE.MeshPhysicalMaterial({ color: 0x6f8875, metalness: 0.18, roughness: 0.28, transmission: 0.42, thickness: 0.8, ior: 1.22, transparent: true, opacity: 0.68, clearcoat: 0.55 })
-    ));
-    const coreFrame = new THREE.LineSegments(
-      new THREE.EdgesGeometry(new THREE.BoxGeometry(2.02, 2.02, 2.02)),
-      new THREE.LineBasicMaterial({ color: 0xaab5ad, transparent: true, opacity: 0.34 })
-    );
-    core.add(coreFrame);
+    // ========== CENTRAL SPHERE - WIREFRAME GEODESIC (ENHANCED) ==========
+    const sphereGroup = new THREE.Group();
+    world.add(sphereGroup);
 
-    const bars = new THREE.Group();
-    const barMaterial = new THREE.MeshStandardMaterial({ color: 0xc5cec7, metalness: 0.05, roughness: 0.55 });
-    [0.42, 0.76, 0.58, 0.92].forEach((scale, index) => {
-      const bar = new THREE.Mesh(new THREE.BoxGeometry(0.16, scale, 0.16), barMaterial);
-      bar.position.set(-0.48 + index * 0.32, -0.32 + scale / 2, 0.88);
-      bars.add(bar);
+    // Main wireframe sphere - geodesic structure
+    const mainWireframeGeo = new THREE.IcosahedronGeometry(3.2, 4);
+    const mainWireframeMat = new THREE.MeshBasicMaterial({
+      color: 0x8eb397,
+      wireframe: true,
+      transparent: true,
+      opacity: 0.45
     });
-    core.add(bars);
+    const mainWireframe = new THREE.Mesh(mainWireframeGeo, mainWireframeMat);
+    sphereGroup.add(mainWireframe);
 
-    const ringMaterial = new THREE.LineBasicMaterial({ color: 0x8c9b91, transparent: true, opacity: 0.2 });
-    const makeRing = (scale: number, rotationY: number, opacity: number) => {
-      const geometry = new THREE.BufferGeometry().setFromPoints(Array.from({ length: 96 }, (_, index) => {
-        const angle = (index / 96) * Math.PI * 2;
-        return new THREE.Vector3(Math.cos(angle) * 3.05 * scale, Math.sin(angle) * 0.72 * scale, Math.sin(angle) * 0.95 * scale);
-      }));
-      const material = ringMaterial.clone();
-      material.opacity = opacity;
-      const ring = new THREE.LineLoop(geometry, material);
-      ring.rotation.x = 0.35;
-      ring.rotation.y = rotationY;
-      world.add(ring);
+    // Secondary wireframe for depth
+    const innerWireframeGeo = new THREE.IcosahedronGeometry(2.8, 3);
+    const innerWireframeMat = new THREE.MeshBasicMaterial({
+      color: 0x7e8b82,
+      wireframe: true,
+      transparent: true,
+      opacity: 0.25
+    });
+    const innerWireframe = new THREE.Mesh(innerWireframeGeo, innerWireframeMat);
+    sphereGroup.add(innerWireframe);
+
+    // Core structure with subtle glow
+    const coreGeo = new THREE.IcosahedronGeometry(2.4, 2);
+    const coreMat = new THREE.MeshPhysicalMaterial({
+      color: 0x6f8875,
+      metalness: 0.1,
+      roughness: 0.2,
+      transmission: 0.6,
+      thickness: 1.0,
+      transparent: true,
+      opacity: 0.15,
+      emissive: 0x8eb397,
+      emissiveIntensity: 0.05,
+      side: THREE.DoubleSide
+    });
+    const core = new THREE.Mesh(coreGeo, coreMat);
+    sphereGroup.add(core);
+
+    // Connection lines from center to vertices (structural beams)
+    const beamMaterial = new THREE.LineBasicMaterial({
+      color: 0x8eb397,
+      transparent: true,
+      opacity: 0.1
+    });
+    
+    const beamPositions = [
+      [0, 0, 0, 0, 3.2, 0],
+      [0, 0, 0, 0, -3.2, 0],
+      [0, 0, 0, 3.2, 0, 0],
+      [0, 0, 0, -3.2, 0, 0],
+      [0, 0, 0, 0, 0, 3.2],
+      [0, 0, 0, 0, 0, -3.2],
+    ];
+    
+    beamPositions.forEach(coords => {
+      const points = [
+        new THREE.Vector3(coords[0], coords[1], coords[2]),
+        new THREE.Vector3(coords[3], coords[4], coords[5])
+      ];
+      const beamGeo = new THREE.BufferGeometry().setFromPoints(points);
+      const beam = new THREE.Line(beamGeo, beamMaterial);
+      sphereGroup.add(beam);
+    });
+
+    // Vertex markers at key positions
+    const vertexGeo = new THREE.SphereGeometry(0.06, 8, 8);
+    const vertexMat = new THREE.MeshBasicMaterial({
+      color: 0x8eb397,
+      transparent: true,
+      opacity: 0.6
+    });
+    
+    const vertexPositions = [
+      [0, 3.2, 0], [0, -3.2, 0], [3.2, 0, 0], [-3.2, 0, 0],
+      [2.2, 2.2, 0], [-2.2, 2.2, 0], [2.2, -2.2, 0], [-2.2, -2.2, 0],
+      [0, 2.2, 2.2], [0, -2.2, 2.2], [0, 2.2, -2.2], [0, -2.2, -2.2],
+      [2.2, 0, 2.2], [-2.2, 0, 2.2], [2.2, 0, -2.2], [-2.2, 0, -2.2]
+    ];
+    vertexPositions.forEach(([x, y, z]) => {
+      const vertex = new THREE.Mesh(vertexGeo, vertexMat.clone());
+      vertex.position.set(x, y, z);
+      sphereGroup.add(vertex);
+    });
+
+    // ========== ORBITAL RINGS ==========
+    const createOrbitRing = (radius: number, inclination: number, twist: number, opacity: number) => {
+      const points: THREE.Vector3[] = [];
+      const segments = 128;
+      for (let i = 0; i <= segments; i++) {
+        const angle = (i / segments) * Math.PI * 2;
+        const x = Math.cos(angle) * radius;
+        const y = Math.sin(angle) * radius * Math.sin(inclination) * 0.3;
+        const z = Math.sin(angle) * radius * Math.cos(inclination);
+        points.push(new THREE.Vector3(x, y, z));
+      }
+      const geo = new THREE.BufferGeometry().setFromPoints(points);
+      const mat = new THREE.LineBasicMaterial({ 
+        color: 0x8c9b91, 
+        transparent: true, 
+        opacity 
+      });
+      const ring = new THREE.LineLoop(geo, mat);
+      ring.rotation.y = twist;
       return ring;
     };
-    const ringA = makeRing(1, 0, 0.2);
-    const ringB = makeRing(1.14, 0.75, 0.12);
 
-    const nodeMeshes = new Map<NodeKey, THREE.Mesh>();
+    const ring1 = createOrbitRing(5.2, 0.4, 0, 0.14);
+    const ring2 = createOrbitRing(5.6, 0.6, 0.8, 0.10);
+    const ring3 = createOrbitRing(5.0, 0.2, 1.4, 0.12);
+    world.add(ring1, ring2, ring3);
+
+    // ========== 6 ORBITING NODES ==========
+    const nodeMeshes = new Map<NodeKey, THREE.Group>();
     const connectorLines = new Map<NodeKey, THREE.Line>();
-    const nodePositions: Record<NodeKey, THREE.Vector3> = {
-      DATA: new THREE.Vector3(-3.35, 1.65, 0.35),
-      MARKET: new THREE.Vector3(3.35, 1.45, -0.2),
-      EVIDENCE: new THREE.Vector3(-3.55, -1.45, -0.2),
-      RISK: new THREE.Vector3(3.45, -1.55, 0.35),
-      DECISION: new THREE.Vector3(0, 3.05, 0.1),
+    
+    // Node positions on different orbital paths - 6 nodes evenly distributed
+    const nodeOrbitalData: Record<NodeKey, { angle: number; radius: number; inclination: number; speed: number }> = {
+      DATA: { angle: 0, radius: 5.2, inclination: 0.4, speed: 1.0 },
+      ANALYSIS: { angle: Math.PI / 3, radius: 5.4, inclination: 0.3, speed: 1.08 },
+      MARKET: { angle: Math.PI * 2 / 3, radius: 5.6, inclination: 0.6, speed: 0.85 },
+      EVIDENCE: { angle: Math.PI, radius: 5.0, inclination: 0.2, speed: 1.15 },
+      RISK: { angle: Math.PI * 4 / 3, radius: 5.4, inclination: 0.5, speed: 0.95 },
+      DECISION: { angle: Math.PI * 5 / 3, radius: 5.3, inclination: 0.35, speed: 1.05 },
     };
 
-    NODE_ORDER.forEach((name, index) => {
-      const material = new THREE.MeshStandardMaterial({ color: name === 'DECISION' ? 0x8eb397 : 0x9ba59d, metalness: 0.18, roughness: 0.34, emissive: name === 'DECISION' ? 0x526b59 : 0x343a36, emissiveIntensity: 0.08 });
-      const mesh = new THREE.Mesh(new THREE.SphereGeometry(name === 'DECISION' ? 0.27 : 0.2, 20, 20), material);
-      mesh.position.copy(nodePositions[name]);
-      mesh.userData.nodeKey = name;
-      mesh.scale.setScalar(reducedMotion ? 1 : 0.82 + index * 0.035);
-      world.add(mesh);
-      nodeMeshes.set(name, mesh);
-
-      const line = new THREE.Line(
-        new THREE.BufferGeometry().setFromPoints([nodePositions[name].clone(), nodePositions[name].clone().multiplyScalar(0.32)]),
-        new THREE.LineBasicMaterial({ color: name === 'DECISION' ? 0x8eb397 : 0x7e8b82, transparent: true, opacity: 0.16 })
-      );
+    NODE_ORDER.forEach((name) => {
+      const orbital = nodeOrbitalData[name];
+      const color = NODE_COLORS[name];
+      
+      const nodeGroup = new THREE.Group();
+      nodeGroup.userData.nodeKey = name;
+      nodeGroup.userData.orbital = orbital;
+      
+      // Node marker - small diamond/geometric shape
+      const nodeGeo = name === 'DECISION' 
+        ? new THREE.OctahedronGeometry(0.3, 0)
+        : new THREE.OctahedronGeometry(0.24, 0);
+      
+      const nodeMat = new THREE.MeshStandardMaterial({ 
+        color, 
+        metalness: 0.2, 
+        roughness: 0.3,
+        emissive: color,
+        emissiveIntensity: 0.1
+      });
+      
+      const nodeMesh = new THREE.Mesh(nodeGeo, nodeMat);
+      nodeGroup.add(nodeMesh);
+      
+      // Subtle halo
+      const haloGeo = new THREE.SphereGeometry(0.42, 16, 16);
+      const haloMat = new THREE.MeshBasicMaterial({
+        color,
+        transparent: true,
+        opacity: 0.08,
+        side: THREE.BackSide
+      });
+      const halo = new THREE.Mesh(haloGeo, haloMat);
+      halo.userData.isHalo = true;
+      nodeGroup.add(halo);
+      
+      // Initial position
+      const x = Math.cos(orbital.angle) * orbital.radius;
+      const y = Math.sin(orbital.angle) * orbital.radius * Math.sin(orbital.inclination) * 0.3;
+      const z = Math.sin(orbital.angle) * orbital.radius * Math.cos(orbital.inclination);
+      nodeGroup.position.set(x, y, z);
+      
+      world.add(nodeGroup);
+      nodeMeshes.set(name, nodeGroup);
+      
+      // Connector line to sphere
+      const lineGeo = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(0, 0, 0),
+        nodeGroup.position.clone().normalize().multiplyScalar(2.5)
+      ]);
+      const lineMat = new THREE.LineBasicMaterial({ 
+        color, 
+        transparent: true, 
+        opacity: 0.12 
+      });
+      const line = new THREE.Line(lineGeo, lineMat);
+      line.userData.nodeKey = name;
       world.add(line);
       connectorLines.set(name, line);
     });
 
-    const points = new Float32Array(90 * 3);
-    for (let index = 0; index < 90; index += 1) {
-      const radius = 4.1 + Math.random() * 3.1;
+    // Sparse dust field
+    const dustCount = 120;
+    const dustPos = new Float32Array(dustCount * 3);
+    for (let i = 0; i < dustCount; i++) {
+      const r = 4.5 + Math.random() * 4.5;
       const theta = Math.random() * Math.PI * 2;
       const phi = Math.acos(2 * Math.random() - 1);
-      points[index * 3] = radius * Math.sin(phi) * Math.cos(theta);
-      points[index * 3 + 1] = radius * Math.cos(phi) * 0.6;
-      points[index * 3 + 2] = radius * Math.sin(phi) * Math.sin(theta);
+      dustPos[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+      dustPos[i * 3 + 1] = r * Math.cos(phi) * 0.5;
+      dustPos[i * 3 + 2] = r * Math.sin(phi) * Math.sin(theta);
     }
-    const pointGeometry = new THREE.BufferGeometry();
-    pointGeometry.setAttribute('position', new THREE.BufferAttribute(points, 3));
-    world.add(new THREE.Points(pointGeometry, new THREE.PointsMaterial({ color: 0x9ca79f, size: 0.026, transparent: true, opacity: 0.34, sizeAttenuation: true })));
+    const dustGeo = new THREE.BufferGeometry();
+    dustGeo.setAttribute('position', new THREE.BufferAttribute(dustPos, 3));
+    const dust = new THREE.Points(
+      dustGeo, 
+      new THREE.PointsMaterial({ 
+        color: 0x9ca79f, 
+        size: 0.018, 
+        transparent: true, 
+        opacity: 0.28, 
+        sizeAttenuation: true 
+      })
+    );
+    world.add(dust);
 
+    // ========== INTERACTION & CAMERA CONTROLS ==========
     const raycaster = new THREE.Raycaster();
     const pointer = new THREE.Vector2(-10, -10);
-    const pointerTarget = { x: 0, y: 0 };
-    const pointerCurrent = { x: 0, y: 0 };
     let rafId = 0;
     let visible = true;
     let lastHover: NodeKey | null = null;
+    
+    // Drag state
+    const dragState = {
+      isDragging: false,
+      previousX: 0,
+      previousY: 0,
+      velocityX: 0,
+      velocityY: 0,
+      inertia: 0.95
+    };
+    
+    // Target rotation for smooth camera movement
+    const targetRotation = { x: 0, y: 0 };
+    const currentRotation = { x: 0, y: 0 };
+
+    const findNodeKey = (obj: THREE.Object3D | null): NodeKey | null => {
+      let o: THREE.Object3D | null = obj;
+      while (o) {
+        if (o.userData.nodeKey) return o.userData.nodeKey as NodeKey;
+        o = o.parent;
+      }
+      return null;
+    };
 
     const handlePointerMove = (event: PointerEvent) => {
       const rect = renderer.domElement.getBoundingClientRect();
       pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
       pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-      pointerTarget.x = pointer.x * 0.18;
-      pointerTarget.y = pointer.y * 0.12;
+      
+      if (dragState.isDragging) {
+        const deltaX = event.clientX - dragState.previousX;
+        const deltaY = event.clientY - dragState.previousY;
+        
+        dragState.velocityX = deltaX * 0.005;
+        dragState.velocityY = deltaY * 0.005;
+        
+        targetRotation.y += dragState.velocityX;
+        targetRotation.x += dragState.velocityY;
+        
+        // Clamp X rotation
+        targetRotation.x = Math.max(-Math.PI / 3, Math.min(Math.PI / 3, targetRotation.x));
+        
+        dragState.previousX = event.clientX;
+        dragState.previousY = event.clientY;
+        
+        renderer.domElement.style.cursor = 'grabbing';
+      } else {
+        // Gentle parallax when not dragging
+        targetRotation.x = -pointer.y * 0.1;
+        targetRotation.y = pointer.x * 0.15;
+      }
     };
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (convergenceActive) return;
+      dragState.isDragging = true;
+      dragState.previousX = event.clientX;
+      dragState.previousY = event.clientY;
+      dragState.velocityX = 0;
+      dragState.velocityY = 0;
+      renderer.domElement.style.cursor = 'grabbing';
+    };
+
+    const handlePointerUp = () => {
+      dragState.isDragging = false;
+      renderer.domElement.style.cursor = 'grab';
+    };
+
     const handlePointerLeave = () => {
-      pointer.set(-10, -10);
-      pointerTarget.x = 0;
-      pointerTarget.y = 0;
+      dragState.isDragging = false;
+      targetRotation.x = 0;
+      targetRotation.y = 0;
+      renderer.domElement.style.cursor = 'default';
+      if (lastHover) {
+        lastHover = null;
+        setActiveNode(null);
+      }
     };
+
     const selectNode = () => {
+      if (convergenceActive) return;
       raycaster.setFromCamera(pointer, camera);
-      const hit = raycaster.intersectObjects(Array.from(nodeMeshes.values()))[0];
-      const node = hit?.object.userData.nodeKey as NodeKey | undefined;
+      const hits = raycaster.intersectObjects(world.children, true);
+      const node = hits.length ? findNodeKey(hits[0].object) : null;
       if (node) setActiveNode(node);
     };
+
     renderer.domElement.addEventListener('pointermove', handlePointerMove);
+    renderer.domElement.addEventListener('pointerdown', handlePointerDown);
+    renderer.domElement.addEventListener('pointerup', handlePointerUp);
     renderer.domElement.addEventListener('pointerleave', handlePointerLeave);
     renderer.domElement.addEventListener('click', selectNode);
+    renderer.domElement.style.cursor = 'grab';
 
     const resize = () => {
       const w = Math.max(1, mount.clientWidth);
@@ -174,39 +436,164 @@ export const IntroExperience: React.FC<IntroExperienceProps> = ({ onEnter }) => 
       renderer.setSize(w, h);
     };
     window.addEventListener('resize', resize);
-    const observer = new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; });
+
+    const observer = new IntersectionObserver(([entry]) => { 
+      visible = entry.isIntersecting; 
+    });
     observer.observe(mount);
+
+    // ========== ANIMATION LOOP ==========
+    const clock = new THREE.Clock();
 
     const animate = () => {
       if (visible) {
-        pointerCurrent.x += (pointerTarget.x - pointerCurrent.x) * 0.045;
-        pointerCurrent.y += (pointerTarget.y - pointerCurrent.y) * 0.045;
-        world.rotation.y = pointerCurrent.x + (reducedMotion ? 0 : performance.now() * 0.000025);
-        world.rotation.x = pointerCurrent.y;
-        core.rotation.y += reducedMotion ? 0 : 0.0022;
-        core.rotation.x += reducedMotion ? 0 : 0.0008;
-        ringA.rotation.z += reducedMotion ? 0 : 0.00055;
-        ringB.rotation.z -= reducedMotion ? 0 : 0.0004;
-        raycaster.setFromCamera(pointer, camera);
-        const hit = raycaster.intersectObjects(Array.from(nodeMeshes.values()))[0];
-        const hovered = hit?.object.userData.nodeKey as NodeKey | undefined;
-        if (hovered !== lastHover) {
-          lastHover = hovered || null;
-          setActiveNode(hovered || null);
-        }
-        nodeMeshes.forEach((mesh, name) => {
-          const selected = name === lastHover;
-          const targetScale = selected ? 1.32 : name === 'DECISION' ? 1.05 : 1;
-          mesh.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.12);
-          const material = mesh.material as THREE.MeshStandardMaterial;
-          material.emissiveIntensity += ((selected ? 0.22 : 0.07) - material.emissiveIntensity) * 0.12;
-          const line = connectorLines.get(name);
-          if (line) {
-            const lineMaterial = line.material as THREE.LineBasicMaterial;
-            lineMaterial.opacity += ((selected ? 0.42 : 0.14) - lineMaterial.opacity) * 0.12;
+        const delta = Math.min(clock.getDelta(), 0.05);
+        const t = clock.elapsedTime;
+        const amp = reducedMotion ? 0 : 1;
+
+        // Convergence animation
+        const conv = convergenceStateRef.current;
+        if (conv.active) {
+          conv.progress = Math.min(1, conv.progress + delta / (conv.duration / 1000));
+          
+          // Ease function for smooth acceleration
+          const easeProgress = 1 - Math.pow(1 - conv.progress, 3);
+          
+          // Nodes converge toward sphere
+          nodeMeshes.forEach((nodeGroup, name) => {
+            const orbital = nodeGroup.userData.orbital;
+            const targetPos = new THREE.Vector3(0, 0, 0);
+            nodeGroup.position.lerp(targetPos, easeProgress * 0.95);
+            
+            // Increase emissive as they converge
+            nodeGroup.children.forEach(child => {
+              if (child instanceof THREE.Mesh && !child.userData.isHalo) {
+                const mat = child.material as THREE.MeshStandardMaterial;
+                mat.emissiveIntensity = 0.1 + easeProgress * 0.4;
+              }
+            });
+            
+            // Scale up slightly
+            const targetScale = 1 + easeProgress * 0.5;
+            nodeGroup.scale.setScalar(targetScale);
+          });
+          
+          // Orbital rings tighten and fade
+          [ring1, ring2, ring3].forEach(ring => {
+            ring.scale.setScalar(1 - easeProgress * 0.6);
+            const mat = ring.material as THREE.LineBasicMaterial;
+            mat.opacity = (mat.userData.initialOpacity || mat.opacity) * (1 - easeProgress * 0.8);
+            if (!mat.userData.initialOpacity) mat.userData.initialOpacity = mat.opacity;
+          });
+          
+          // Sphere reacts - compress then expand
+          const sphereScale = conv.progress < 0.7 
+            ? 1 - easeProgress * 0.15 
+            : 0.85 + (conv.progress - 0.7) / 0.3 * 0.25;
+          sphereGroup.scale.setScalar(sphereScale);
+          
+          // Increase sphere brightness
+          mainWireframeMat.opacity = 0.35 + easeProgress * 0.2;
+        } else {
+          // Normal orbital animation with smooth camera
+          
+          // Apply inertia to drag velocity
+          if (!dragState.isDragging) {
+            dragState.velocityX *= dragState.inertia;
+            dragState.velocityY *= dragState.inertia;
+            targetRotation.y += dragState.velocityX;
+            targetRotation.x += dragState.velocityY;
           }
-        });
+          
+          // Smooth interpolation to target rotation
+          currentRotation.x += (targetRotation.x - currentRotation.x) * 0.08;
+          currentRotation.y += (targetRotation.y - currentRotation.y) * 0.08;
+          
+          world.rotation.x = currentRotation.x;
+          world.rotation.y = currentRotation.y + (amp * t * 0.00005);
+
+          // Sphere slow rotation
+          sphereGroup.rotation.y += amp * 0.001;
+          sphereGroup.rotation.x += amp * 0.0004;
+          mainWireframe.rotation.y += amp * 0.0015;
+          innerWireframe.rotation.x += amp * 0.001;
+          core.rotation.z += amp * 0.0008;
+
+          // Orbital rings rotation
+          ring1.rotation.z += amp * 0.0008;
+          ring2.rotation.z -= amp * 0.0006;
+          ring3.rotation.z += amp * 0.0010;
+
+          // Node orbital motion
+          nodeMeshes.forEach((nodeGroup, name) => {
+            const orbital = nodeGroup.userData.orbital;
+            const orbitAngle = orbital.angle + t * 0.08 * orbital.speed * amp;
+            
+            const x = Math.cos(orbitAngle) * orbital.radius;
+            const y = Math.sin(orbitAngle) * orbital.radius * Math.sin(orbital.inclination) * 0.3;
+            const z = Math.sin(orbitAngle) * orbital.radius * Math.cos(orbital.inclination);
+            
+            nodeGroup.position.set(x, y, z);
+            nodeGroup.rotation.y += delta * 0.2 * amp;
+            
+            // Update connector line
+            const line = connectorLines.get(name);
+            if (line) {
+              const points = [
+                nodeGroup.position.clone(),
+                nodeGroup.position.clone().normalize().multiplyScalar(2.5)
+              ];
+              line.geometry.setFromPoints(points);
+            }
+          });
+
+          // Hover interaction
+          raycaster.setFromCamera(pointer, camera);
+          const hits = raycaster.intersectObjects(world.children, true);
+          const hovered = hits.length ? findNodeKey(hits[0].object) : null;
+          
+          if (hovered !== lastHover) {
+            lastHover = hovered || null;
+            setActiveNode(hovered || null);
+          }
+
+          nodeMeshes.forEach((nodeGroup, name) => {
+            const selected = name === lastHover;
+            const targetScale = selected ? 1.28 : 1;
+            nodeGroup.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.15);
+            
+            nodeGroup.children.forEach(child => {
+              if (child instanceof THREE.Mesh && !child.userData.isHalo) {
+                const mat = child.material as THREE.MeshStandardMaterial;
+                const targetIntensity = selected ? 0.25 : 0.1;
+                mat.emissiveIntensity += (targetIntensity - mat.emissiveIntensity) * 0.12;
+              }
+            });
+            
+            const line = connectorLines.get(name);
+            if (line) {
+              const lineMat = line.material as THREE.LineBasicMaterial;
+              const targetOpacity = selected ? 0.35 : 0.12;
+              lineMat.opacity += (targetOpacity - lineMat.opacity) * 0.12;
+            }
+          });
+        }
+
         renderer.render(scene, camera);
+
+        // Project node positions for floating labels
+        if (!convergenceActive && Math.round(t * 8) % 2 === 0) {
+          const v = new THREE.Vector3();
+          const positions: Record<NodeKey, { x: number; y: number; z: number }> = {} as any;
+          nodeMeshes.forEach((nodeGroup, key) => {
+            v.setFromMatrixPosition(nodeGroup.matrixWorld);
+            v.project(camera);
+            const x = (v.x * 0.5 + 0.5) * mount.clientWidth;
+            const y = (-v.y * 0.5 + 0.5) * mount.clientHeight;
+            positions[key] = { x, y, z: v.z };
+          });
+          setLabelPositions(positions);
+        }
       }
       rafId = requestAnimationFrame(animate);
     };
@@ -218,56 +605,205 @@ export const IntroExperience: React.FC<IntroExperienceProps> = ({ onEnter }) => 
       observer.disconnect();
       window.removeEventListener('resize', resize);
       renderer.domElement.removeEventListener('pointermove', handlePointerMove);
+      renderer.domElement.removeEventListener('pointerdown', handlePointerDown);
+      renderer.domElement.removeEventListener('pointerup', handlePointerUp);
       renderer.domElement.removeEventListener('pointerleave', handlePointerLeave);
       renderer.domElement.removeEventListener('click', selectNode);
       scene.traverse((object) => {
         if (object instanceof THREE.Mesh || object instanceof THREE.Line || object instanceof THREE.Points) {
           object.geometry.dispose();
-          if (Array.isArray(object.material)) object.material.forEach((material) => material.dispose());
-          else object.material.dispose();
+          if (Array.isArray(object.material)) {
+            object.material.forEach((material) => material.dispose());
+          } else {
+            object.material.dispose();
+          }
         }
       });
       renderer.dispose();
-      if (renderer.domElement.parentNode === mount) mount.removeChild(renderer.domElement);
+      if (renderer.domElement.parentNode === mount) {
+        mount.removeChild(renderer.domElement);
+      }
     };
-  }, []);
+  }, [convergenceActive]);
 
   const activeCopy = activeNode ? NODE_COPY[activeNode] : null;
 
   return (
-    <div className={`cb-intro fixed inset-0 z-[100] overflow-hidden bg-[#191b1a] text-[#e7e9e4] ${exiting ? 'cb-intro-exit' : ''}`}>
-      <div ref={mountRef} className="absolute inset-0" aria-label="Interactive CorporateBaddie intelligence network" />
-      <header className="absolute left-6 top-6 flex items-center gap-3 sm:left-10 sm:top-8">
-        <span className="h-2 w-2 rounded-full bg-[#8eb397]" />
-        <span className="font-mono text-[10px] uppercase tracking-[0.24em] text-[#9da79f]">CORPORATEBADDIE</span>
-      </header>
-      <div className="absolute right-6 top-6 font-mono text-[9px] uppercase tracking-[0.2em] text-[#68716b] sm:right-10 sm:top-8">DECISION INTELLIGENCE / 01</div>
-
-      <section className={`absolute left-6 right-6 top-[18%] mx-auto max-w-3xl text-center transition-all duration-700 ${ready ? 'translate-y-0 opacity-100' : 'translate-y-3 opacity-0'}`}>
-        <p className="mb-4 font-mono text-[10px] uppercase tracking-[0.32em] text-[#7e8c82]">Making Sense of Corporate Nonsense</p>
-        <h1 className="text-[clamp(2.35rem,6vw,5.25rem)] font-medium leading-[0.94] tracking-[-0.055em] text-[#edf0eb]">Better questions.<br />Better decisions.</h1>
-        <p className="mx-auto mt-6 max-w-xl text-sm leading-7 text-[#8d968f] sm:text-base">Investigate business data, market signals, risk and evidence before deciding what to do next.</p>
-      </section>
-
-      <div className={`absolute left-6 top-1/2 hidden -translate-y-1/2 transition-all duration-500 sm:block ${activeCopy ? 'opacity-100' : 'opacity-0'}`}>
-        <p className="font-mono text-[9px] uppercase tracking-[0.22em] text-[#7f8a82]">{activeNode}</p>
-        <p className="mt-2 text-sm text-[#dce2dc]">{activeCopy?.title}</p>
-        <p className="mt-1 max-w-[180px] text-xs leading-5 text-[#737d76]">{activeCopy?.detail}</p>
-      </div>
-
-      <div className="absolute bottom-8 left-6 right-6 flex flex-col gap-5 sm:bottom-10 sm:left-10 sm:right-10 sm:flex-row sm:items-end sm:justify-between">
-        <div className="max-w-md">
-          <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-[#657069]">Question → Investigation → Evidence → Decision</p>
-          <p className="mt-2 text-xs leading-5 text-[#737d76]">Hover the intelligence streams. Click one to inspect what it contributes.</p>
+    <div className={`cb-intro fixed inset-0 z-[100] overflow-hidden bg-[#0f1210] text-[#e7e9e4] ${exiting ? 'cb-intro-exit' : ''}`}>
+      {/* Ambient Background Grid */}
+      <div className="absolute inset-0 opacity-[0.15]" style={{
+        backgroundImage: `
+          linear-gradient(rgba(142, 179, 151, 0.03) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(142, 179, 151, 0.03) 1px, transparent 1px)
+        `,
+        backgroundSize: '80px 80px',
+        backgroundPosition: 'center center'
+      }} />
+      
+      {/* Radial Gradient Overlay */}
+      <div className="absolute inset-0" style={{
+        background: 'radial-gradient(circle at 60% 50%, rgba(78, 95, 87, 0.08) 0%, transparent 50%)'
+      }} />
+      
+      {/* Top Header */}
+      <header className="absolute left-0 right-0 top-0 z-10 flex items-center justify-between border-b border-[#1a1f1c]/50 bg-[#0a0c0b]/90 px-6 py-4 backdrop-blur-sm sm:px-10 sm:py-5">
+        <div className="flex items-center gap-3">
+          <span className="h-1.5 w-1.5 rounded-full bg-[#8eb397]" />
+          <span className="font-mono text-[9px] uppercase tracking-[0.24em] text-[#9da79f]">CORPORATEBADDIE</span>
         </div>
-        <button type="button" onClick={enter} className="group flex items-center gap-4 self-start border border-[#69756d] bg-[#222522] px-5 py-3 text-[11px] font-medium uppercase tracking-[0.18em] text-[#dfe5df] transition-all duration-150 hover:-translate-y-0.5 hover:border-[#8eb397] hover:bg-[#292d2a] active:translate-y-0">Enter Decision Intelligence<span className="text-[#8eb397] transition-transform duration-150 group-hover:translate-x-1">→</span></button>
+        <div className="flex items-center gap-6">
+          <span className="hidden font-mono text-[8.5px] uppercase tracking-[0.2em] text-[#68716b] sm:inline">DECISION INTELLIGENCE / 01</span>
+          <button 
+            type="button" 
+            onClick={handleSkip}
+            className="group flex items-center gap-2 font-mono text-[9px] uppercase tracking-[0.18em] text-[#7f8981] transition-colors hover:text-[#b8d4bd]"
+          >
+            SKIP INTRO
+            <span className="text-[#8eb397] transition-transform group-hover:translate-x-1">→</span>
+          </button>
+        </div>
+      </header>
+
+      {/* Main Two-Column Layout */}
+      <div className="absolute inset-0 flex items-center">
+        <div className="mx-auto grid w-full max-w-[1400px] grid-cols-1 items-center gap-8 px-6 py-20 lg:grid-cols-2 lg:gap-16 lg:px-16">
+          
+          {/* Left Column - Content */}
+          <div className={`transition-all duration-700 ${ready ? 'translate-x-0 opacity-100' : '-translate-x-4 opacity-0'}`}>
+            <p className="cb-kicker mb-4 text-[#7e8c82]">DECISION SYSTEM / ENTRY</p>
+            
+            <p className="mb-3 font-mono text-[10px] uppercase tracking-[0.2em] text-[#7a847c]">
+              Making Sense of Corporate Nonsense.
+            </p>
+            
+            <h1 className="cb-display mb-5 text-[clamp(2.2rem,4.5vw,3.4rem)] leading-[1.1] text-[#edf0eb]">
+              Turn business<br />
+              questions into<br />
+              <span className="text-[#8eb397]">evidence-backed</span><br />
+              decisions.
+            </h1>
+            
+            <p className="mb-6 max-w-[480px] text-[13px] leading-relaxed text-[#9da79f] sm:text-[14px]">
+              It investigates your data, checks the market, tests<br className="hidden sm:inline" /> assumptions and shows you why a recommendation can be<br className="hidden sm:inline" /> trusted.
+            </p>
+
+            {/* Example Question */}
+            <div className="mb-6">
+              <p className="cb-meta mb-2.5 text-[#6a736d]">QUESTION</p>
+              <div className="flex items-center border border-[#2a322c] bg-[#0f1210] px-4 py-2.5 text-[13px] text-[#c5cec7]">
+                <span className="flex-1">"Why are our margins falling?"</span>
+                <span className="text-[#8eb397]">→</span>
+              </div>
+            </div>
+
+            {/* Primary CTA */}
+            <button 
+              type="button" 
+              onClick={enter}
+              disabled={convergenceActive}
+              className="group inline-flex items-center gap-2.5 border border-[#7ea889] bg-[#7ea889] px-5 py-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#172019] transition-all hover:-translate-y-0.5 hover:bg-[#91b99a] active:translate-y-0 disabled:opacity-50 disabled:hover:translate-y-0"
+            >
+              ENTER DECISION INTELLIGENCE
+              <span className="text-[#2a3b2e] transition-transform group-hover:translate-x-0.5">↗</span>
+            </button>
+          </div>
+
+          {/* Right Column - 3D Sphere */}
+          <div className={`relative transition-all duration-700 ${ready ? 'translate-x-0 opacity-100' : 'translate-x-4 opacity-0'}`}>
+            {/* Ambient Glow Behind Sphere */}
+            <div className="absolute left-1/2 top-1/2 h-[400px] w-[400px] -translate-x-1/2 -translate-y-1/2 opacity-20 blur-[100px]" style={{
+              background: 'radial-gradient(circle, rgba(142, 179, 151, 0.3) 0%, transparent 70%)'
+            }} />
+            
+            <div 
+              ref={mountRef} 
+              className="relative mx-auto aspect-square w-full max-w-[600px]" 
+              aria-label="Interactive CorporateBaddie decision intelligence system"
+            >
+              {/* Floating Node Labels */}
+              {!convergenceActive && NODE_ORDER.map((nodeKey) => {
+                const pos = labelPositions[nodeKey];
+                if (!pos || pos.z > 1) return null; // Don't show if behind camera
+                
+                const isActive = activeNode === nodeKey;
+                const nodeCopy = NODE_COPY[nodeKey];
+                
+                return (
+                  <div
+                    key={nodeKey}
+                    className="pointer-events-none absolute transition-opacity duration-300"
+                    style={{
+                      left: `${pos.x}px`,
+                      top: `${pos.y}px`,
+                      transform: 'translate(-50%, -50%)',
+                      opacity: isActive ? 1 : 0.7,
+                    }}
+                  >
+                    <div className={`rounded px-2 py-1 text-center transition-all duration-200 ${
+                      isActive ? 'bg-[#8eb397]/20 border border-[#8eb397]/40' : 'bg-[#0f1210]/80 border border-[#2a322c]/80'
+                    }`}>
+                      <p className={`font-mono text-[9px] font-semibold uppercase tracking-[0.18em] ${
+                        isActive ? 'text-[#8eb397]' : 'text-[#9da79f]'
+                      }`}>
+                        {nodeKey}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            
+            {/* Node Detail Overlay */}
+            {activeCopy && (
+              <div className="absolute bottom-8 left-8 right-8 border border-[#2a322c] bg-[#0f1210]/95 p-4 backdrop-blur-sm">
+                <p className="mb-2 font-mono text-[9px] uppercase tracking-[0.2em] text-[#8eb397]">{activeCopy.title}</p>
+                <p className="mb-1.5 text-[13px] font-medium text-[#dce2dc]">{activeCopy.detail}</p>
+                <p className="text-[11px] leading-relaxed text-[#7a847c]">{activeCopy.description}</p>
+              </div>
+            )}
+          </div>
+
+        </div>
       </div>
 
-      <div className="pointer-events-none absolute bottom-8 left-1/2 hidden -translate-x-1/2 font-mono text-[8px] uppercase tracking-[0.22em] text-[#56605a] md:block">{activeNode ? `${activeNode} selected` : 'Move to explore'}</div>
+      {/* Bottom Intelligence System */}
+      <div className="absolute bottom-0 left-0 right-0 z-10 border-t border-[#1a1f1c]/50 bg-[#0a0c0b]/90 px-6 py-3 backdrop-blur-sm sm:px-10 sm:py-4">
+        <div className="mx-auto flex max-w-[1400px] items-center justify-between">
+          <div className="flex items-center gap-6">
+            <span className="cb-kicker text-[#6a736d]">INTELLIGENCE SYSTEM</span>
+            <div className="hidden items-center gap-4 sm:flex">
+              {['DATA', 'ANALYSIS', 'MARKET', 'EVIDENCE', 'RISK', 'DECISION'].map((step, i) => (
+                <span 
+                  key={step} 
+                  className={`font-mono text-[8.5px] uppercase tracking-[0.14em] transition-colors ${
+                    i === 0 ? 'text-[#8eb397]' : 'text-[#5a615c]'
+                  }`}
+                >
+                  {step}
+                </span>
+              ))}
+            </div>
+          </div>
+          <span className="hidden font-mono text-[8px] uppercase tracking-[0.18em] text-[#5a615c] lg:inline">
+            — EVIDENCE OVER ELOQUENCE.
+          </span>
+        </div>
+      </div>
+
       <style>{`
-        .cb-intro { opacity: 1; transition: opacity 520ms ease, transform 520ms ease; }
-        .cb-intro-exit { opacity: 0; transform: scale(1.015); pointer-events: none; }
-        @media (prefers-reduced-motion: reduce) { .cb-intro, .cb-intro-exit { transition: none; } }
+        .cb-intro { 
+          opacity: 1; 
+          transition: opacity 600ms cubic-bezier(0.22, 1, 0.36, 1); 
+        }
+        .cb-intro-exit { 
+          opacity: 0; 
+          pointer-events: none; 
+        }
+        @media (prefers-reduced-motion: reduce) { 
+          .cb-intro, .cb-intro-exit { 
+            transition: opacity 200ms ease; 
+          } 
+        }
       `}</style>
     </div>
   );
