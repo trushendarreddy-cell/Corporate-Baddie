@@ -94,7 +94,7 @@ export const EvidenceDetailModal: React.FC<EvidenceDetailModalProps> = ({
       <div 
         role="dialog"
         aria-modal="true"
-        aria-label="Adversarial Evidence Audit Dossier"
+        aria-label="Finding evidence details"
         className="w-full max-w-3xl bg-[#0e121b] border border-slate-700 rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
       >
         {/* Header */}
@@ -106,14 +106,14 @@ export const EvidenceDetailModal: React.FC<EvidenceDetailModalProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-base font-bold text-white">
-                  Adversarial Evidence & Verification Audit
+                  Why this finding matters
                 </h3>
                 <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded bg-amber-950/60 border border-amber-800 text-amber-300">
                   {finding.evidenceClaimId}
                 </span>
               </div>
               <p className="text-xs text-slate-400">
-                Independent adversarial testing of empirical reliability and correlation vs causation boundaries
+                The plain-English explanation first, followed by calculations, sources, limitations, and audit checks.
               </p>
             </div>
           </div>
@@ -132,7 +132,7 @@ export const EvidenceDetailModal: React.FC<EvidenceDetailModalProps> = ({
           <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-800 flex flex-wrap items-center justify-between gap-3">
             <div>
               <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">
-                Audited Metric: {finding.label}
+                Finding: {finding.label}
               </span>
               <div className="flex items-baseline gap-2 mt-0.5">
                 <span className="text-xl font-extrabold text-white font-mono">{finding.value}</span>
@@ -160,7 +160,7 @@ export const EvidenceDetailModal: React.FC<EvidenceDetailModalProps> = ({
           <div className="p-3.5 rounded-xl bg-cyan-950/20 border border-cyan-800/40 text-cyan-200/90 space-y-1">
             <div className="flex items-center gap-1.5 font-bold text-cyan-300">
               <ShieldCheck className="w-4 h-4 text-cyan-400" />
-              <span>Formal Epistemic Guardrail</span>
+              <span>How strong is this evidence?</span>
             </div>
             <p className="text-[11px] leading-relaxed">
               {epistemicLabel === 'CAUSAL EVIDENCE' 
@@ -175,7 +175,7 @@ export const EvidenceDetailModal: React.FC<EvidenceDetailModalProps> = ({
           <div className="space-y-3">
             <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
               <Scale className="w-3.5 h-3.5 text-amber-400" />
-              <span>8-Dimension Adversarial Audit</span>
+              <span>Full evidence checks</span>
             </h4>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -268,7 +268,7 @@ export const EvidenceDetailModal: React.FC<EvidenceDetailModalProps> = ({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-amber-300 font-bold">
                 <Zap className="w-4 h-4 text-amber-400" />
-                <span>Challenge This Finding</span>
+                <span>Challenge this finding</span>
               </div>
               <button
                 type="button"

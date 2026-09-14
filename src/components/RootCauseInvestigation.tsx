@@ -66,14 +66,14 @@ export const RootCauseInvestigation: React.FC<RootCauseInvestigationProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6 pb-4 border-b border-slate-800">
         <div>
           <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-            Section 4 · Causal Decomposition Chain
+            Why this may be happening
           </span>
           <h2 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
             <GitBranch className="w-5 h-5 text-amber-400" />
-            ROOT CAUSE INVESTIGATION
+            Why this may be happening
           </h2>
           <p className="text-xs text-slate-400 mt-0.5">
-            Step-by-step diagnostic link from consolidated top-line down to operational drivers
+            A step-by-step chain from the overall change down to the specific drivers
           </p>
         </div>
 

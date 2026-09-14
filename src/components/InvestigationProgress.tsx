@@ -4,14 +4,11 @@ import {
   Loader2,
   Circle,
   Terminal,
-  FastForward,
   BrainCircuit,
   ChevronDown,
   ChevronUp,
   Copy,
   Check,
-  Activity,
-  ShieldCheck,
 } from 'lucide-react';
 import { InvestigationStage } from '../types';
 
@@ -23,13 +20,13 @@ interface InvestigationProgressProps {
 }
 
 const PIPELINE_STEPS = [
-  { id: 'data', label: 'DATA' },
-  { id: 'analysis', label: 'ANALYSIS' },
-  { id: 'anomalies', label: 'ANOMALIES' },
-  { id: 'root-cause', label: 'ROOT CAUSE' },
-  { id: 'market', label: 'MARKET' },
-  { id: 'verify', label: 'VERIFY' },
-  { id: 'decide', label: 'DECIDE' },
+  { id: 'data', label: 'YOUR DATA' },
+  { id: 'analysis', label: 'WHAT CHANGED' },
+  { id: 'anomalies', label: 'IMPORTANT CHANGES' },
+  { id: 'root-cause', label: 'WHY' },
+  { id: 'market', label: 'OUTSIDE SIGNALS' },
+  { id: 'verify', label: 'EVIDENCE' },
+  { id: 'decide', label: 'RECOMMENDATION' },
 ];
 
 /**
@@ -74,54 +71,53 @@ export const InvestigationProgress: React.FC<InvestigationProgressProps> = ({
   const completedMilestones = stages.slice(0, Math.max(0, currentStageIndex)).slice(-3, );
 
   return (
-    <div className="w-full max-w-5xl mx-auto py-6 sm:py-10 space-y-6">
+    <div className="w-full max-w-3xl mx-auto py-8 sm:py-12 space-y-6">
       {/* Header */}
-      <div className="cb-glass-hero cb-edge relative rounded-3xl p-6 sm:p-8 overflow-hidden">
+      <div className="cb-glass-hero cb-edge relative rounded-xl p-6 sm:p-7 overflow-hidden">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="relative">
-              <div className="w-12 h-12 rounded-2xl bg-amber-500/15 border border-amber-500/40 flex items-center justify-center">
-                <BrainCircuit className="w-6 h-6 text-amber-400 animate-pulse" />
+            <div className="relative shrink-0">
+              <div className="w-10 h-10 rounded-lg bg-amber-500/10 border border-amber-500/25 flex items-center justify-center">
+                <BrainCircuit className="w-5 h-5 text-amber-400" />
               </div>
-              <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500" />
+              <span className="absolute -top-0.5 -right-0.5 flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-70" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-400" />
               </span>
             </div>
             <div>
-              <span className="cb-kicker text-amber-400/90">CorporateBaddie is investigating</span>
-              <h2 className="cb-display text-xl sm:text-2xl text-white mt-0.5">
-                Autonomous agent execution
+              <span className="cb-kicker">CorporateBaddie is investigating</span>
+              <h2 className="text-[16px] font-semibold text-white mt-0.5">
+                Building your answer
               </h2>
             </div>
           </div>
 
           <div className="flex items-center gap-4 self-end sm:self-auto">
             <div className="text-right">
-              <span className="cb-meta text-slate-500 block">
-                Stage {currentStageIndex + 1} of {stages.length}
+              <span className="cb-meta block">
+                Stage {currentStageIndex + 1} / {stages.length}
               </span>
-              <span className="text-2xl font-mono font-extrabold text-amber-400 tabular-nums">
+              <span className="cb-metric text-[20px] text-amber-400">
                 {percent}%
               </span>
             </div>
             <button
               onClick={onSkip}
-              className="cb-btn inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900/70 border border-slate-700 hover:border-slate-600 text-xs font-semibold text-slate-200"
+              className="cb-btn px-3 py-1.5 rounded-md border border-slate-800 hover:border-slate-700 text-[12.5px] font-medium text-slate-400 hover:text-slate-200"
               title="Fast-forward to results"
             >
-              <FastForward className="w-3.5 h-3.5 text-amber-400" />
-              <span>Skip</span>
+              Skip
             </button>
           </div>
         </div>
 
         {/* Progress bar */}
         <div className="mt-6">
-          <div className="w-full bg-slate-950/80 h-1.5 rounded-full overflow-hidden border border-slate-800/80">
+          <div className="w-full bg-slate-900/80 h-[3px] rounded-full overflow-hidden">
             <div
-              className="bg-gradient-to-r from-amber-500 via-amber-400 to-emerald-400 h-full rounded-full transition-all duration-500 ease-out"
-              style={{ width: `${percent}%`, boxShadow: '0 0 12px rgba(245,158,11,0.4)' }}
+              className="bg-amber-400 h-full rounded-full transition-all duration-500 ease-out"
+              style={{ width: `${percent}%` }}
             />
           </div>
         </div>
@@ -211,7 +207,7 @@ export const InvestigationProgress: React.FC<InvestigationProgressProps> = ({
       </div>
 
       {/* Investigation log */}
-      <div className="cb-glass rounded-3xl overflow-hidden">
+      <div className="cb-glass rounded-xl overflow-hidden">
         <div
           onClick={() => setIsLogExpanded(!isLogExpanded)}
           className="p-4 sm:p-5 border-b border-slate-800/80 flex items-center justify-between cursor-pointer select-none hover:bg-slate-900/40 transition-colors"
@@ -223,7 +219,7 @@ export const InvestigationProgress: React.FC<InvestigationProgressProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <h4 className="text-xs font-bold text-white uppercase tracking-wider">
-                  Investigation Log
+                  Investigation details
                 </h4>
                 <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-slate-900 text-slate-300 border border-slate-800">
                   {terminalLogs.length} events

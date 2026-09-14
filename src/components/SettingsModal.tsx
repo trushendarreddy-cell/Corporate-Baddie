@@ -159,10 +159,10 @@ applet_graph = workflow.compile()
             </div>
             <div>
               <h3 className="text-base font-bold text-white">
-                Architecture & LangGraph Migration Blueprint
+                Decision workflow & data map
               </h3>
               <p className="text-xs text-slate-400">
-                1:1 schema mapping to Python + FastAPI + LangGraph stateful execution
+                A practical view of how the investigation moves from evidence to recommendation
               </p>
             </div>
           </div>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   TrendingDown, 
   ArrowDownRight, 
@@ -10,7 +10,8 @@ import {
   MapPin,
   Users,
   AlertTriangle,
-  Info
+  Info,
+  ChevronDown
 } from 'lucide-react';
 import { KeyFinding, CitationRef, EpistemicStatus } from '../types';
 import { CitationBadge } from './CitationBadge';
@@ -26,6 +27,8 @@ export const KeyFindings: React.FC<KeyFindingsProps> = ({
   onViewEvidence,
   onSelectCitation,
 }) => {
+  const [expandedFindingId, setExpandedFindingId] = useState<string | null>(null);
+
   const getIcon = (id: string) => {
     switch (id) {
       case 'kf-1':
@@ -102,17 +105,17 @@ export const KeyFindings: React.FC<KeyFindingsProps> = ({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-            Section 6 · Empirical Observations & Epistemic Boundaries
+            Why this matters
           </span>
-          <h2 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
-            <span>KEY FINDINGS</span>
+          <h2 className="text-xl font-bold text-white tracking-tight flex items-center gap-2 flex-wrap">
+            <span>Why this matters</span>
             <span className="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 font-normal">
-              Correlation vs. Causation Guardrails Active
+              Simple summary · full proof available
             </span>
           </h2>
         </div>
         <span className="text-xs text-slate-400 font-medium">
-          Audited Ledgers · Click any badge for provenance
+          Select a finding to see what changed and where it came from
         </span>
       </div>
 
@@ -120,7 +123,9 @@ export const KeyFindings: React.FC<KeyFindingsProps> = ({
         {findings.map((finding) => (
           <div
             key={finding.id}
-            className="group bg-[#0e121b] hover:bg-[#111622] border border-slate-800/90 hover:border-slate-700/80 rounded-xl p-5 transition-all shadow-lg shadow-black/40 flex flex-col justify-between relative overflow-hidden"
+            className={`group bg-[#0e121b] hover:bg-[#111622] border rounded-xl p-5 transition-all shadow-lg shadow-black/40 flex flex-col justify-between relative overflow-hidden cursor-pointer ${expandedFindingId === finding.id ? 'border-amber-500/40 bg-[#111622]' : 'border-slate-800/90 hover:border-slate-700/80'}`}
+            onClick={() => setExpandedFindingId(expandedFindingId === finding.id ? null : finding.id)}
+            aria-expanded={expandedFindingId === finding.id}
           >
             {/* Top row */}
             <div>
@@ -170,6 +175,27 @@ export const KeyFindings: React.FC<KeyFindingsProps> = ({
                   <span>Guarded: Observational correlation. Recommendation engine does not claim customer churn alone caused revenue loss.</span>
                 </div>
               )}
+
+              {expandedFindingId === finding.id && (
+                <div className="mt-4 pt-4 border-t border-slate-800/80 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3 text-[11px] animate-in fade-in slide-in-from-top-1 duration-200">
+                  <div>
+                    <span className="cb-meta block mb-1">What changed</span>
+                    <p className="text-slate-200 leading-relaxed">{finding.detailedData.variance}</p>
+                  </div>
+                  <div>
+                    <span className="cb-meta block mb-1">Calculation</span>
+                    <p className="text-slate-300 leading-relaxed">{finding.detailedData.baseline} → {finding.detailedData.current}</p>
+                  </div>
+                  <div>
+                    <span className="cb-meta block mb-1">Confidence</span>
+                    <p className="text-emerald-300 font-mono">{finding.detailedData.confidence}% · {finding.epistemicLabel || 'Evidence-backed finding'}</p>
+                  </div>
+                  <div>
+                    <span className="cb-meta block mb-1">Source</span>
+                    <p className="text-slate-300 leading-relaxed break-words">{finding.detailedData.dataSource}</p>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Bottom "View Evidence" trigger */}
@@ -177,14 +203,23 @@ export const KeyFindings: React.FC<KeyFindingsProps> = ({
               <span className="text-[10px] font-mono text-slate-500">
                 {finding.detailedData.confidence}% confidence
               </span>
-              <button
-                type="button"
-                onClick={() => onViewEvidence(finding)}
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-400 hover:text-amber-300 group-hover:underline transition-all"
-              >
-                <span>Audit Proof</span>
-                <ArrowDownRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-              </button>
+              <div className="flex items-center gap-3">
+                <span className="inline-flex items-center gap-1 text-[11px] text-slate-500">
+                  {expandedFindingId === finding.id ? 'Hide detail' : 'Show detail'}
+                  <ChevronDown className={`w-3.5 h-3.5 transition-transform ${expandedFindingId === finding.id ? 'rotate-180' : ''}`} />
+                </span>
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onViewEvidence(finding);
+                  }}
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-400 hover:text-amber-300 group-hover:underline transition-all"
+                >
+                  <span>Open full proof</span>
+                  <ArrowDownRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                </button>
+              </div>
             </div>
           </div>
         ))}

@@ -38,13 +38,13 @@ export const Charts: React.FC<{ hasEvidence?: boolean }> = ({ hasEvidence = true
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-800">
         <div>
           <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-            Section 3 · Quantitative Validation
+            What the data shows
           </span>
           <h2 className="text-xl font-bold text-white tracking-tight">
-            VISUAL EVIDENCE
+            The numbers behind the change
           </h2>
           <p className="text-xs text-slate-400 mt-0.5">
-            Grounded time-series ledgers and portfolio variance decompositions
+            Revenue trends and how the change splits across products and regions
           </p>
         </div>
 
@@ -54,7 +54,7 @@ export const Charts: React.FC<{ hasEvidence?: boolean }> = ({ hasEvidence = true
             onClick={() => setActiveTab('trend')}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
               activeTab === 'trend'
-                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30 shadow-sm'
+                ? 'bg-[#7ea889]/15 text-[#b8d4bd] border border-[#7ea889]/40'
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
@@ -66,7 +66,7 @@ export const Charts: React.FC<{ hasEvidence?: boolean }> = ({ hasEvidence = true
             onClick={() => setActiveTab('product')}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
               activeTab === 'product'
-                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30 shadow-sm'
+                ? 'bg-[#7ea889]/15 text-[#b8d4bd] border border-[#7ea889]/40'
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
@@ -78,7 +78,7 @@ export const Charts: React.FC<{ hasEvidence?: boolean }> = ({ hasEvidence = true
             onClick={() => setActiveTab('region')}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
               activeTab === 'region'
-                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30 shadow-sm'
+                ? 'bg-[#7ea889]/15 text-[#b8d4bd] border border-[#7ea889]/40'
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
@@ -90,7 +90,7 @@ export const Charts: React.FC<{ hasEvidence?: boolean }> = ({ hasEvidence = true
             onClick={() => setActiveTab('retention')}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
               activeTab === 'retention'
-                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30 shadow-sm'
+                ? 'bg-[#7ea889]/15 text-[#b8d4bd] border border-[#7ea889]/40'
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
@@ -108,7 +108,7 @@ export const Charts: React.FC<{ hasEvidence?: boolean }> = ({ hasEvidence = true
             <div className="flex flex-wrap items-center justify-between gap-2 mb-4 text-xs">
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
-                  <span className="w-3 h-0.5 bg-rose-400 rounded-full"></span>
+                  <span className="w-3 h-0.5 bg-[#b47d78] rounded-full"></span>
                   <span className="text-slate-300 font-medium">Actual Monthly Revenue ($M)</span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -116,7 +116,7 @@ export const Charts: React.FC<{ hasEvidence?: boolean }> = ({ hasEvidence = true
                   <span className="text-slate-500 font-medium">Budget Target Baseline</span>
                 </div>
               </div>
-              <div className="flex items-center gap-1 text-rose-400 font-mono font-semibold bg-rose-950/40 px-2 py-0.5 rounded border border-rose-800/40">
+              <div className="flex items-center gap-1 text-[#c59691] font-mono font-semibold bg-[#3a2928] px-2 py-0.5 rounded border border-[#754b48]/50">
                 <TrendingDown className="w-3.5 h-3.5" />
                 <span>Total contraction: -$3.05M (-14.2%)</span>
               </div>
@@ -151,7 +151,7 @@ export const Charts: React.FC<{ hasEvidence?: boolean }> = ({ hasEvidence = true
                 {/* Actual Revenue Line (contracting downwards) */}
                 <polyline
                   fill="none"
-                  stroke="#f43f5e"
+                  stroke="#b47d78"
                   strokeWidth="3.5"
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -180,7 +180,7 @@ export const Charts: React.FC<{ hasEvidence?: boolean }> = ({ hasEvidence = true
                         cy={y}
                         r={isHovered ? 7 : 4.5}
                         fill="#090b10"
-                        stroke="#f43f5e"
+                        stroke="#b47d78"
                         strokeWidth="3"
                         className="transition-all"
                       />
@@ -213,13 +213,13 @@ export const Charts: React.FC<{ hasEvidence?: boolean }> = ({ hasEvidence = true
                     {MOCK_CHART_SERIES[hoveredPoint].period} Performance
                   </p>
                   <div className="space-y-0.5 font-mono text-[11px]">
-                    <p className="text-rose-400">
+                    <p className="text-[#c59691]">
                       Actual: ${MOCK_CHART_SERIES[hoveredPoint].revenue.toFixed(2)}M
                     </p>
                     <p className="text-slate-400">
                       Baseline: ${MOCK_CHART_SERIES[hoveredPoint].baseline.toFixed(2)}M
                     </p>
-                    <p className="text-amber-300">
+                    <p className="text-[#b8b39a]">
                       Product A: ${MOCK_CHART_SERIES[hoveredPoint].productA.toFixed(2)}M
                     </p>
                   </div>
@@ -240,7 +240,7 @@ export const Charts: React.FC<{ hasEvidence?: boolean }> = ({ hasEvidence = true
           <div>
             <div className="flex items-center justify-between mb-4 text-xs">
               <span className="text-slate-300 font-medium">Product Portfolio Contribution Breakdown</span>
-              <span className="text-amber-400 font-medium">Highlight: Product A accounts for 68.2% of decline</span>
+              <span className="text-[#b8d4bd] font-medium">Highlight: Product A accounts for 68.2% of decline</span>
             </div>
 
             <div className="space-y-3">

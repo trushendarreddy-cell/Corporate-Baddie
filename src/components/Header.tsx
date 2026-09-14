@@ -50,7 +50,7 @@ export const Header: React.FC<HeaderProps> = ({
                 </span>
               </div>
               <p className="text-[11px] font-medium text-slate-400 tracking-wide">
-                Making Sense of Corporate Nonsense
+                Clear answers for business decisions
               </p>
             </div>
           </button>
@@ -60,7 +60,7 @@ export const Header: React.FC<HeaderProps> = ({
         <nav className="hidden md:flex items-center gap-1 text-xs font-medium text-slate-300">
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900/60 border border-slate-800 text-slate-300">
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Agentic Decision Intelligence</span>
+            <span>Decision support</span>
           </div>
 
           <button
@@ -76,7 +76,7 @@ export const Header: React.FC<HeaderProps> = ({
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-slate-800/60 hover:text-white transition-colors text-slate-400"
           >
             <Settings2 className="w-3.5 h-3.5" />
-            <span>LangGraph Pipeline</span>
+            <span>Workflow</span>
           </button>
         </nav>
 

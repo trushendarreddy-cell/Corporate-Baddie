@@ -83,27 +83,27 @@ export const ConfidencePanel: React.FC<ConfidencePanelProps> = ({
   return (
     <section 
       id="confidence-uncertainty-section"
-      aria-label="Transparent Confidence Model and Epistemic Falsification"
+      aria-label="Confidence and decision limits"
       className="w-full bg-[#0e121b] border border-slate-800/90 rounded-2xl p-6 shadow-xl shadow-black/40 space-y-6"
     >
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-slate-800">
         <div>
           <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-            Section 8 · Epistemic Calibration & Falsification Bounds
+            How confident are we?
           </span>
           <h2 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
             <ShieldCheck className="w-5 h-5 text-amber-400" />
-            TRANSPARENT CONFIDENCE MODEL & WHAT WOULD CHANGE IT
+            Confidence, limits, and what could change the decision
           </h2>
           <p className="text-xs text-slate-400 mt-0.5">
-            Mathematical breakdown of multi-dimensional epistemic weights, data quality bounds, and falsification triggers
+            A score based on data quality, verified evidence, source coverage, and scenario checks. The detail below shows how it was calculated.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-emerald-950/70 border border-emerald-700/60 text-emerald-300 text-xs font-bold">
-            <span>Decision Confidence: {confidenceLevel} ({overallScore}%)</span>
+            <span>{confidenceLevel} · {overallScore}% supported by the current evidence</span>
           </div>
           {onOpenRobustnessModal && (
             <button
@@ -112,7 +112,7 @@ export const ConfidencePanel: React.FC<ConfidencePanelProps> = ({
               className="px-3 py-1 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-xs font-semibold transition-colors flex items-center gap-1"
             >
               <Scale className="w-3.5 h-3.5" />
-              <span>Test Source Removal</span>
+              <span>Test if a source is removed</span>
             </button>
           )}
         </div>
@@ -123,10 +123,10 @@ export const ConfidencePanel: React.FC<ConfidencePanelProps> = ({
         <div className="flex items-center justify-between">
           <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
             <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Multi-Dimensional Confidence Breakdown</span>
+            <span>What makes up the score</span>
           </h3>
           <span className="text-[11px] text-slate-500 font-mono">
-            Calibrated against enterprise dataset census
+            Every component is calculated from this investigation
           </span>
         </div>
 
@@ -225,7 +225,7 @@ export const ConfidencePanel: React.FC<ConfidencePanelProps> = ({
           <div className="p-3.5 rounded-lg bg-emerald-950/20 border border-emerald-800/30 space-y-1.5">
             <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wide flex items-center gap-1.5">
               <TrendingUp className="w-3.5 h-3.5" />
-              <span>Top Confidence Boosters</span>
+              <span>What supports this score</span>
             </span>
             <ul className="list-disc list-inside space-y-1 text-slate-300 text-[11px]">
               {(confidenceModel?.topBoosters || []).map((b, idx) => <li key={idx}>{b}</li>)}
@@ -235,7 +235,7 @@ export const ConfidencePanel: React.FC<ConfidencePanelProps> = ({
           <div className="p-3.5 rounded-lg bg-amber-950/20 border border-amber-800/30 space-y-1.5">
             <span className="text-[11px] font-bold text-amber-400 uppercase tracking-wide flex items-center gap-1.5">
               <TrendingDown className="w-3.5 h-3.5" />
-              <span>Top Confidence Reducers & Caveats</span>
+              <span>What limits this score</span>
             </span>
             <ul className="list-disc list-inside space-y-1 text-slate-300 text-[11px]">
               {(confidenceModel?.topReducers || []).map((r, idx) => <li key={idx}>{r}</li>)}
@@ -244,7 +244,7 @@ export const ConfidencePanel: React.FC<ConfidencePanelProps> = ({
         </div>
 
         <div className="p-3.5 rounded-lg bg-slate-900/60 border border-slate-800 space-y-1.5 text-[11px]">
-          <span className="font-bold text-cyan-300 uppercase tracking-wide">Score Trace</span>
+          <span className="font-bold text-cyan-300 uppercase tracking-wide">How the score was calculated</span>
           {Object.entries(confidenceModel?.explanations || {}).map(([dimension, explanation]) => (
             <p key={dimension} className="text-slate-300"><strong className="text-slate-400">{dimension}:</strong> {explanation}</p>
           ))}
@@ -263,7 +263,7 @@ export const ConfidencePanel: React.FC<ConfidencePanelProps> = ({
       <div>
         <h3 className="text-sm font-semibold text-slate-200 mb-3 flex items-center gap-2">
           <ShieldQuestion className="w-4 h-4 text-amber-400" />
-          <span>Interactive Policy Reversal Simulation: The recommendation would change if:</span>
+          <span>What would change the recommendation?</span>
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">

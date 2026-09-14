@@ -76,19 +76,19 @@ export const ExecutiveDecision: React.FC<ExecutiveDecisionProps> = ({
       {/* Background Accent Glow */}
       <div className="absolute top-0 right-0 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
 
-      {/* Demo Disclaimer Banner */}
+      {/* Decision-ready banner */}
       <div className="flex flex-wrap items-center justify-between gap-2 px-3.5 py-2 rounded-lg bg-amber-500/10 border border-amber-500/25 text-amber-300 text-xs">
         <div className="flex items-center gap-2">
           <AlertCircle className="w-4 h-4 text-amber-400 shrink-0" />
           <span className="font-semibold uppercase tracking-wider text-[11px]">
-            Demo State / Grounded Verification
+            Decision ready
           </span>
           <span className="text-amber-200/80 hidden sm:inline">
-            — Epistemic guardrails active: Inferences strictly separated from empirical accounting causality.
+            — We separate facts from assumptions before recommending a move.
           </span>
         </div>
         <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-amber-950/60 border border-amber-800 text-amber-300">
-          AUDIT-CHAIN ACTIVE
+          EVIDENCE-BASED
         </span>
       </div>
 
@@ -100,10 +100,10 @@ export const ExecutiveDecision: React.FC<ExecutiveDecisionProps> = ({
           </div>
           <div>
             <span className="text-[11px] font-bold uppercase tracking-wider text-amber-400">
-              Section 1 · Prescriptive Synthesis
+              Decision ready
             </span>
             <h2 className="text-sm font-semibold text-slate-300">
-              EXECUTIVE DECISION
+              WHAT WE RECOMMEND
             </h2>
           </div>
         </div>
@@ -112,12 +112,12 @@ export const ExecutiveDecision: React.FC<ExecutiveDecisionProps> = ({
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex items-center gap-1.5 bg-slate-900/80 border border-slate-700/80 px-3 py-1.5 rounded-xl text-xs">
             <Database className="w-3.5 h-3.5 text-indigo-400" />
-            <span className="text-slate-400">Data Quality:</span>
+            <span className="text-slate-400">Data quality</span>
             <span className="font-mono font-bold text-indigo-300">{state.dataQuality.overallPercent}%</span>
           </div>
 
           <div className="flex items-center gap-1.5 bg-slate-900/80 border border-slate-700/80 px-3 py-1.5 rounded-xl text-xs">
-            <span className="text-slate-400">Decision Confidence:</span>
+            <span className="text-slate-400">How confident we are</span>
             <span className="text-xs font-extrabold uppercase tracking-wide px-2 py-0.5 rounded bg-emerald-950/70 text-emerald-300 border border-emerald-700/60 flex items-center gap-1.5">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
               {state.recommendationConfidence.level} ({state.recommendationConfidence.overallScore}%)
@@ -147,7 +147,7 @@ export const ExecutiveDecision: React.FC<ExecutiveDecisionProps> = ({
 
         {/* Reference Badges Legend Bar */}
         <div className="pt-3 border-t border-slate-900 flex flex-wrap items-center gap-3 text-[11px] text-slate-400">
-          <span className="font-semibold text-slate-300">Clickable Citations:</span>
+          <span className="font-semibold text-slate-300">Evidence references:</span>
           <div className="flex flex-wrap items-center gap-2">
             <span className="inline-flex items-center gap-1 text-indigo-300 font-mono">
               <span className="w-2 h-2 rounded-full bg-indigo-400" /> [S#] Data Ingestion

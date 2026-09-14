@@ -26,13 +26,18 @@ import {
   buildUnifiedInvestigationState,
   recomputeStateWithRemovedSource,
   DEFAULT_EVIDENCE_GRAPH,
-  generateExecutionMessage,
 } from './state/investigationEngine';
+import {
+  executeInvestigation,
+  applyExecutionOutcomeToState,
+  deriveDisplayStages,
+  type ExecutionOutcome,
+} from './state/executionEngine';
 import { exportInvestigationToPDF } from './utils/pdfExport';
 import { calculateDecisionConfidence } from './state/confidenceEngine';
 
 import { CommandHeader, ModuleTab } from './components/ui/CommandHeader';
-import type { CoreNodeAction } from './components/ui/DecisionCore';
+import type { CoreNodeAction } from './components/ui/DecisionCore3D';
 import { ExecutiveDashboard } from './components/ui/ExecutiveDashboard';
 import { InvestigateModule } from './components/ui/InvestigateModule';
 import { DecisionsModule } from './components/ui/DecisionsModule';
@@ -62,15 +67,18 @@ export default function App() {
   const [hasCustomContext, setHasCustomContext] = useState<boolean>(false);
 
   // Module navigation
-  const [activeTab, setActiveTab] = useState<ModuleTab>('overview');
+  // Start with the product's question, not a pre-filled dashboard.
+  const [activeTab, setActiveTab] = useState<ModuleTab>('investigate');
 
   // Investigation Execution State
-  const [hasAnalyzed, setHasAnalyzed] = useState<boolean>(true); // default loaded with demo analysis
+  const [hasAnalyzed, setHasAnalyzed] = useState<boolean>(false);
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
   const [currentToolIndex, setCurrentToolIndex] = useState<number>(0);
   const [currentStageIndex, setCurrentStageIndex] = useState<number>(0);
   const [executedTools, setExecutedTools] = useState<string[]>([]);
   const [terminalLogs, setTerminalLogs] = useState<{ timestamp: string; text: string }[]>([]);
+  // Real executed stages from the execution engine (falls back to demo stages).
+  const [displayStages, setDisplayStages] = useState<InvestigationStage[]>(PRIMARY_INVESTIGATION.stages || []);
 
   // Active Data State
   const [investigationState, setInvestigationState] = useState<InvestigationState>(PRIMARY_INVESTIGATION);
@@ -209,7 +217,7 @@ export default function App() {
     setAttachedDataLabel(`Attached: ${name}`);
   };
 
-  // ------------------------- Investigation execution (unchanged logic) -------------------------
+  // ------------------------- Investigation execution (real engine) -------------------------
 
   const handleStartAnalysis = () => {
     setIsAnalyzing(true);
@@ -220,18 +228,18 @@ export default function App() {
     setTerminalLogs([]);
     setActiveTab('investigate');
 
-    const startTime = Date.now();
     const newRunId = `RUN-00${runs.length + 1}`;
-
     const addLog = (msg: string) => {
       const timeStr = new Date().toISOString().slice(11, 19);
       setTerminalLogs((prev) => [...prev, { timestamp: timeStr, text: msg }]);
     };
 
     addLog(`[ORCHESTRATOR] Received Inquiry: "${question}"`);
-    addLog(`[ORCHESTRATOR] Analyzing question intent and selecting appropriate tools...`);
 
-    setTimeout(() => {
+    // Plan is built inside the engine's REQUIREMENT_ANALYSIS stage; run the
+    // real execution pipeline end-to-end.
+    (async () => {
+      // Build the base unified state first (drives artifact gating + plan).
       const plannedState = buildUnifiedInvestigationState({
         runId: newRunId,
         userQuestion: question,
@@ -240,43 +248,48 @@ export default function App() {
         selectedOptionId: unifiedState.selectedOptionId,
         governanceDecision: unifiedState.governanceDecision,
       });
-      const plan = plannedState.investigationPlan;
-      setUnifiedState(plannedState);
 
-      const executeNext = (index: number, completedTools: string[]) => {
-        if (index >= plan.length) {
-          finishAnalysis(newRunId, plannedState);
-          return;
-        }
+      addLog(
+        `[ORCHESTRATOR] Requirement analysis: ${plannedState.classifiedQuestionTypes.join(' + ')} · ${plannedState.investigationPlan.length} tools planned`
+      );
 
-        const currentTool = plan[index];
-        const nextCompletedTools = [...completedTools, currentTool.id];
-        setCurrentToolIndex(index + 1);
-        setCurrentStageIndex(Math.min(index, Math.max(0, stages.length - 1)));
-        setExecutedTools(nextCompletedTools);
-        const message = currentTool.status === 'BLOCKED' || currentTool.status === 'REQUIRES MORE DATA'
-          ? `${currentTool.status}: ${currentTool.label} cannot produce reliable output from current inputs.`
-          : generateExecutionMessage(currentTool.id, {
-              question,
-              completedTools,
-              dataAvailable: dataSources.some((source) => source.selected),
-            });
-        addLog(`[TOOL ${index + 1}/${plan.length}] ${message}`);
-
-        const executionTime = currentTool.id === 'sql-pandas-analytics' || currentTool.id === 'data-profiler'
-          ? 800
-          : currentTool.id === 'forecasting' || currentTool.id === 'scenario-simulation' ? 1200 : 600;
-        setTimeout(() => {
-          if (index + 1 >= plan.length) {
-            finishAnalysis(newRunId, plannedState, nextCompletedTools);
-          } else {
-            executeNext(index + 1, nextCompletedTools);
+      // Execute the real stage pipeline with structured logging.
+      const outcome = await executeInvestigation({
+        runId: newRunId,
+        question,
+        dataSources,
+        stageDelayMs: 650,
+        onStage: (result, entry) => {
+          const label = entry.stage;
+          const statusWord =
+            result.status === 'COMPLETED'
+              ? 'COMPLETED'
+              : result.status === 'SKIPPED'
+              ? 'SKIPPED'
+              : 'FAILED';
+          addLog(
+            `[${label}] ${statusWord} · ${result.durationMs}ms — ${result.summary}`
+          );
+          if (result.outputKeys.length > 0) {
+            addLog(`[${label}] outputs: ${result.outputKeys.join(', ')}`);
           }
-        }, executionTime);
-      };
+          setCurrentStageIndex((prev) => prev + 1);
+        },
+      });
 
-      executeNext(0, []);
-    }, 1000);
+      // Log the structured execution record (metadata only).
+      for (const entry of outcome.log) {
+        if (entry.status === 'TERMINATED') {
+          addLog(`[PIPELINE] TERMINATED at ${entry.stage} — ${entry.summary || 'see stage result'}`);
+        }
+      }
+
+      finishAnalysis(newRunId, plannedState, outcome);
+    })().catch((err) => {
+      // Engine-level exception: surface as explicit TOOL FAILED, never fake success.
+      addLog(`[PIPELINE] TOOL FAILED: ${err instanceof Error ? err.message : String(err)}`);
+      finishAnalysis(newRunId, undefined, undefined, err instanceof Error ? err.message : String(err));
+    });
   };
 
   const handleSkipAnalysis = () => {
@@ -287,7 +300,8 @@ export default function App() {
   const finishAnalysis = (
     newRunId: string,
     completedState?: UnifiedInvestigationState,
-    completedToolIds: string[] = [],
+    outcome?: import('./state/executionEngine').ExecutionOutcome,
+    engineError?: string,
   ) => {
     setIsAnalyzing(false);
     setHasAnalyzed(true);
@@ -299,15 +313,56 @@ export default function App() {
       businessContext,
       dataSources,
     });
-    const finalState: UnifiedInvestigationState = {
-      ...baseState,
-      investigationPlan: baseState.investigationPlan.map((node) => ({
-        ...node,
-        status: node.status === 'BLOCKED' || node.status === 'REQUIRES MORE DATA'
-          ? node.status
-          : completedToolIds.includes(node.id) ? 'COMPLETED' : 'SKIPPED',
-      })),
-    };
+
+    let finalState: UnifiedInvestigationState;
+
+    if (engineError) {
+      // Explicit tool failure path: no fabricated artifacts.
+      finalState = {
+        ...baseState,
+        investigationPlan: baseState.investigationPlan.map((node) => ({
+          ...node,
+          status: 'BLOCKED' as const,
+        })),
+        claims: [],
+        empiricalFindings: [],
+        discoveredAnomalies: [],
+        marketIntelligence: [],
+        scenarioResults: [],
+        recommendation: `TOOL FAILED: Investigation could not complete — ${engineError}`,
+        recommendationExplanation: 'The execution engine reported a failure. No recommendation is issued.',
+        issues: [
+          ...baseState.issues || [],
+          {
+            status: 'TOOL FAILURE',
+            failedComponent: 'Execution Engine',
+            impact: `The investigation pipeline failed: ${engineError}`,
+            confidenceDelta: -100,
+            nextAction: 'Review the failed stage in the execution log and rerun.',
+          },
+        ],
+      };
+    } else if (outcome) {
+      // Apply real execution outcome: plan statuses, evidence gating, issues.
+      finalState = applyExecutionOutcomeToState(baseState, outcome);
+      // Derive display stages from the REAL executed stages.
+      const displayStages = deriveDisplayStages(outcome.results);
+      setDisplayStages(displayStages.length > 0 ? displayStages : stages);
+      setCurrentStageIndex(displayStages.length);
+    } else {
+      // Skipped analysis: fall back to static stages, mark plan from base.
+      finalState = {
+        ...baseState,
+        investigationPlan: baseState.investigationPlan.map((node) => ({
+          ...node,
+          status: node.status === 'BLOCKED' || node.status === 'REQUIRES MORE DATA'
+            ? node.status
+            : 'SKIPPED',
+        })),
+      };
+      setDisplayStages(stages);
+    }
+
     finalState.recommendationConfidence = calculateDecisionConfidence({
       dataQuality: finalState.dataQuality,
       dataSources: finalState.activeDataSources,
@@ -322,8 +377,6 @@ export default function App() {
     }
 
     setUnifiedState(finalState);
-
-    const hasSalesData = dataSources.some(ds => ds.id === 'src-1' && ds.selected);
 
     const newRun: InvestigationRun = {
       id: newRunId,
@@ -467,7 +520,6 @@ export default function App() {
             onOpenInvestigation={() => handleNavigate('investigate')}
             onViewEvidence={() => setIsEvidenceGraphOpen(true)}
             onOpenNode={handleCoreNode}
-            onOpenConfidence={() => handleNavigate('decisions')}
             onNavigateDecisions={() => handleNavigate('decisions')}
             onOpenSignals={() => handleNavigate('signals')}
             onOpenHistory={() => handleNavigate('history')}
@@ -489,7 +541,7 @@ export default function App() {
             hasAnalyzed={hasAnalyzed}
             terminalLogs={terminalLogs}
             currentStageIndex={currentStageIndex}
-            stages={stages}
+            stages={displayStages.length > 0 ? displayStages : stages}
             onOpenUploadModal={() => setIsUploadModalOpen(true)}
             onOpenContextModal={() => setIsContextModalOpen(true)}
             attachedDataLabel={attachedDataLabel}
@@ -548,11 +600,9 @@ export default function App() {
       </main>
 
       {/* Footer */}
-      <footer className="w-full border-t border-slate-800/70 bg-[#060709]/80 py-5 px-4 text-center text-[11px] text-slate-600 space-y-1">
-        <p className="font-semibold text-slate-500">
-          CORPORATEBADDIE · Agentic Decision Intelligence Platform
-        </p>
-        <p>Making Sense of Corporate Nonsense — correlation strictly separated from deterministic accounting causation.</p>
+      <footer className="w-full border-t cb-hairline py-6 px-6 flex flex-wrap items-center justify-between gap-2 text-[11.5px] text-slate-600">
+        <span>CorporateBaddie — Making sense of the signal behind the noise.</span>
+        <span className="font-mono">Facts, assumptions, and risk are separated before the decision is made.</span>
       </footer>
 
       {/* ------------------- Preserved modals (all functionality intact) ------------------- */}
@@ -656,10 +706,10 @@ export default function App() {
           onClick={() => setIsAskModalOpen(false)}
         >
           <div
-            className="w-full max-w-3xl max-h-[88vh] overflow-y-auto cb-glass-raised rounded-3xl animate-in zoom-in-95 duration-200"
+            className="w-full max-w-2xl max-h-[86vh] overflow-y-auto cb-glass-raised rounded-xl animate-in fade-in zoom-in-[0.98] duration-200"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="p-5 sm:p-7">
+            <div className="p-5 sm:p-6">
               <AskCorporateBaddie onSelectClaim={() => setIsEvidenceGraphOpen(true)} />
             </div>
           </div>

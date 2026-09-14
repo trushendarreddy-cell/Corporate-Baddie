@@ -116,28 +116,23 @@ export const EvidenceModule: React.FC<EvidenceModuleProps> = ({
     : unifiedState.claims.slice(0, 5);
 
   return (
-    <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-8 space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
+    <div className="max-w-[1240px] mx-auto px-5 sm:px-8 py-10 space-y-10">
+      <div className="flex flex-wrap items-end justify-between gap-4 pb-6 border-b cb-hairline">
         <div>
-          <span className="cb-kicker text-amber-400/90 flex items-center gap-2">
-            <Network className="w-3.5 h-3.5" />
-            Module · Evidence
-          </span>
-          <h1 className="cb-display text-2xl sm:text-3xl text-white mt-1.5">
-            Evidence Graph & Citation Inspector
-          </h1>
+          <p className="cb-kicker">Module</p>
+          <h1 className="cb-display text-[26px] sm:text-[32px] text-white mt-2">Evidence</h1>
         </div>
-        <div className="flex items-center gap-3 text-xs">
-          <span className="cb-glass px-3 py-1.5 rounded-lg">
-            <ShieldCheck className="w-3.5 h-3.5 inline text-emerald-400 mr-1.5" />
-            <span className="font-mono font-bold text-emerald-300">{verifiedCount}/{unifiedState.claims.length}</span>
-            <span className="text-slate-400"> verified</span>
+        <div className="flex items-center gap-4">
+          <span className="flex items-center gap-1.5 text-[12.5px]">
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+            <span className="cb-metric text-[13px] text-emerald-300">{verifiedCount}</span>
+            <span className="text-slate-500">/ {unifiedState.claims.length} verified</span>
           </span>
         </div>
       </div>
 
       {/* Confidence explorer — progressive disclosure */}
-      <section className="cb-glass rounded-3xl p-6 sm:p-8" aria-label="Confidence explorer">
+      <section className="cb-glass rounded-xl p-6" aria-label="Confidence explorer">
         <div className="flex flex-col md:flex-row items-center gap-8">
           <ConfidenceRing
             value={unifiedState.recommendationConfidence.overallScore}
@@ -183,7 +178,7 @@ export const EvidenceModule: React.FC<EvidenceModuleProps> = ({
       </section>
 
       {/* Spatial layered graph — depth communicates lineage distance */}
-      <section className="cb-glass rounded-3xl p-6 sm:p-8 cb-noise relative overflow-hidden" aria-label="Spatial evidence graph">
+      <section className="cb-glass rounded-xl p-6 cb-noise relative overflow-hidden" aria-label="Spatial evidence graph">
         <div className="flex flex-wrap items-center justify-between gap-2 mb-6">
           <div>
             <span className="cb-kicker text-slate-400">Traceability Hierarchy</span>
@@ -261,7 +256,7 @@ export const EvidenceModule: React.FC<EvidenceModuleProps> = ({
       </section>
 
       {/* Claim verification ledger */}
-      <section className="cb-glass rounded-3xl p-6 sm:p-8" aria-label="Claim verification">
+      <section className="cb-glass rounded-xl p-6" aria-label="Claim verification">
         <div className="flex items-center justify-between mb-4">
           <div>
             <span className="cb-kicker text-slate-400">Claim Verification Ledger</span>
@@ -307,7 +302,7 @@ export const EvidenceModule: React.FC<EvidenceModuleProps> = ({
 
       {/* Finding evidence triggers */}
       {unifiedState.empiricalFindings.length > 0 && (
-        <section className="cb-glass rounded-3xl p-6 sm:p-8" aria-label="Finding lineage">
+        <section className="cb-glass rounded-xl p-6" aria-label="Finding lineage">
           <span className="cb-kicker text-slate-400">Findings → Source Lineage</span>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
             {unifiedState.empiricalFindings.map((f) => (
@@ -330,7 +325,7 @@ export const EvidenceModule: React.FC<EvidenceModuleProps> = ({
       )}
 
       {/* Data source toggles (robustness surface) */}
-      <section className="cb-glass rounded-3xl p-6 sm:p-8" aria-label="Data lineage">
+      <section className="cb-glass rounded-xl p-6" aria-label="Data lineage">
         <div className="flex items-center gap-2">
           <Database className="w-4 h-4 text-indigo-400" />
           <span className="cb-kicker text-slate-400">Connected Data Sources</span>

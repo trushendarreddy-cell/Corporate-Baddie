@@ -45,6 +45,18 @@ export const classifyQuestionIntent = (question: string): QuestionClassification
     intents.push('Diagnostic');
   }
 
+  // Prescriptive questions about interventions under explicit external
+  // pressure (e.g. "should we change pricing given competitor pressure?")
+  // require causal grounding first: the recommendation is only defensible
+  // if the pressure is diagnosed against internal evidence.
+  if (
+    (lowerQuestion.includes('pressure') || lowerQuestion.includes('given current')) &&
+    /market|competitor|pricing|rival|external/.test(lowerQuestion) &&
+    !intents.includes('Diagnostic')
+  ) {
+    intents.push('Diagnostic');
+  }
+
   // Prescriptive intent: questions about what to do, recommendations, actions
   if (
     lowerQuestion.includes('should') ||

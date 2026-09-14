@@ -372,7 +372,8 @@ export type InvestigationStatus =
   | 'TOOL FAILURE'
   | 'FORECAST UNRELIABLE'
   | 'CLAIM UNVERIFIED'
-  | 'INVESTIGATION BLOCKED';
+  | 'INVESTIGATION BLOCKED'
+  | 'MARKET INTELLIGENCE UNAVAILABLE';
 
 export interface InvestigationIssue {
   status: InvestigationStatus;

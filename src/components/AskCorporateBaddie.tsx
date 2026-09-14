@@ -12,6 +12,7 @@ import {
   ExternalLink
 } from 'lucide-react';
 import { GROUNDED_QA_PAIRS } from '../mockData';
+import { askGroundedQuestion } from '../services/providerRegistry';
 
 interface AskCorporateBaddieProps {
   onSelectClaim?: (claimId: string) => void;
@@ -24,6 +25,8 @@ interface MessageEntry {
   sender: 'user' | 'agent';
   text: string;
   referencedClaims?: string[];
+  providerName?: string;
+  providerStatus?: 'ready' | 'fallback';
   timestamp: string;
 }
 
@@ -36,7 +39,7 @@ export const AskCorporateBaddie: React.FC<AskCorporateBaddieProps> = ({
     {
       id: 'init-1',
       sender: 'agent',
-      text: 'I am grounded exclusively on the findings, evidence claims, and data models of Run CB-DEMO-001. Ask any decision-support or validation question regarding the Product A and Region South analysis.',
+      text: 'I can explain what we found, why the recommendation matters, and what evidence supports it. Ask in plain business terms and I will answer with the evidence behind the decision.',
       referencedClaims: ['CLM-017', 'CLM-024', 'CLM-031'],
       timestamp: 'Just now',
     },
@@ -67,28 +70,19 @@ export const AskCorporateBaddie: React.FC<AskCorporateBaddieProps> = ({
     setIsThinking(true);
 
     setTimeout(() => {
-      // Find matching mock Q&A or synthesize grounded decision answer
-      const matched = GROUNDED_QA_PAIRS.find(
-        (qa) => qa.question.toLowerCase().includes(questionText.toLowerCase().slice(0, 15)) ||
-                questionText.toLowerCase().includes(qa.question.toLowerCase().slice(0, 15))
-      );
-
-      let responseText = '';
-      let claims: string[] = [];
-
-      if (matched) {
-        responseText = matched.answer;
-        claims = matched.referencedClaims;
-      } else {
-        responseText = 'CLAIM UNVERIFIED: This question does not match a stored, evidence-backed answer in the current investigation. No conclusion has been generated.';
-        claims = [];
-      }
+        const result = askGroundedQuestion({
+          question: questionText,
+          businessContext: 'Corporate decision support investigation',
+          availableClaimIds: ['CLM-017', 'CLM-024', 'CLM-026', 'CLM-027', 'CLM-030', 'CLM-031'],
+        });
 
       const agentMsg: MessageEntry = {
         id: `agent-${Date.now()}`,
         sender: 'agent',
-        text: responseText,
-        referencedClaims: claims,
+          text: result.text,
+          referencedClaims: result.referencedClaims,
+          providerName: result.providerName,
+          providerStatus: result.status,
         timestamp: 'Just now',
       };
 
@@ -108,21 +102,21 @@ export const AskCorporateBaddie: React.FC<AskCorporateBaddieProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <h3 className="text-sm sm:text-base font-bold text-white tracking-wide">
-                Ask About this Investigation
+                Ask a question about this decision
               </h3>
               <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 border border-amber-500/30 text-amber-300">
-                Grounded Decision Support
+                Evidence-backed answers
               </span>
             </div>
             <p className="text-xs text-slate-400">
-              Inquiries are verified against internal ledger claims, causal chains, and market signals — not generic AI hallucinations
+              Ask about the recommendation, the evidence behind it, or what would change the decision.
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2 text-xs text-emerald-400 font-mono bg-emerald-950/40 border border-emerald-800/40 px-3 py-1 rounded-lg">
           <ShieldCheck className="w-3.5 h-3.5" />
-          <span>Strictly Grounded in CB-DEMO-001</span>
+          <span>Grounded in this investigation</span>
         </div>
       </div>
 
@@ -131,7 +125,7 @@ export const AskCorporateBaddie: React.FC<AskCorporateBaddieProps> = ({
         <div className="space-y-2">
           <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
             <Sparkles className="w-3 h-3 text-amber-400" />
-            <span>Suggested Executive Decision Queries:</span>
+            <span>Good questions to ask</span>
           </div>
           <div className="flex flex-wrap gap-2">
             {quickPrompts.map((prompt, idx) => (
@@ -180,6 +174,15 @@ export const AskCorporateBaddie: React.FC<AskCorporateBaddieProps> = ({
                     ))}
                   </div>
                 )}
+
+                {m.providerName && (
+                  <div className="mt-2 pt-2 border-t border-slate-700/60 flex items-center justify-between gap-2">
+                    <span className="text-[10px] text-slate-400">Answer source</span>
+                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${m.providerStatus === 'fallback' ? 'bg-amber-500/10 text-amber-300 border border-amber-500/30' : 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/30'}`}>
+                      {m.providerName}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           ))}
@@ -187,7 +190,7 @@ export const AskCorporateBaddie: React.FC<AskCorporateBaddieProps> = ({
           {isThinking && (
             <div className="flex items-center gap-2 text-xs text-slate-400 p-2">
               <span className="w-3.5 h-3.5 border-2 border-amber-400 border-t-transparent rounded-full animate-spin"></span>
-              <span>Querying verified investigation graph...</span>
+              <span>Checking the evidence behind this recommendation...</span>
             </div>
           )}
         </div>

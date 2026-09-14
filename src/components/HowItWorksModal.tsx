@@ -48,7 +48,7 @@ export const HowItWorksModal: React.FC<HowItWorksModalProps> = ({ isOpen, onClos
                 How CorporateBaddie Works
               </h3>
               <p className="text-xs text-amber-300/90 font-medium">
-                "Making Sense of Corporate Nonsense" — Agentic Decision Intelligence
+                Clear answers for business decisions — without the usual corporate confusion
               </p>
             </div>
           </div>

@@ -94,35 +94,28 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({
   };
 
     return (
-    <div id="what-if-scenario-section" className="cb-glass rounded-3xl overflow-hidden">
+    <div id="what-if-scenario-section" className="rounded-xl border cb-hairline bg-slate-950/40 overflow-hidden">
       {/* Top Header */}
-      <div className="p-5 sm:p-6 flex flex-wrap items-center justify-between gap-3 border-b border-slate-800/70">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
-            <Sliders className="w-5 h-5" />
+      <div className="px-6 py-4 flex flex-wrap items-center justify-between gap-3 border-b cb-hairline">
+        <div>
+          <div className="flex items-center gap-3">
+            <h3 className="cb-kicker">What-If · Strategy Laboratory</h3>
+            <span className="cb-meta text-cyan-400/80">Modelled estimate</span>
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h3 className="cb-kicker text-white">What-If Strategy Lab</h3>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-cyan-500/10 border border-cyan-500/30 text-cyan-300">
-                MODELLED ESTIMATE
-              </span>
-            </div>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Move the levers — revenue, margin, volume, and risk respond in real time
-            </p>
-          </div>
+          <p className="text-[12.5px] text-slate-500 mt-0.5">
+            Move the levers — revenue, margin, volume, and risk respond in real time
+          </p>
         </div>
 
         {appliedNotice && (
-          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 text-xs font-bold animate-in fade-in">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-emerald-500/30 bg-emerald-950/20 text-emerald-300 text-[12px] font-medium animate-in fade-in">
             <Check className="w-3.5 h-3.5" />
             <span>{appliedNotice}</span>
           </div>
         )}
       </div>
 
-      <div className="p-5 sm:p-7 space-y-6">
+      <div className="px-6 py-5 space-y-6">
         {/* Scenario Selection Tabs */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-2.5">
           {scenarios.map((sc) => {

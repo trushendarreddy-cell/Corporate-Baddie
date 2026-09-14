@@ -24,11 +24,11 @@ export const MarketIntelligence: React.FC<MarketIntelligenceProps> = ({ signals 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6 pb-4 border-b border-slate-800">
         <div>
           <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-            Section 5 · External Environmental Signals
+            What's happening outside
           </span>
           <h2 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
             <Globe2 className="w-5 h-5 text-purple-400" />
-            MARKET INTELLIGENCE
+            What's happening outside
           </h2>
           <p className="text-xs text-slate-400 mt-0.5">
             Competitive pricing vectors, category promotional benchmarks, and regional elasticity

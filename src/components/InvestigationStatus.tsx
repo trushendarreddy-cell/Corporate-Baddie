@@ -41,7 +41,7 @@ export const InvestigationStatus: React.FC<InvestigationStatusProps> = ({
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
             </span>
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-              Investigation Status
+              Investigation complete
             </span>
           </div>
 
@@ -57,7 +57,7 @@ export const InvestigationStatus: React.FC<InvestigationStatusProps> = ({
           <div className="h-4 w-px bg-slate-800 hidden sm:block" />
 
           <div className="flex items-center gap-1.5 text-xs">
-            <span className="text-slate-500">Question Type:</span>
+            <span className="text-slate-500">Question:</span>
             <span className="text-slate-200 font-medium px-2 py-0.5 rounded bg-slate-800/70 border border-slate-700/60">
               {state.questionType}
             </span>
@@ -71,7 +71,7 @@ export const InvestigationStatus: React.FC<InvestigationStatusProps> = ({
             className="group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-semibold transition-all"
           >
             <SlidersHorizontal className="w-3.5 h-3.5 text-amber-400 group-hover:rotate-45 transition-transform" />
-            <span>Audit Evidence Graph</span>
+            <span>How we know</span>
             <ChevronRight className="w-3.5 h-3.5 text-amber-400/70 group-hover:translate-x-0.5 transition-transform" />
           </button>
         </div>
@@ -83,7 +83,7 @@ export const InvestigationStatus: React.FC<InvestigationStatusProps> = ({
         <div className="bg-slate-900/60 p-2.5 rounded-lg border border-slate-800/80">
           <div className="flex items-center gap-1.5 text-slate-400 mb-1">
             <Database className="w-3.5 h-3.5 text-indigo-400" />
-            <span className="text-[11px]">Data Quality</span>
+            <span className="text-[11px]">Your data</span>
           </div>
           <div className="flex items-baseline gap-1.5">
             <span className="text-base font-bold font-mono text-slate-100">{state.dataQualityPercent}%</span>
@@ -95,7 +95,7 @@ export const InvestigationStatus: React.FC<InvestigationStatusProps> = ({
         <div className="bg-slate-900/60 p-2.5 rounded-lg border border-slate-800/80">
           <div className="flex items-center gap-1.5 text-slate-400 mb-1">
             <FileCheck2 className="w-3.5 h-3.5 text-cyan-400" />
-            <span className="text-[11px]">Evidence Claims</span>
+            <span className="text-[11px]">Key claims</span>
           </div>
           <div className="flex items-baseline gap-1.5">
             <span className="text-base font-bold font-mono text-slate-100">{state.evidenceClaimsCount}</span>
@@ -107,7 +107,7 @@ export const InvestigationStatus: React.FC<InvestigationStatusProps> = ({
         <div className="bg-slate-900/60 p-2.5 rounded-lg border border-slate-800/80">
           <div className="flex items-center gap-1.5 text-slate-400 mb-1">
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-            <span className="text-[11px]">Verified Claims</span>
+            <span className="text-[11px]">Verified evidence</span>
           </div>
           <div className="flex items-baseline gap-1.5">
             <span className="text-base font-bold font-mono text-emerald-400">{state.verifiedClaimsCount}</span>
@@ -119,7 +119,7 @@ export const InvestigationStatus: React.FC<InvestigationStatusProps> = ({
         <div className="bg-slate-900/60 p-2.5 rounded-lg border border-slate-800/80">
           <div className="flex items-center gap-1.5 text-slate-400 mb-1">
             <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
-            <span className="text-[11px]">Warnings</span>
+            <span className="text-[11px]">Things to watch</span>
           </div>
           <div className="flex items-baseline gap-1.5">
             <span className="text-base font-bold font-mono text-amber-400">{state.warningsCount}</span>

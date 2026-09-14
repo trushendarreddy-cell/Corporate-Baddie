@@ -1,5 +1,4 @@
 import React from 'react';
-import { Scale, Sliders, FlaskConical, FileSignature } from 'lucide-react';
 import {
   UnifiedInvestigationState,
   InvestigationState,
@@ -57,33 +56,28 @@ export const DecisionsModule: React.FC<DecisionsModuleProps> = ({
     );
 
   return (
-    <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-8 space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
+    <div className="max-w-[1240px] mx-auto px-5 sm:px-8 py-10 space-y-8">
+      <div className="flex flex-wrap items-end justify-between gap-4 pb-6 border-b cb-hairline">
         <div>
-          <span className="cb-kicker text-amber-400/90 flex items-center gap-2">
-            <Scale className="w-3.5 h-3.5" />
-            Module · Decisions
-          </span>
-          <h1 className="cb-display text-2xl sm:text-3xl text-white mt-1.5">
-            Decision Room & Strategy Lab
+          <p className="cb-kicker">Module</p>
+          <h1 className="cb-display text-[26px] sm:text-[32px] text-white mt-2">
+            Decisions
           </h1>
         </div>
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
             onClick={onOpenRobustnessModal}
-            className="cb-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 text-xs font-bold"
+            className="cb-btn px-3 py-1.5 rounded-md text-[12.5px] font-medium text-slate-400 hover:text-cyan-300 border border-transparent hover:border-cyan-500/25 hover:bg-cyan-950/20"
           >
-            <Sliders className="w-3.5 h-3.5" />
             Robustness Test
           </button>
           <button
             type="button"
             onClick={onExportBrief}
-            className="cb-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold"
+            className="cb-btn px-3 py-1.5 rounded-md text-[12.5px] font-medium text-slate-400 hover:text-amber-300 border border-transparent hover:border-amber-500/25 hover:bg-amber-950/20"
             title="Export executive brief PDF"
           >
-            <FileSignature className="w-3.5 h-3.5" />
             Export Brief
           </button>
         </div>
@@ -113,9 +107,9 @@ export const DecisionsModule: React.FC<DecisionsModuleProps> = ({
       )}
 
       {/* What-If Strategy Lab */}
-      <div className="flex items-center gap-2 pt-2">
-        <FlaskConical className="w-4 h-4 text-amber-400" />
-        <h2 className="cb-kicker text-slate-400">What-If · Strategy Laboratory</h2>
+      <div className="flex items-baseline justify-between pt-2">
+        <h2 className="cb-kicker">What-If · Strategy Laboratory</h2>
+        <span className="cb-meta">Modelled Estimate</span>
       </div>
       {hasReliableInternalEvidence ? (
         <ScenarioSimulator

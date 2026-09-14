@@ -1,8 +1,8 @@
 export { CommandHeader } from './CommandHeader';
 export type { ModuleTab } from './CommandHeader';
 export { ConfidenceRing, StatDelta } from './ConfidenceRing';
-export { DecisionCore } from './DecisionCore';
-export type { CoreNodeAction } from './DecisionCore';
+export { DecisionCore3D } from './DecisionCore3D';
+export type { CoreNodeAction } from './DecisionCore3D';
 export { ExecutiveDashboard } from './ExecutiveDashboard';
 export { InvestigateModule } from './InvestigateModule';
 export { DecisionsModule } from './DecisionsModule';

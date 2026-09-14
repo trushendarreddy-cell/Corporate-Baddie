@@ -1,15 +1,8 @@
 import React, { useState } from 'react';
 import {
-  Scale,
   Target,
-  TrendingUp,
-  AlertTriangle,
-  Clock,
-  ShieldCheck,
-  Sparkles,
   ChevronDown,
   ChevronUp,
-  Layers,
 } from 'lucide-react';
 import { DecisionRoomOption } from '../types';
 
@@ -65,34 +58,28 @@ export const DecisionRoom: React.FC<DecisionRoomProps> = ({
   };
 
   return (
-    <div id="decision-room-section" className="cb-glass rounded-3xl overflow-hidden">
+    <div id="decision-room-section" className="rounded-xl border cb-hairline bg-slate-950/40 overflow-hidden">
       {/* Header */}
-      <div className="p-5 sm:p-6 flex flex-wrap items-center justify-between gap-3 border-b border-slate-800/70">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
-            <Scale className="w-5 h-5" />
-          </div>
-          <div>
-            <h3 className="cb-kicker text-white">Decision Room</h3>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Four strategic options, appraised on evidence, unit economics, and execution friction
-            </p>
-          </div>
+      <div className="px-6 py-4 flex flex-wrap items-center justify-between gap-3 border-b cb-hairline">
+        <div>
+          <h3 className="cb-kicker">Decision Room</h3>
+          <p className="text-[12.5px] text-slate-500 mt-0.5">
+            Four strategic options, appraised on evidence and unit economics
+          </p>
         </div>
         <button
           type="button"
           onClick={() => setShowMatrix(!showMatrix)}
-          className="cb-btn inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900/70 border border-slate-700 hover:border-slate-600 text-xs font-bold text-slate-200"
+          className="cb-btn px-3 py-1.5 rounded-md text-[12.5px] font-medium text-slate-400 hover:text-slate-200 border border-slate-800 hover:border-slate-700"
         >
-          <Layers className="w-3.5 h-3.5 text-amber-400" />
-          {showMatrix ? 'Show Option Cards' : 'Compare Options (Matrix)'}
+          {showMatrix ? 'Show Option Cards' : 'Compare Options'}
         </button>
       </div>
 
-      <div className="p-5 sm:p-7">
+      <div className="px-6 py-5">
         {/* Option cards — progressive disclosure default */}
         {!showMatrix && (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
             {options.map((opt) => {
               const isSelected = selectedId === opt.id;
               const isExpanded = expandedId === opt.id;
@@ -101,131 +88,117 @@ export const DecisionRoom: React.FC<DecisionRoomProps> = ({
               return (
                 <div
                   key={opt.id}
-                  className={`cb-rise cb-lift cb-press rounded-2xl p-5 border cursor-pointer relative transition-all ${
-                    isSelected
-                      ? 'border-amber-500/50 bg-gradient-to-b from-amber-950/20 to-slate-950/60'
-                      : 'border-slate-800 bg-slate-950/50 hover:border-slate-700'
+                  className={`cb-rise cb-lift cb-press rounded-lg p-4 border cursor-pointer relative ${
+                    opt.isRecommended
+                      ? 'border-amber-500/35 bg-amber-950/[0.08]'
+                      : isSelected
+                      ? 'border-slate-600 bg-slate-900/50'
+                      : 'border-slate-800/80 bg-slate-950/40 hover:border-slate-700'
                   }`}
                   style={{
-                    transformStyle: 'preserve-3d',
-                    boxShadow: opt.isRecommended
-                      ? '0 0 0 1px rgba(245,158,11,0.25), 0 24px 50px -24px rgba(0,0,0,0.85)'
-                      : undefined,
-                    animationDelay: `${options.indexOf(opt) * 60}ms`,
+                    animationDelay: `${options.indexOf(opt) * 50}ms`,
                   }}
                   onClick={() => handleSelect(opt.id)}
                 >
                   {opt.isRecommended && (
-                    <span className="absolute -top-2 left-4 px-2 py-0.5 rounded text-[9px] font-extrabold bg-amber-400 text-slate-950 tracking-widest">
-                      RECOMMENDED
+                    <span className="cb-meta !text-amber-400/90 block -mt-1 mb-2">
+                      Recommended
                     </span>
                   )}
 
-                  <div className="flex items-start justify-between gap-2">
-                    <h4 className="text-sm font-bold text-white leading-snug">{opt.name}</h4>
-                  </div>
+                  <h4 className="text-[13.5px] font-semibold text-white leading-snug">{opt.name}</h4>
 
                   {/* Big confidence number */}
-                  <div className="mt-4 flex items-baseline gap-1">
-                    <span className={`text-3xl font-mono font-extrabold tabular-nums ${opt.confidence >= 70 ? 'text-emerald-400' : opt.confidence >= 50 ? 'text-amber-400' : 'text-rose-400'}`}>
+                  <div className="mt-3 flex items-baseline gap-1">
+                    <span className={`cb-metric text-[26px] ${opt.confidence >= 70 ? 'text-emerald-300' : opt.confidence >= 50 ? 'text-amber-300' : 'text-rose-300'}`}>
                       {opt.confidence}%
                     </span>
                   </div>
 
-                  <div className="mt-2 space-y-1.5 text-xs">
+                  <div className="mt-2.5 space-y-1 text-[12px]">
                     <div className="flex items-center justify-between">
-                      <span className="cb-meta text-slate-500">Expected</span>
-                      <span className="font-mono font-bold text-emerald-300">{opt.expectedImpact.split('(')[0].trim()}</span>
+                      <span className="text-slate-500">Expected</span>
+                      <span className="font-mono font-medium text-emerald-300">{opt.expectedImpact.split('(')[0].trim()}</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="cb-meta text-slate-500">Risk</span>
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${tone?.ring} ${tone?.text}`}>{opt.risk}</span>
+                      <span className="text-slate-500">Risk</span>
+                      <span className={tone?.text}>{opt.risk}</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="cb-meta text-slate-500">Time</span>
+                      <span className="text-slate-500">Time</span>
                       <span className="font-mono text-slate-300">{opt.timeToImpact}</span>
                     </div>
-                    <div className="flex items-center justify-between pt-1 border-t border-slate-800/70">
-                      <span className="cb-meta text-slate-500">Evidence</span>
+                    <div className="flex items-center justify-between pt-1 border-t border-slate-800/60">
+                      <span className="text-slate-500">Evidence</span>
                       {getStrengthBadge(opt.evidenceStrength)}
                     </div>
                   </div>
 
                   {/* Expand indicator */}
-                  <div className="mt-4 pt-3 border-t border-slate-800/70 flex items-center justify-between">
-                    <span className="text-[11px] font-bold text-amber-400/90">
+                  <div className="mt-3.5 pt-2.5 border-t border-slate-800/60 flex items-center justify-between">
+                    <span className="text-[11.5px] font-medium text-amber-400/80">
                       {isExpanded ? 'Hide analysis' : 'Detailed analysis'}
                     </span>
                     {isExpanded ? (
-                      <ChevronUp className="w-3.5 h-3.5 text-amber-400" />
+                      <ChevronUp className="w-3.5 h-3.5 text-amber-400/70" />
                     ) : (
-                      <ChevronDown className="w-3.5 h-3.5 text-slate-500" />
+                      <ChevronDown className="w-3.5 h-3.5 text-slate-600" />
                     )}
                   </div>
 
                   {/* Expanded analysis panel (progressive disclosure) */}
                   {isExpanded && (
-                    <div className="mt-4 space-y-3 text-[11px] animate-in fade-in slide-in-from-top-1 duration-200">
+                    <div className="mt-4 space-y-3 text-[11.5px] animate-in fade-in slide-in-from-top-1 duration-200">
                       <div>
-                        <span className="cb-meta text-emerald-400 block mb-1.5 flex items-center gap-1">
-                          <ShieldCheck className="w-3 h-3" /> Supporting evidence
-                        </span>
+                        <span className="cb-meta text-emerald-400/90 block mb-1.5">Supporting evidence</span>
                         <ul className="space-y-1 text-slate-300">
                           {opt.whyThisOption.supportingEvidence.slice(0, 3).map((e, i) => (
                             <li key={i} className="flex items-start gap-1.5 leading-relaxed">
-                              <span className="text-amber-400 mt-0.5">•</span>
+                              <span className="text-amber-400/70 mt-0.5">·</span>
                               <span>{e}</span>
                             </li>
                           ))}
                         </ul>
                       </div>
                       <div>
-                        <span className="cb-meta text-emerald-400 block mb-1 flex items-center gap-1">
-                          <TrendingUp className="w-3 h-3" /> Upside
-                        </span>
+                        <span className="cb-meta text-emerald-400/90 block mb-1">Upside</span>
                         <p className="text-slate-300 leading-relaxed">{opt.whyThisOption.potentialUpside}</p>
                       </div>
                       <div>
-                        <span className="cb-meta text-rose-400 block mb-1.5 flex items-center gap-1">
-                          <AlertTriangle className="w-3 h-3" /> Key risks
-                        </span>
+                        <span className="cb-meta text-rose-400/90 block mb-1.5">Key risks</span>
                         <ul className="space-y-1 text-slate-300">
                           {opt.whyThisOption.risks.map((r, i) => (
                             <li key={i} className="flex items-start gap-1.5 leading-relaxed">
-                              <span className="text-rose-400 mt-0.5">•</span>
+                              <span className="text-rose-400/70 mt-0.5">·</span>
                               <span>{r}</span>
                             </li>
                           ))}
                         </ul>
                       </div>
                       <div>
-                        <span className="cb-meta text-cyan-400 block mb-1.5 flex items-center gap-1">
-                          <Clock className="w-3 h-3" /> Dependencies
-                        </span>
+                        <span className="cb-meta text-cyan-400/90 block mb-1.5">Dependencies</span>
                         <ul className="space-y-1 text-slate-300">
                           {opt.whyThisOption.dependencies.map((d, i) => (
                             <li key={i} className="flex items-start gap-1.5 leading-relaxed">
-                              <span className="text-cyan-400 mt-0.5">•</span>
+                              <span className="text-cyan-400/70 mt-0.5">·</span>
                               <span>{d}</span>
                             </li>
                           ))}
                         </ul>
                       </div>
                       <div>
-                        <span className="cb-meta text-amber-400 block mb-1.5 flex items-center gap-1">
-                          <Sparkles className="w-3 h-3" /> What must be true
-                        </span>
+                        <span className="cb-meta text-amber-400/90 block mb-1.5">What must be true</span>
                         <ul className="space-y-1 text-slate-300">
                           {opt.whyThisOption.whatMustBeTrue.map((w, i) => (
                             <li key={i} className="flex items-start gap-1.5 leading-relaxed">
-                              <span className="text-amber-400 mt-0.5">•</span>
+                              <span className="text-amber-400/70 mt-0.5">·</span>
                               <span>{w}</span>
                             </li>
                           ))}
                         </ul>
                       </div>
-                      <div className="pt-2 border-t border-slate-800/70 text-slate-400">
-                        <span className="cb-meta text-slate-500 block mb-0.5">Cost</span>
+                      <div className="pt-2 border-t border-slate-800/60 text-slate-400 flex justify-between">
+                        <span className="text-slate-500">Cost</span>
                         <span className="font-mono">{opt.cost}</span>
                       </div>
                     </div>
@@ -238,7 +211,7 @@ export const DecisionRoom: React.FC<DecisionRoomProps> = ({
 
         {/* Comparison matrix — on demand */}
         {showMatrix && (
-          <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-950/60 animate-in fade-in duration-200">
+          <div className="overflow-x-auto rounded-lg border cb-hairline bg-slate-950/50">
             <table className="w-full text-left text-xs">
               <thead className="bg-slate-900/60 text-slate-400 uppercase tracking-wider font-semibold text-[11px] border-b border-slate-800">
                 <tr>
@@ -298,26 +271,20 @@ export const DecisionRoom: React.FC<DecisionRoomProps> = ({
           </div>
         )}
 
-        {/* Selected option deep-dive banner (contextual, always available) */}
-        <div className="mt-6 rounded-2xl border border-amber-500/25 bg-gradient-to-b from-slate-900/80 to-slate-950/80 p-5">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-amber-500/15 border border-amber-500/35 flex items-center justify-center text-amber-400">
-                <Target className="w-4 h-4" />
-              </div>
-              <div>
-                <span className="cb-meta text-amber-400">Selected option</span>
-                <h4 className="text-sm font-bold text-white mt-0.5">{selectedOption.name}</h4>
-              </div>
+        {/* Selected option deep-dive banner */}
+        <div className="mt-6 rounded-lg border border-amber-500/20 bg-amber-950/[0.06] px-5 py-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3.5">
+            <Target className="w-4 h-4 text-amber-400" />
+            <div>
+              <p className="cb-meta">Selected</p>
+              <h4 className="text-[13.5px] font-semibold text-white mt-0.5">{selectedOption.name}</h4>
             </div>
-            <div className="flex items-center gap-3">
-              <span className="text-xs text-slate-400">
-                {decisionConfidenceLabel || 'Decision Confidence'}:
-              </span>
-              <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-400 text-slate-950 font-mono">
-                {decisionConfidence ?? selectedOption.confidence}%
-              </span>
-            </div>
+          </div>
+          <div className="flex items-center gap-2.5">
+            <span className="text-[12.5px] text-slate-500">{decisionConfidenceLabel || 'Decision Confidence'}</span>
+            <span className="cb-metric text-[15px] text-amber-300">
+              {decisionConfidence ?? selectedOption.confidence}%
+            </span>
           </div>
         </div>
       </div>

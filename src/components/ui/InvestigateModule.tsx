@@ -1,11 +1,5 @@
 import React from 'react';
 import {
-  Search,
-  ShieldAlert,
-  AlertTriangle,
-  Cpu,
-} from 'lucide-react';
-import {
   UnifiedInvestigationState,
   InvestigationState,
   InvestigationStage,
@@ -96,48 +90,37 @@ export const InvestigateModule: React.FC<InvestigateModuleProps> = ({
     );
 
   return (
-    <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-8 space-y-6">
-      {/* Module header */}
-      <div className="flex flex-wrap items-end justify-between gap-3">
+    <div className="max-w-[1240px] mx-auto px-5 sm:px-8 py-6 sm:py-8 space-y-6">
+      {/* Entry header — the question is the product's first action */}
+      <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b cb-hairline">
         <div>
-          <span className="cb-kicker text-amber-400/90 flex items-center gap-2">
-            <Search className="w-3.5 h-3.5" />
-            Module · Investigate
-          </span>
-          <h1 className="cb-display text-2xl sm:text-3xl text-white mt-1.5">
-            What should I investigate?
-          </h1>
+          <p className="cb-kicker text-amber-400/90">New investigation</p>
+          <p className="text-[13px] text-slate-400 mt-1">Ask a question. We will show you what changed, why it matters, and what to do next.</p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-x-4 gap-y-2">
           <button
             type="button"
             onClick={onOpenHostileAuditModal}
-            className="cb-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-300 text-xs font-bold"
+            className="cb-btn text-[11px] font-medium text-slate-500 hover:text-rose-300"
             title="Red-team stress test the recommendations"
           >
-            <ShieldAlert className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Hostile Red-Team Audit</span>
-            <span className="sm:hidden">Red-Team</span>
+            Red-Team Audit
           </button>
           <button
             type="button"
             onClick={onOpenFailureModeModal}
-            className="cb-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/30 text-orange-300 text-xs font-bold"
+            className="cb-btn text-[11px] font-medium text-slate-500 hover:text-orange-300"
             title="Pre-mortem blind spots and failure modes"
           >
-            <AlertTriangle className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Failure Mode Inspector</span>
-            <span className="sm:hidden">Failure Modes</span>
+            Failure Modes
           </button>
           <button
             type="button"
             onClick={onOpenToolMatrixModal}
-            className="cb-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 text-xs font-bold"
+            className="cb-btn text-[11px] font-medium text-slate-500 hover:text-cyan-300"
             title="Inspect 5 Reasoning Agents & 4 Analytical Services"
           >
-            <Cpu className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Agent & Tool Matrix</span>
-            <span className="sm:hidden">Tool Matrix</span>
+            Agent Matrix
           </button>
         </div>
       </div>

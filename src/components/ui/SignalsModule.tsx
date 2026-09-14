@@ -1,11 +1,4 @@
 import React from 'react';
-import {
-  Radar,
-  ShieldAlert,
-  Sparkles,
-  Globe2,
-  Activity,
-} from 'lucide-react';
 import { UnifiedInvestigationState } from '../../types';
 import { RiskRadar } from '../RiskRadar';
 import { OpportunityRadar } from '../OpportunityRadar';
@@ -30,68 +23,71 @@ interface SignalsModuleProps {
  */
 export const SignalsModule: React.FC<SignalsModuleProps> = ({ unifiedState }) => {
   return (
-    <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-8 space-y-6">
-      <div>
-        <span className="cb-kicker text-amber-400/90 flex items-center gap-2">
-          <Radar className="w-3.5 h-3.5" />
-          Module · Signals
-        </span>
-        <h1 className="cb-display text-2xl sm:text-3xl text-white mt-1.5">
-          Risk, Opportunity & Market Radars
-        </h1>
-        <p className="text-sm text-slate-400 mt-1.5 max-w-2xl">
-          Six vulnerability vectors, four growth signals, and live category intelligence —
-          each card expands into full mitigation or action detail.
+    <div className="max-w-[1240px] mx-auto px-5 sm:px-8 py-10 space-y-10">
+      <div className="pb-6 border-b cb-hairline">
+        <p className="cb-kicker">Module</p>
+        <h1 className="cb-display text-[26px] sm:text-[32px] text-white mt-2">Signals</h1>
+        <p className="text-[14px] text-slate-400 mt-2.5 max-w-xl leading-relaxed">
+          Risk vectors, growth signals, and live category intelligence.
         </p>
       </div>
 
       {/* Risk radar */}
-      <div className="flex items-center gap-2 pt-1">
-        <ShieldAlert className="w-4 h-4 text-rose-400" />
-        <h2 className="cb-kicker text-slate-400">Risk Radar</h2>
-      </div>
-      <RiskRadar
-        risks={RISK_RADAR_ITEMS}
-        decisionConfidence={unifiedState.recommendationConfidence.overallScore}
-      />
+      <section>
+        <h2 className="cb-kicker">Risk Radar</h2>
+        <div className="mt-4">
+          <RiskRadar
+            risks={RISK_RADAR_ITEMS}
+            decisionConfidence={unifiedState.recommendationConfidence.overallScore}
+          />
+        </div>
+      </section>
 
       {/* Opportunity radar */}
-      <div className="flex items-center gap-2 pt-2">
-        <Sparkles className="w-4 h-4 text-emerald-400" />
-        <h2 className="cb-kicker text-slate-400">Opportunity Radar</h2>
-      </div>
-      <OpportunityRadar opportunities={OPPORTUNITY_RADAR_ITEMS} />
+      <section>
+        <h2 className="cb-kicker">Opportunity Radar</h2>
+        <div className="mt-4">
+          <OpportunityRadar opportunities={OPPORTUNITY_RADAR_ITEMS} />
+        </div>
+      </section>
 
       {/* Competitive intelligence */}
-      <div className="flex items-center gap-2 pt-2">
-        <Globe2 className="w-4 h-4 text-cyan-400" />
-        <h2 className="cb-kicker text-slate-400">Competitive Intelligence</h2>
-        <span className="ml-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold bg-cyan-950/60 border border-cyan-800/50 text-cyan-400 tracking-widest">
-          DEMO RESEARCH SOURCE
-        </span>
-      </div>
-      {unifiedState.marketIntelligence.length > 0 ? (
-        <CompetitorIntelligence
-          competitors={COMPETITOR_LANDSCAPE}
-          signals={unifiedState.marketIntelligence}
-        />
-      ) : (
-        <div className="cb-glass rounded-2xl p-5 text-xs text-slate-400">
-          Market Search was not selected for this question; external claims are withheld.
+      <section>
+        <div className="flex items-center gap-3">
+          <h2 className="cb-kicker">Competitive Intelligence</h2>
+          <span className="cb-meta text-cyan-500/80">Demo research source</span>
         </div>
-      )}
+        <div className="mt-4">
+          {unifiedState.marketIntelligence.length > 0 ? (
+            <CompetitorIntelligence
+              competitors={COMPETITOR_LANDSCAPE}
+              signals={unifiedState.marketIntelligence}
+            />
+          ) : (
+            <div className="text-[13px] text-slate-500 py-4">
+              Market Search was not selected for this question; external claims are withheld.
+            </div>
+          )}
+        </div>
+      </section>
 
       {/* Market signals feed */}
       {unifiedState.marketIntelligence.length > 0 && (
-        <MarketIntelligence signals={unifiedState.marketIntelligence} />
+        <section>
+          <h2 className="cb-kicker">Market Signals</h2>
+          <div className="mt-4">
+            <MarketIntelligence signals={unifiedState.marketIntelligence} />
+          </div>
+        </section>
       )}
 
       {/* Trend radar */}
-      <div className="flex items-center gap-2 pt-2">
-        <Activity className="w-4 h-4 text-amber-400" />
-        <h2 className="cb-kicker text-slate-400">Trend Radar</h2>
-      </div>
-      <TrendRadar trends={TREND_RADAR_ITEMS} signals={EMERGING_SIGNALS} />
+      <section>
+        <h2 className="cb-kicker">Trend Radar</h2>
+        <div className="mt-4">
+          <TrendRadar trends={TREND_RADAR_ITEMS} signals={EMERGING_SIGNALS} />
+        </div>
+      </section>
     </div>
   );
 };

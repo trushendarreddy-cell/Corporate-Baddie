@@ -135,7 +135,7 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
         role="dialog"
         aria-modal="true"
         aria-label="Evidence Graph Inspector"
-        className="w-full max-w-7xl max-h-[92vh] cb-glass-raised rounded-3xl flex flex-col overflow-hidden"
+        className="w-full max-w-7xl max-h-[92vh] cb-glass-raised rounded-xl flex flex-col overflow-hidden"
       >
         {/* Header */}
         <div className="px-6 py-4 border-b border-slate-800/70 flex flex-wrap items-center justify-between gap-3">

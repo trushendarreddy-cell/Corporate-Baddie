@@ -1,20 +1,14 @@
-import React, { useState } from 'react';
-import { 
-  Search, 
-  Upload, 
-  Layers, 
-  Sparkles, 
-  FileSpreadsheet, 
+import React, { useEffect, useState } from 'react';
+import {
   ArrowRight,
   Database,
   Building2,
-  CheckCircle,
-  HelpCircle,
-  Sliders,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  CheckCircle2,
+  Loader2,
 } from 'lucide-react';
-import { EXAMPLE_QUESTIONS, DEFAULT_BUSINESS_CONTEXT, DEFAULT_DATA_SOURCES, DATA_RELATIONSHIPS } from '../mockData';
+import { DEFAULT_BUSINESS_CONTEXT, DEFAULT_DATA_SOURCES, DATA_RELATIONSHIPS } from '../mockData';
 import { BusinessContext, DataSource } from '../types';
 import { BusinessContextPanel } from './BusinessContextPanel';
 import { DataSourcesPanel } from './DataSourcesPanel';
@@ -53,10 +47,27 @@ export const QuestionInput: React.FC<QuestionInputProps> = ({
   const [activeExampleIndex, setActiveExampleIndex] = useState<number>(0);
   const [showInlineContext, setShowInlineContext] = useState<boolean>(false);
   const [showInlineDataSources, setShowInlineDataSources] = useState<boolean>(false);
+  const [previewStage, setPreviewStage] = useState(-1);
+
+  const previewStages = [
+    'Checking your data',
+    'Finding important changes',
+    'Investigating why',
+    'Checking market signals',
+    'Verifying evidence',
+    'Building a recommendation',
+  ];
+
+  useEffect(() => {
+    if (previewStage < 0 || previewStage >= previewStages.length - 1) return;
+    const timer = window.setTimeout(() => setPreviewStage((current) => current + 1), 520);
+    return () => window.clearTimeout(timer);
+  }, [previewStage, previewStages.length]);
 
   const handleSelectExample = (prompt: string, idx: number) => {
     setQuestion(prompt);
     setActiveExampleIndex(idx);
+    setPreviewStage(0);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -67,36 +78,30 @@ export const QuestionInput: React.FC<QuestionInputProps> = ({
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto space-y-6">
-      {/* Hero Header */}
-      <div className="text-center mb-6">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-semibold uppercase tracking-wider mb-4">
-          <Sparkles className="w-3.5 h-3.5" />
-          <span>Agentic Decision Intelligence Platform</span>
-        </div>
-        <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-white mb-3">
-          Turn business questions into decisions.
+    <div className="w-full max-w-5xl mx-auto space-y-5">
+      {/* Product entry */}
+      <div className="text-center max-w-2xl mx-auto">
+        <p className="cb-kicker text-amber-400/90">CorporateBaddie</p>
+        <h1 className="cb-display text-[28px] sm:text-[38px] text-white mt-3 leading-tight">
+          Ask a business question.<br />
+          <span className="text-[#a9c9ae]">Get a decision you can defend.</span>
         </h1>
-        <p className="text-base sm:text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed">
-          CorporateBaddie investigates your multi-source data, profiles anomalies, researches external market signals, and provides falsifiable executive recommendations.
+        <p className="text-[13px] sm:text-[15px] text-slate-400 max-w-2xl mx-auto leading-relaxed mt-4">
+          CorporateBaddie investigates your data, checks the evidence, studies relevant market signals, and turns the findings into a clear next move.
         </p>
       </div>
 
-      {/* Main Investigation Input Card */}
-      <div className="bg-[#0e121b] border border-slate-800/90 rounded-2xl p-5 sm:p-6 shadow-2xl shadow-black/60 relative overflow-hidden backdrop-blur-sm">
-        {/* Glow corner accent */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
-
+      {/* Main Investigation Input */}
+      <div className="cb-glass rounded-xl p-4 sm:p-5 relative max-w-4xl mx-auto">
         <div className="flex items-center justify-between mb-3">
-          <label 
-            htmlFor="business-question-input" 
-            className="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-2"
+          <label
+            htmlFor="business-question-input"
+            className="cb-kicker !text-slate-400"
           >
-            <Search className="w-3.5 h-3.5" />
-            What's happening?
+            Start with a question
           </label>
           <span className="text-[11px] text-slate-500 hidden sm:inline">
-            Press <kbd className="px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700 font-mono text-[10px]">Cmd + Enter</kbd> to analyze
+            <kbd className="px-1.5 py-0.5 rounded bg-slate-900 text-slate-400 border border-slate-800 font-mono text-[10px]">Cmd + Enter</kbd> to analyze
           </span>
         </div>
 
@@ -107,7 +112,7 @@ export const QuestionInput: React.FC<QuestionInputProps> = ({
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
             onKeyDown={handleKeyDown}
-            rows={3}
+            rows={2}
             disabled={isAnalyzing}
             placeholder="Describe your business dilemma, margin contraction, or strategic choice..."
             className="w-full bg-[#090b10] border border-slate-700/80 rounded-xl p-4 text-base sm:text-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/80 transition-all resize-none shadow-inner"
@@ -124,15 +129,15 @@ export const QuestionInput: React.FC<QuestionInputProps> = ({
                 setShowInlineDataSources(!showInlineDataSources);
                 if (showInlineContext) setShowInlineContext(false);
               }}
-              className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-xs font-medium transition-colors ${
+              className={`cb-btn inline-flex items-center gap-2 px-3 py-2 rounded-md text-[12.5px] font-medium border ${
                 showInlineDataSources
-                  ? 'bg-indigo-950/40 border-indigo-500/60 text-indigo-300 ring-1 ring-indigo-500/30'
-                  : 'bg-slate-900 hover:bg-slate-800 border-slate-700/80 text-slate-300'
+                  ? 'bg-indigo-950/30 border-indigo-500/40 text-indigo-300'
+                  : 'bg-transparent border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700'
               }`}
             >
               <Database className="w-3.5 h-3.5 text-indigo-400" />
-              <span>Data Sources ({dataSources.length} Connected)</span>
-              {showInlineDataSources ? <ChevronUp className="w-3.5 h-3.5 text-indigo-300" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-500" />}
+              <span>Data Sources · {dataSources.length}</span>
+              {showInlineDataSources ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5 opacity-50" />}
             </button>
 
             {/* Toggle Business Context Panel */}
@@ -142,15 +147,15 @@ export const QuestionInput: React.FC<QuestionInputProps> = ({
                 setShowInlineContext(!showInlineContext);
                 if (showInlineDataSources) setShowInlineDataSources(false);
               }}
-              className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-xs font-medium transition-colors ${
+              className={`cb-btn inline-flex items-center gap-2 px-3 py-2 rounded-md text-[12.5px] font-medium border ${
                 showInlineContext
-                  ? 'bg-amber-950/40 border-amber-500/60 text-amber-300 ring-1 ring-amber-500/30'
-                  : 'bg-slate-900 hover:bg-slate-800 border-slate-700/80 text-slate-300'
+                  ? 'bg-amber-950/30 border-amber-500/40 text-amber-300'
+                  : 'bg-transparent border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700'
               }`}
             >
               <Building2 className="w-3.5 h-3.5 text-amber-400" />
-              <span>Business Context ({businessContext.companyName})</span>
-              {showInlineContext ? <ChevronUp className="w-3.5 h-3.5 text-amber-300" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-500" />}
+              <span>Context · {businessContext.companyName}</span>
+              {showInlineContext ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5 opacity-50" />}
             </button>
           </div>
 
@@ -159,18 +164,17 @@ export const QuestionInput: React.FC<QuestionInputProps> = ({
             type="button"
             onClick={onAnalyze}
             disabled={isAnalyzing || !question.trim()}
-            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 via-amber-400 to-orange-400 hover:from-amber-400 hover:to-orange-300 text-slate-950 font-bold text-sm transition-all shadow-lg shadow-amber-500/20 hover:shadow-amber-500/30 disabled:opacity-50 disabled:cursor-not-allowed group cursor-pointer"
+              className="cb-primary-action cb-btn inline-flex items-center gap-2 px-5 py-2.5 rounded-md font-semibold text-[13.5px] disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {isAnalyzing ? (
               <>
                 <span className="w-4 h-4 border-2 border-slate-900 border-t-transparent rounded-full animate-spin"></span>
-                <span>Investigating...</span>
+                <span>Investigating…</span>
               </>
             ) : (
               <>
-                <Sparkles className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                <span>Analyze Problem</span>
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                <span>Start an investigation</span>
+                <ArrowRight className="w-4 h-4" />
               </>
             )}
           </button>
@@ -201,35 +205,75 @@ export const QuestionInput: React.FC<QuestionInputProps> = ({
       )}
 
       {/* Clickable Example Questions */}
-      <div>
+      <div className="space-y-4">
         <div className="flex items-center gap-2 mb-2 text-xs font-medium text-slate-400">
-          <span>Or explore benchmark investigations:</span>
+          <span className="cb-kicker">Try a real business question</span>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {EXAMPLE_QUESTIONS.map((ex, idx) => (
+        <div className="flex flex-wrap gap-2">
+          {[
+            'Why are our margins falling?',
+            'Should we change our pricing?',
+            'Which region should we invest in?',
+            'What should we do about declining sales?',
+            'Which product deserves more budget?',
+          ].map((prompt, idx) => (
             <button
               key={idx}
               type="button"
-              onClick={() => handleSelectExample(ex.prompt, idx)}
-              className={`text-left p-3 rounded-xl border text-xs transition-all flex items-start justify-between gap-2 group ${
-                activeExampleIndex === idx && question === ex.prompt
-                  ? 'bg-slate-800/90 border-amber-500/40 text-slate-100 shadow-md shadow-black/20'
+              onClick={() => handleSelectExample(prompt, idx)}
+              className={`text-left px-3.5 py-2.5 rounded-md border text-xs transition-all group ${
+                activeExampleIndex === idx && question === prompt
+                  ? 'cb-selected text-emerald-100'
                   : 'bg-[#0e121b]/70 hover:bg-[#0e121b] border-slate-800/80 hover:border-slate-700 text-slate-300'
               }`}
             >
-              <div className="flex items-start gap-2">
-                <span className="font-mono text-amber-400/80 font-bold text-[11px] mt-0.5">
-                  0{idx + 1}
-                </span>
-                <span className="font-medium group-hover:text-amber-200 transition-colors">
-                  {ex.title}
-                </span>
-              </div>
-              <ArrowRight className="w-3.5 h-3.5 text-slate-500 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all shrink-0 mt-0.5" />
+              <span className="font-medium group-hover:text-amber-200 transition-colors">{prompt}</span>
             </button>
           ))}
         </div>
       </div>
+
+      {previewStage >= 0 && (
+        <div className="cb-glass-hero cb-edge rounded-xl p-5 sm:p-6 space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="cb-kicker text-amber-400/90">Live example</p>
+              <p className="text-base sm:text-lg font-semibold text-white mt-2">“{question}”</p>
+            </div>
+            <span className="cb-meta text-emerald-300">{previewStage === previewStages.length - 1 ? 'Example ready' : 'Example running'}</span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
+            {previewStages.map((stage, index) => {
+              const complete = index < previewStage;
+              const current = index === previewStage;
+              return (
+                <div key={stage} className={`flex items-center gap-2 text-xs ${complete ? 'text-emerald-300' : current ? 'text-amber-200' : 'text-slate-600'}`}>
+                  {complete ? <CheckCircle2 className="w-3.5 h-3.5 shrink-0" /> : current ? <Loader2 className="w-3.5 h-3.5 shrink-0 animate-spin" /> : <span className="w-3.5 h-3.5 rounded-full border border-current shrink-0" />}
+                  <span>{stage}</span>
+                </div>
+              );
+            })}
+          </div>
+
+          {previewStage === previewStages.length - 1 && (
+            <div className="pt-4 border-t border-slate-800/80 grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="sm:col-span-2">
+                <p className="cb-kicker text-amber-400/90">What we recommend</p>
+                <p className="text-sm font-semibold text-white mt-1">Reduce discounting on high-demand products.</p>
+                <p className="text-xs text-slate-400 mt-2 leading-relaxed">Revenue stayed stable, but aggressive discounting reduced gross margin.</p>
+              </div>
+              <div className="flex sm:flex-col gap-4 sm:gap-2 sm:text-right">
+                <div><span className="cb-metric text-emerald-300 text-lg">7</span><span className="cb-meta ml-1">verified claims</span></div>
+                <div><span className="cb-metric text-emerald-300 text-lg">82%</span><span className="cb-meta ml-1">confidence</span></div>
+              </div>
+              <button type="button" onClick={onAnalyze} className="cb-primary-action sm:col-span-3 justify-self-start inline-flex items-center gap-2 text-xs font-semibold px-4 py-2 rounded-md cb-btn">
+                Open this investigation <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

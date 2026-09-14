@@ -108,10 +108,10 @@ export const DynamicInvestigationPlanner: React.FC<DynamicInvestigationPlannerPr
           <div>
             <div className="flex items-center gap-2">
               <h3 className="text-sm sm:text-base font-bold text-white tracking-wide">
-                Adaptive Investigation Planner & Execution Graph
+                What we're checking
               </h3>
               <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-cyan-500/10 border border-cyan-500/30 text-cyan-300">
-                Non-Static Execution Graph
+                Execution path
               </span>
             </div>
             <p className="text-xs text-slate-400">

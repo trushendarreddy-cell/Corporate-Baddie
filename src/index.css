@@ -1,128 +1,123 @@
 @import "tailwindcss";
 
 /* ============================================================================
-   CORPORATEBADDIE — Decision Command Center Design System
-   Philosophy: Complex intelligence underneath. Radical simplicity on top.
-   Palette: near-black charcoal, warm amber primary, semantic accents only.
+  CORPORATEBADDIE — Enterprise Decision Workspace
+  Dense, calm, and precise. Color is reserved for meaning.
    ============================================================================ */
 
 @layer base {
   body {
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background-color: #07080c;
-    color: #e2e8f0;
+    background-color: #191b1a;
+    color: #e7e9e4;
     -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
 
   code, pre, .font-mono {
     font-family: 'JetBrains Mono', monospace;
   }
+
+  ::selection {
+    background: rgba(126, 168, 137, 0.24);
+    color: #dce9dd;
+  }
 }
 
 /* ----------------------------------------------------------------------------
-   Ambient background: layered radial lighting over deep charcoal
+   Ambient background — near-black with two barely-there light sources
    ---------------------------------------------------------------------------- */
 .cb-ambient {
-  background:
-    radial-gradient(1100px 520px at 18% -8%, rgba(245, 158, 11, 0.05), transparent 60%),
-    radial-gradient(900px 480px at 88% 4%, rgba(99, 102, 241, 0.045), transparent 62%),
-    radial-gradient(760px 620px at 50% 118%, rgba(245, 158, 11, 0.03), transparent 58%),
-    #07080c;
+  background: #191b1a;
+  overflow-x: clip;
 }
 
-/* Subtle noise texture to kill banding on gradients (very cheap, static) */
+/* Film grain — kills gradient banding, imperceptible */
 .cb-noise::after {
   content: '';
   position: absolute;
   inset: 0;
   pointer-events: none;
-  opacity: 0.028;
+  opacity: 0.02;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 /* ----------------------------------------------------------------------------
-   Glass surfaces — depth-aware layered panels
+   Surfaces — thin borders, restrained glass. Most content needs NO card.
    ---------------------------------------------------------------------------- */
 .cb-glass {
-  background: linear-gradient(160deg, rgba(21, 25, 36, 0.72), rgba(11, 13, 20, 0.82));
-  border: 1px solid rgba(148, 163, 184, 0.10);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  box-shadow:
-    0 1px 0 0 rgba(255, 255, 255, 0.04) inset,
-    0 18px 40px -18px rgba(0, 0, 0, 0.75),
-    0 2px 10px -4px rgba(0, 0, 0, 0.5);
+  background: #202321;
+  border: 1px solid rgba(196, 205, 196, 0.11);
+  box-shadow: none;
 }
 
 .cb-glass-raised {
-  background: linear-gradient(160deg, rgba(26, 31, 44, 0.85), rgba(13, 16, 24, 0.9));
-  border: 1px solid rgba(148, 163, 184, 0.14);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  box-shadow:
-    0 1px 0 0 rgba(255, 255, 255, 0.05) inset,
-    0 28px 60px -24px rgba(0, 0, 0, 0.85),
-    0 4px 16px -6px rgba(0, 0, 0, 0.55);
+  background: #252825;
+  border: 1px solid rgba(196, 205, 196, 0.14);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.14);
 }
 
+/* The executive hero — the one surface allowed atmosphere */
 .cb-glass-hero {
-  background:
-    radial-gradient(720px 300px at 82% -20%, rgba(245, 158, 11, 0.07), transparent 60%),
-    linear-gradient(165deg, rgba(24, 28, 40, 0.88), rgba(10, 12, 18, 0.94));
-  border: 1px solid rgba(245, 158, 11, 0.16);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  box-shadow:
-    0 1px 0 0 rgba(255, 255, 255, 0.05) inset,
-    0 40px 90px -30px rgba(0, 0, 0, 0.9);
+  background: #222522;
+  border: 1px solid rgba(196, 205, 196, 0.14);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.16);
 }
 
-/* Depth-aware top edge highlight used on premium cards */
+/* Hairline separators — the primary structural device */
+.cb-hairline {
+  border-color: rgba(148, 163, 184, 0.09);
+}
+
+/* Depth-aware top edge for the single most important surface */
 .cb-edge::before {
   content: '';
   position: absolute;
   top: 0;
-  left: 12%;
-  right: 12%;
+  left: 14%;
+  right: 14%;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(245, 158, 11, 0.35), transparent);
+  background: rgba(126, 168, 137, 0.35);
   pointer-events: none;
 }
 
 /* ----------------------------------------------------------------------------
-   3D card micro-interaction: lift + subtle perspective + border illumination
-   Applied via .cb-lift on interactive cards
+   Micro-interaction: cards lift 2px. No rotation, no theater.
    ---------------------------------------------------------------------------- */
 .cb-lift {
   transition:
-    transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
-    box-shadow 280ms cubic-bezier(0.22, 1, 0.36, 1),
-    border-color 220ms ease;
+    transform 180ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 180ms ease,
+    background-color 180ms ease;
   will-change: transform;
 }
 
 .cb-lift:hover {
-  transform: translateY(-4px) rotateX(1.6deg) rotateY(-0.8deg) scale(1.006);
-  border-color: rgba(245, 158, 11, 0.28);
+  transform: translateY(-2px);
+  border-color: rgba(148, 163, 184, 0.16);
   box-shadow:
-    0 1px 0 0 rgba(255, 255, 255, 0.06) inset,
-    0 34px 70px -26px rgba(0, 0, 0, 0.9),
-    0 6px 22px -8px rgba(0, 0, 0, 0.55),
-    0 0 0 1px rgba(245, 158, 11, 0.06);
+    0 1px 0 0 rgba(255, 255, 255, 0.03) inset,
+    0 24px 48px -24px rgba(0, 0, 0, 0.8);
 }
 
-.cb-press:active {
-  transform: translateY(-1px) scale(0.985);
-  transition-duration: 100ms;
+/* Quiet interactive rows (findings, signals, runs) */
+.cb-row {
+  transition: background-color 160ms ease, border-color 160ms ease;
 }
 
-/* Buttons: magnetic-leaning press depth (keyboard/tap friendly) */
+.cb-row:hover {
+  background-color: rgba(148, 163, 184, 0.045);
+}
+
+/* Physical press feedback for buttons */
 .cb-btn {
   transition:
-    transform 160ms cubic-bezier(0.22, 1, 0.36, 1),
-    box-shadow 200ms ease,
-    background-color 200ms ease,
-    border-color 200ms ease;
+    transform 150ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 180ms ease,
+    background-color 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease;
 }
 
 .cb-btn:hover {
@@ -130,43 +125,13 @@
 }
 
 .cb-btn:active {
-  transform: translateY(1px) scale(0.98);
+  transform: translateY(0) scale(0.985);
   transition-duration: 90ms;
 }
 
 /* ----------------------------------------------------------------------------
-   Navigation: sliding active indicator pill
+   Navigation — quiet text, hairline active indicator
    ---------------------------------------------------------------------------- */
-.cb-nav-pill {
-  position: relative;
-  isolation: isolate;
-}
-
-.cb-nav-pill::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  border-radius: inherit;
-  background: linear-gradient(180deg, rgba(245, 158, 11, 0.14), rgba(245, 158, 11, 0.07));
-  border: 1px solid rgba(245, 158, 11, 0.3);
-  box-shadow: 0 0 18px -6px rgba(245, 158, 11, 0.35), 0 1px 0 rgba(255,255,255,0.05) inset;
-  opacity: 0;
-  transform: scale(0.94);
-  transition: opacity 220ms cubic-bezier(0.22, 1, 0.36, 1), transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.cb-nav-pill[data-active='true']::after,
-.cb-nav-pill:hover::after {
-  opacity: 1;
-  transform: scale(1);
-}
-
-.cb-nav-pill[data-active='true'] {
-  color: #fcd34d;
-}
-
-/* Underline sweep variant for desktop nav */
 .cb-nav-underline {
   position: relative;
 }
@@ -174,15 +139,20 @@
 .cb-nav-underline::after {
   content: '';
   position: absolute;
-  left: 14%;
-  right: 14%;
+  left: 10%;
+  right: 10%;
   bottom: -1px;
-  height: 2px;
-  border-radius: 2px;
-  background: linear-gradient(90deg, transparent, #f59e0b, transparent);
+  height: 1.5px;
+  border-radius: 1px;
+  background: #8eb397;
   opacity: 0;
-  transform: scaleX(0.4);
-  transition: opacity 200ms ease, transform 240ms cubic-bezier(0.22, 1, 0.36, 1);
+  transform: scaleX(0.35);
+  transition: opacity 180ms ease, transform 240ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.cb-nav-underline:hover::after {
+  opacity: 0.35;
+  transform: scaleX(1);
 }
 
 .cb-nav-underline[data-active='true']::after {
@@ -191,13 +161,143 @@
 }
 
 /* ----------------------------------------------------------------------------
-   Decision Core — orbital system
+   Typography system
    ---------------------------------------------------------------------------- */
-.cb-orbit-ring {
-  border-radius: 9999px;
-  border: 1px dashed rgba(148, 163, 184, 0.14);
+.cb-display {
+  letter-spacing: -0.022em;
+  font-weight: 700;
+  line-height: 1.12;
+}
+
+.cb-kicker {
+  font-size: 10.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: #8d968f;
+}
+
+.cb-meta {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 600;
+  font-family: 'JetBrains Mono', monospace;
+  color: #7f8981;
+}
+
+/* Enterprise surfaces use small radii and quiet separation. */
+.rounded-2xl { border-radius: 6px; }
+.rounded-xl { border-radius: 5px; }
+.rounded-lg { border-radius: 4px; }
+
+/* Keep primary actions and active states in the product accent. */
+.cb-primary-action {
+  background: #7ea889 !important;
+  color: #172019 !important;
+}
+
+.cb-primary-action:hover {
+  background: #91b99a !important;
+}
+
+.cb-selected {
+  color: #b8d4bd !important;
+  border-color: rgba(126, 168, 137, 0.45) !important;
+  background: rgba(126, 168, 137, 0.11) !important;
+}
+
+/* Normalize legacy component surfaces without changing their behavior. */
+[class*="bg-[#0e121b]"], [class*="bg-[#0b0e15]"], [class*="bg-[#090b10]"], [class*="bg-[#101524]"], [class*="bg-[#111622]"], [class*="bg-[#121622]"] {
+  background-color: #202321 !important;
+  background-image: none !important;
+}
+
+[class*="bg-gradient"] {
+  background-image: none !important;
+}
+
+.shadow-xl, .shadow-2xl, .shadow-lg {
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.13) !important;
+}
+
+/* Cyan, purple, and indigo are legacy decoration here; keep their meaning readable but neutral. */
+[class*="text-cyan-"], [class*="text-purple-"], [class*="text-indigo-"], [class*="text-blue-"] {
+  color: #a6aea7 !important;
+}
+
+[class*="border-cyan-"], [class*="border-purple-"], [class*="border-indigo-"], [class*="border-blue-"] {
+  border-color: rgba(166, 174, 167, 0.22) !important;
+}
+
+/* Human, editorial semantic colors: sage, ochre, clay, and warm neutrals. */
+[class*="text-amber-"] { color: #c3aa78 !important; }
+[class*="text-emerald-"] { color: #9fbea4 !important; }
+[class*="text-rose-"] { color: #c4867d !important; }
+[class*="bg-amber-"] { background-color: rgba(142, 112, 60, 0.16) !important; background-image: none !important; }
+[class*="bg-emerald-"] { background-color: rgba(91, 125, 99, 0.16) !important; background-image: none !important; }
+[class*="bg-rose-"] { background-color: rgba(126, 66, 61, 0.16) !important; background-image: none !important; }
+[class*="border-amber-"] { border-color: rgba(195, 170, 120, 0.35) !important; }
+[class*="border-emerald-"] { border-color: rgba(159, 190, 164, 0.35) !important; }
+[class*="border-rose-"] { border-color: rgba(196, 134, 125, 0.35) !important; }
+
+.text-slate-100, .text-slate-200 { color: #e7e5dc !important; }
+.text-slate-300 { color: #c2c5bd !important; }
+.text-slate-400 { color: #9ca39c !important; }
+.text-slate-500 { color: #7f8880 !important; }
+
+/* Selection utility classes live on the page roots too; never let their amber
+   token recolor the application background. */
+body[class*="bg-"], .cb-ambient {
+  background-color: #191b1a !important;
+  background-image: none !important;
+}
+
+/* Precise metric numerals */
+.cb-metric {
+  font-family: 'JetBrains Mono', monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  font-weight: 700;
+}
+
+/* ----------------------------------------------------------------------------
+   Decision Core (3D) — canvas container + floating node labels
+   ---------------------------------------------------------------------------- */
+.cb-core-stage {
+  touch-action: pan-y;
+  cursor: default;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.cb-core-label {
   position: absolute;
-  inset: 0;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  white-space: nowrap;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  color: rgba(148, 163, 184, 0.55);
+  transition: color 160ms ease, opacity 160ms ease;
+  will-change: transform;
+  text-shadow: 0 1px 14px rgba(2, 6, 23, 0.8);
+}
+
+.cb-core-label[data-lit='true'] {
+  color: #e2e8f0;
+}
+
+/* On narrow viewports the 3D stage shrinks; hide node labels to prevent
+   collisions with the center confidence readout. Hover explanations still
+   convey the information. */
+@media (max-width: 420px) {
+  .cb-core-label {
+    display: none;
+  }
 }
 
 @keyframes cb-orbit-spin {
@@ -205,42 +305,14 @@
   to { transform: rotate(360deg); }
 }
 
-.cb-orbit-slow {
-  animation: cb-orbit-spin 90s linear infinite;
-}
-
-.cb-orbit-reverse {
-  animation: cb-orbit-spin 140s linear infinite reverse;
-}
-
-/* Gentle float for satellite nodes — communicates life, not distraction */
-@keyframes cb-node-float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-4px); }
-}
-
-.cb-node-float {
-  animation: cb-node-float 7s ease-in-out infinite;
-}
-
-/* Animated data-flow dashes along the connector lines */
-@keyframes cb-dash-flow {
-  to { stroke-dashoffset: -18; }
-}
-
-.cb-flow-line {
-  stroke-dasharray: 3 15;
-  animation: cb-dash-flow 1.4s linear infinite;
-}
-
-/* Soft breathing glow behind the core confidence value */
+/* Ambient breathing behind the confidence value */
 @keyframes cb-core-breathe {
-  0%, 100% { opacity: 0.55; }
-  50% { opacity: 0.9; }
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 0.85; }
 }
 
 .cb-core-breathe {
-  animation: cb-core-breathe 5.5s ease-in-out infinite;
+  animation: cb-core-breathe 6s ease-in-out infinite;
 }
 
 /* ----------------------------------------------------------------------------
@@ -251,13 +323,20 @@
   to { stroke-dashoffset: var(--cb-ring-offset, 68); }
 }
 
-.cb-ring-arc {
-  animation: cb-ring-draw 900ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+/* ----------------------------------------------------------------------------
+   Entrance choreography — one quiet fade-rise per section
+   ---------------------------------------------------------------------------- */
+@keyframes cb-rise-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-/* ----------------------------------------------------------------------------
-   Evidence propagation pulse for the Evidence Graph
-   ---------------------------------------------------------------------------- */
+.cb-rise {
+  opacity: 0;
+  animation: cb-rise-in 460ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* Evidence propagation pulse (Evidence Graph module) */
 @keyframes cb-node-pulse {
   0% { transform: scale(0.6); opacity: 0.9; }
   100% { transform: scale(2.1); opacity: 0; }
@@ -267,65 +346,39 @@
   animation: cb-node-pulse 2.4s cubic-bezier(0, 0, 0.2, 1) forwards;
 }
 
-/* ----------------------------------------------------------------------------
-   Entrance choreography (staggered fade-up; class-based, one-shot)
-   ---------------------------------------------------------------------------- */
-@keyframes cb-rise-in {
-  from { opacity: 0; transform: translateY(14px); }
-  to { opacity: 1; transform: translateY(0); }
+/* Flowing dashes on 2D connection lines */
+@keyframes cb-dash-flow {
+  to { stroke-dashoffset: -18; }
 }
 
-.cb-rise {
-  opacity: 0;
-  animation: cb-rise-in 480ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+.cb-flow-line {
+  stroke-dasharray: 3 15;
+  animation: cb-dash-flow 1.4s linear infinite;
 }
 
 /* ----------------------------------------------------------------------------
-   Typographic helpers
-   ---------------------------------------------------------------------------- */
-.cb-display {
-  letter-spacing: -0.025em;
-  font-weight: 800;
-}
-
-.cb-meta {
-  font-size: 10px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  font-weight: 700;
-  font-family: 'JetBrains Mono', monospace;
-}
-
-.cb-kicker {
-  font-size: 11px;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  font-weight: 800;
-}
-
-/* ----------------------------------------------------------------------------
-   Custom scrollbar (retained)
+   Scrollbar
    ---------------------------------------------------------------------------- */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #0a0c12;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1f293d;
+  background: #1c2230;
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+  background: #2a3245;
 }
 
 /* ----------------------------------------------------------------------------
-   Reduced motion: strip all decorative animation, keep instant state
+   Reduced motion — decoration stops, state remains instant
    ---------------------------------------------------------------------------- */
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -337,7 +390,9 @@
     scroll-behavior: auto !important;
   }
 
-  .cb-lift:hover {
+  .cb-lift:hover,
+  .cb-btn:hover,
+  .cb-btn:active {
     transform: none;
   }
 
