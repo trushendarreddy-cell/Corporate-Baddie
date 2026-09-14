@@ -27,7 +27,7 @@ function createOrbit(config: typeof ORBITS[number], color: number) {
   const geometry = new THREE.BufferGeometry().setFromPoints(curve.getPoints(180).map((p) => new THREE.Vector3(p.x, 0, p.y)));
   const material = new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.34, depthWrite: false, depthTest: false });
   const line = new THREE.LineLoop(geometry, material);
-  line.renderOrder = 20;
+  line.renderOrder = 50;
   line.rotation.set(config.tiltX, config.tiltY, config.tiltZ);
   return line;
 }
@@ -64,16 +64,20 @@ export default function IntroExperience({ onEnter }: IntroExperienceProps) {
 
     const sphere = new THREE.Group(); root.add(sphere);
     const outer = new THREE.Mesh(new THREE.IcosahedronGeometry(3.25, 3), new THREE.MeshBasicMaterial({ color: 0xa6b3aa, wireframe: true, transparent: true, opacity: 0.34, depthWrite: false, depthTest: false }));
+    outer.renderOrder = 10;
     sphere.add(outer);
-    const inner = new THREE.Mesh(new THREE.IcosahedronGeometry(2.75, 2), new THREE.MeshBasicMaterial({ color: 0xc2cbc4, wireframe: true, transparent: true, opacity: 0.22, depthWrite: false }));
+    const inner = new THREE.Mesh(new THREE.IcosahedronGeometry(2.75, 2), new THREE.MeshBasicMaterial({ color: 0xc2cbc4, wireframe: true, transparent: true, opacity: 0.22, depthWrite: false, depthTest: false }));
+    inner.renderOrder = 11;
     sphere.add(inner);
-    const core = new THREE.Mesh(new THREE.SphereGeometry(2.35, 32, 20), new THREE.MeshPhysicalMaterial({ color: 0x71867b, roughness: 0.72, metalness: 0.05, transmission: 0.24, transparent: true, opacity: 0.22, thickness: 1.2, clearcoat: 0.15 }));
+    const core = new THREE.Mesh(new THREE.SphereGeometry(2.35, 32, 20), new THREE.MeshPhysicalMaterial({ color: 0x71867b, roughness: 0.72, metalness: 0.05, transmission: 0.24, transparent: true, opacity: 0.22, thickness: 1.2, clearcoat: 0.15, depthWrite: false }));
+    core.renderOrder = 9;
     sphere.add(core);
 
     const bars = new THREE.Group();
+    bars.renderOrder = 12;
     for (let i = 0; i < 15; i += 1) {
       const height = 0.8 + ((i * 17) % 9) * 0.22;
-      const bar = new THREE.Mesh(new THREE.BoxGeometry(0.11, height, 0.11), new THREE.MeshBasicMaterial({ color: 0xd1d8d1, transparent: true, opacity: 0.26, depthWrite: false }));
+      const bar = new THREE.Mesh(new THREE.BoxGeometry(0.11, height, 0.11), new THREE.MeshBasicMaterial({ color: 0xd1d8d1, transparent: true, opacity: 0.26, depthWrite: false, depthTest: false }));
       bar.position.set((i - 7) * 0.22, -0.35 + height / 2, 0.15 * Math.sin(i)); bars.add(bar);
     }
     sphere.add(bars);
@@ -82,14 +86,15 @@ export default function IntroExperience({ onEnter }: IntroExperienceProps) {
     const nodeGroups = NODES.map((node) => {
       const group = new THREE.Group();
       const mesh = new THREE.Mesh(new THREE.SphereGeometry(0.24, 18, 18), new THREE.MeshPhysicalMaterial({ color: node.color, roughness: 0.42, metalness: 0.1, transmission: 0.12, transparent: true, opacity: 0.94, clearcoat: 0.45 }));
-      mesh.userData.node = node.key; group.add(mesh);
-      group.add(new THREE.Mesh(new THREE.SphereGeometry(0.4, 16, 16), new THREE.MeshBasicMaterial({ color: node.color, transparent: true, opacity: 0.06, depthWrite: false })));
+      mesh.userData.node = node.key; mesh.renderOrder = 70; group.add(mesh);
+      const halo = new THREE.Mesh(new THREE.SphereGeometry(0.4, 16, 16), new THREE.MeshBasicMaterial({ color: node.color, transparent: true, opacity: 0.06, depthWrite: false, depthTest: false }));
+      halo.renderOrder = 69; group.add(halo);
       root.add(group); return { group, mesh };
     });
     const connectors = NODES.map((node) => {
       const geometry = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]);
       const material = new THREE.LineBasicMaterial({ color: node.color, transparent: true, opacity: 0.11, depthWrite: false, depthTest: false });
-      const line = new THREE.Line(geometry, material); line.renderOrder = 21; root.add(line); return line;
+      const line = new THREE.Line(geometry, material); line.renderOrder = 60; root.add(line); return line;
     });
 
     const raycaster = new THREE.Raycaster();
@@ -101,7 +106,8 @@ export default function IntroExperience({ onEnter }: IntroExperienceProps) {
     const onLeave = () => { pointer.set(10, 10); };
     renderer.domElement.addEventListener('pointermove', onMove);
     renderer.domElement.addEventListener('pointerleave', onLeave);
-    window.addEventListener('resize', () => { const w = Math.max(1, mount.clientWidth), h = Math.max(1, mount.clientHeight); camera.aspect = w / h; camera.updateProjectionMatrix(); renderer.setSize(w, h, false); });
+    const onResize = () => { const w = Math.max(1, mount.clientWidth), h = Math.max(1, mount.clientHeight); camera.aspect = w / h; camera.updateProjectionMatrix(); renderer.setSize(w, h, false); };
+    window.addEventListener('resize', onResize);
     if ('IntersectionObserver' in window) { observer = new IntersectionObserver((entries) => { visible = entries[0]?.isIntersecting ?? true; }); observer.observe(mount); }
 
     const projectLabels = () => {
@@ -131,18 +137,25 @@ export default function IntroExperience({ onEnter }: IntroExperienceProps) {
     };
     animate();
 
-    const startConvergence = () => { if (converging) return; converging = true; convergenceStart = performance.now(); setExiting(true); window.setTimeout(() => enterRef.current(), 1120); };
+    const startConvergence = () => {
+      if (converging) return;
+      try { sessionStorage.setItem('corporatebaddie:intro-entry-question', 'Why are our margins falling?'); } catch { /* best effort */ }
+      converging = true;
+      convergenceStart = performance.now();
+      setExiting(true);
+      window.setTimeout(() => enterRef.current(), 1120);
+    };
     (mount as HTMLDivElement & { __startConvergence?: () => void }).__startConvergence = startConvergence;
 
     return () => {
-      cancelAnimationFrame(frame); observer?.disconnect(); renderer.domElement.removeEventListener('pointermove', onMove); renderer.domElement.removeEventListener('pointerleave', onLeave); renderer.dispose();
+      cancelAnimationFrame(frame); observer?.disconnect(); window.removeEventListener('resize', onResize); renderer.domElement.removeEventListener('pointermove', onMove); renderer.domElement.removeEventListener('pointerleave', onLeave); renderer.dispose();
       scene.traverse((object) => { if (object instanceof THREE.Mesh || object instanceof THREE.Line || object instanceof THREE.LineLoop) { object.geometry.dispose(); const material = object.material; if (Array.isArray(material)) material.forEach((item) => item.dispose()); else material.dispose(); } });
       mount.innerHTML = '';
     };
   }, []);
 
   const start = () => { if (exiting) return; const mount = mountRef.current as (HTMLDivElement & { __startConvergence?: () => void }) | null; mount?.__startConvergence?.(); };
-  const skip = () => { if (exiting) return; setExiting(true); window.setTimeout(() => enterRef.current(), 260); };
+  const skip = () => { if (exiting) return; try { sessionStorage.removeItem('corporatebaddie:intro-entry-question'); } catch { /* best effort */ } setExiting(true); window.setTimeout(() => enterRef.current(), 260); };
 
   return <main className={`cb-intro-v2 ${exiting ? 'is-exiting' : ''}`} aria-label="CorporateBaddie introduction">
     <header className="cb-intro-v2__header"><div className="cb-intro-v2__brand"><span className="cb-intro-v2__dot"/><strong>CORPORATEBADDIE</strong><span className="cb-intro-v2__divider">|</span><span>INTRO</span></div><div className="cb-intro-v2__section">DECISION INTELLIGENCE / 01</div><button className="cb-intro-v2__skip" type="button" onClick={skip}>SKIP INTRO <span>→</span></button></header>
