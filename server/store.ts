@@ -90,6 +90,26 @@ function analyzeTrend(dataset: Dataset, rows: Record<string, unknown>[]) {
   return { status: 'available', dateColumn: dcol, measure: ncol, observations: points.length, firstPeriodMean: firstMean, lastPeriodMean: lastMean, changePercent: change === null ? null : Number(change.toFixed(2)), direction: change === null ? 'unknown' : change > 5 ? 'up' : change < -5 ? 'down' : 'stable' };
 }
 
+function forecast(dataset: Dataset, rows: Record<string, unknown>[]) {
+  const dcol = dateColumn(dataset);
+  const ncol = numericColumns(dataset)[0];
+  if (!dcol || !ncol) return { status: 'FORECAST UNRELIABLE', reason: 'No date field and numeric measure pair was detected.' };
+  const points = rows.map((row, index) => ({ x: Date.parse(String(row[dcol])), y: Number(row[ncol]), index })).filter(p => Number.isFinite(p.x) && Number.isFinite(p.y)).sort((a, b) => a.x - b.x);
+  if (points.length < 12) return { status: 'FORECAST UNRELIABLE', reason: 'At least 12 valid dated observations are required.' };
+  const meanX = points.reduce((s, p) => s + p.x, 0) / points.length;
+  const meanY = points.reduce((s, p) => s + p.y, 0) / points.length;
+  const denominator = points.reduce((s, p) => s + (p.x - meanX) ** 2, 0);
+  if (!denominator) return { status: 'FORECAST UNRELIABLE', reason: 'Dates do not contain enough variation for a trend model.' };
+  const slope = points.reduce((s, p) => s + (p.x - meanX) * (p.y - meanY), 0) / denominator;
+  const intercept = meanY - slope * meanX;
+  const residuals = points.map(p => p.y - (intercept + slope * p.x));
+  const rmse = Math.sqrt(residuals.reduce((s, e) => s + e * e, 0) / points.length);
+  const lastDate = points[points.length - 1].x;
+  const nextDate = lastDate + Math.max(86400000, (lastDate - points[0].x) / Math.max(1, points.length - 1));
+  const prediction = intercept + slope * nextDate;
+  return { status: 'available', method: 'linear_baseline', dateColumn: dcol, measure: ncol, observations: points.length, nextDate: new Date(nextDate).toISOString(), prediction: Number(prediction.toFixed(4)), rmse: Number(rmse.toFixed(4)), uncertainty: { type: 'RMSE_BAND', lower: Number((prediction - rmse).toFixed(4)), upper: Number((prediction + rmse).toFixed(4)) }, note: 'Baseline directional forecast; not causal and not a substitute for validated production forecasting.' };
+}
+
 function questionSignals(question: string) {
   const q = question.toLowerCase();
   return {
@@ -109,19 +129,21 @@ export async function runInvestigation(workspace: Workspace, question: string, d
   const summaries: any[] = [];
   const anomalies: any[] = [];
   const trends: any[] = [];
+  const forecasts: any[] = [];
 
   for (const dataset of usable) {
     const rows = await readRows(dataset);
     summaries.push({ datasetId: dataset.id, dataset: dataset.name, summary: summarizeDataset(dataset, rows) });
     anomalies.push(...analyzeAnomalies(dataset, rows));
     trends.push({ datasetId: dataset.id, dataset: dataset.name, trend: analyzeTrend(dataset, rows) });
+    if (signals.asksForecast) forecasts.push({ datasetId: dataset.id, dataset: dataset.name, forecast: forecast(dataset, rows) });
   }
 
   const metrics = summaries.flatMap(item => item.summary.numericMetrics.map((metric: any) => ({ ...metric, dataset: item.dataset })));
   const strongestMetric = [...metrics].sort((a, b) => Math.abs(b.sum) - Math.abs(a.sum))[0];
-  const findings: any[] = usable.map(dataset => ({ id: `claim-${dataset.id}`, type: 'FACT', claim: `${dataset.name} contains ${dataset.rowCount.toLocaleString()} records across ${columns(dataset).length} fields.`, source: dataset.name, verified: true, evidence: `Ingested dataset with ${dataset.contentHash || 'no recorded hash'}.` }));
-  if (strongestMetric) findings.push({ id: `metric-${strongestMetric.dataset}-${strongestMetric.column}`, type: 'FACT', claim: `${strongestMetric.column} has ${strongestMetric.count.toLocaleString()} numeric observations with an average of ${strongestMetric.average.toLocaleString(undefined, { maximumFractionDigits: 2 })}.`, source: strongestMetric.dataset, verified: true, evidence: 'Calculated directly from the persisted dataset rows.' });
-  if (anomalies.length && signals.asksWhy) findings.push({ id: `anomaly-${runId}`, type: 'FACT', claim: `${anomalies.length} statistical outlier(s) were detected across the selected data.`, source: 'Deterministic anomaly analysis', verified: true, evidence: 'Outliers use absolute z-score >= 3; inspect row-level evidence before treating them as business causes.' });
+  const findings: any[] = usable.map(dataset => ({ id: `claim-${dataset.id}`, type: 'FACT', claim: `${dataset.name} contains ${dataset.rowCount.toLocaleString()} records across ${columns(dataset).length} fields.`, source: dataset.name, verified: true, evidence: `Ingested dataset with ${dataset.contentHash || 'no recorded hash'}.`, evidenceRef: { datasetId: dataset.id, datasetHash: dataset.contentHash || null } }));
+  if (strongestMetric) findings.push({ id: `metric-${strongestMetric.dataset}-${strongestMetric.column}`, type: 'FACT', claim: `${strongestMetric.column} has ${strongestMetric.count.toLocaleString()} numeric observations with an average of ${strongestMetric.average.toLocaleString(undefined, { maximumFractionDigits: 2 })}.`, source: strongestMetric.dataset, verified: true, evidence: 'Calculated directly from the persisted dataset rows.', evidenceRef: { dataset: strongestMetric.dataset, column: strongestMetric.column, calculation: 'mean' } });
+  if (anomalies.length && signals.asksWhy) findings.push({ id: `anomaly-${runId}`, type: 'FACT', claim: `${anomalies.length} statistical outlier(s) were detected across the selected data.`, source: 'Deterministic anomaly analysis', verified: true, evidence: 'Outliers use absolute z-score >= 3; inspect row-level evidence before treating them as business causes.', evidenceRef: { analysis: 'zscore', threshold: 3, count: anomalies.length } });
 
   const status = usable.length ? 'completed' : 'data_insufficient';
   let recommendation = 'DATA INSUFFICIENT: connect a usable dataset before making a recommendation.';
@@ -129,16 +151,16 @@ export async function runInvestigation(workspace: Workspace, question: string, d
     ? `Start with ${strongestMetric.column} in ${strongestMetric.dataset}: validate the observed pattern against business context before changing strategy.`
     : `Investigation ready: ${usable.length} dataset(s) were profiled and deterministic metrics were calculated from persisted rows.`;
 
-  const forecastEligible = trends.find(item => item.trend.status === 'available');
+  const forecastEligible = forecasts.find(item => item.forecast.status === 'available');
   const result = {
     runId, workspaceId: workspace.id, question, status, startedAt: new Date().toISOString(), questionSignals: signals,
-    dataSources: usable.map(d => ({ id: d.id, name: d.name, rows: d.rowCount, columns: columns(d).length })),
-    findings, metricSummaries: summaries, anomalies, trends,
+    dataSources: usable.map(d => ({ id: d.id, name: d.name, rows: d.rowCount, columns: columns(d).length, contentHash: d.contentHash || null })),
+    findings, metricSummaries: summaries, anomalies, trends, forecasts,
     marketStatus: signals.asksMarket ? 'MARKET INTELLIGENCE PENDING_EXTERNAL_SEARCH' : 'NOT REQUIRED',
-    forecastStatus: signals.asksForecast ? (forecastEligible ? 'FORECAST_ELIGIBLE_FOR_MODELING' : 'FORECAST UNRELIABLE') : 'NOT REQUIRED',
+    forecastStatus: signals.asksForecast ? (forecastEligible ? 'available' : 'FORECAST UNRELIABLE') : 'NOT REQUIRED',
     recommendation,
     confidence: usable.length ? Math.min(95, 45 + Math.round((usable.length / Math.max(1, selected.length)) * 35) + (strongestMetric ? 10 : 0) + (signals.asksWhy && anomalies.length ? 5 : 0)) : 0,
-    audit: { evidenceBacked: usable.length > 0, persistedDataUsed: usable.length > 0, deterministicAnalysis: true, generatedAt: new Date().toISOString() },
+    audit: { evidenceBacked: usable.length > 0, persistedDataUsed: usable.length > 0, deterministicAnalysis: true, reproducibility: { inputHashes: usable.map(d => d.contentHash || null), analysisVersion: 'deterministic-v2', forecastMethod: signals.asksForecast ? 'linear_baseline' : null }, generatedAt: new Date().toISOString() },
   };
   const db = await load(); db.investigations.push(result); await save(db); return result;
 }
