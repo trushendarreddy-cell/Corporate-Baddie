@@ -16,5 +16,18 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm install --no-audit --no-fund
-      - run: npm run lint
+      - name: Typecheck
+        shell: bash
+        run: |
+          set +e
+          npm run lint > lint.log 2>&1
+          code=$?
+          cat lint.log
+          exit $code
+      - name: Upload typecheck log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: typecheck-log
+          path: lint.log
       - run: npm run build
