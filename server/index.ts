@@ -4,7 +4,7 @@ import multer from 'multer';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { mkdir } from 'node:fs/promises';
-import { createWorkspace, getWorkspace, listWorkspaces, updateWorkspace, addDataset, getDataset, listDatasets, deleteDataset, runInvestigation } from './store.js';
+import { createWorkspace, getWorkspace, listWorkspaces, updateWorkspace, addDataset, getDataset, listDatasets, deleteDataset, runInvestigation, listInvestigations, getInvestigation, detectRelationships } from './store.js';
 import { ingestFile } from './ingest.js';
 
 const app = express();
@@ -75,6 +75,10 @@ app.post('/api/workspaces/:workspaceId/datasets/upload', upload.single('file'), 
   } catch (error) { next(error); }
 });
 
+app.get('/api/workspaces/:workspaceId/relationships', async (req, res, next) => {
+  try { res.json({ relationships: await detectRelationships(req.params.workspaceId) }); } catch (error) { next(error); }
+});
+
 app.get('/api/datasets/:datasetId', async (req, res, next) => {
   try {
     const dataset = await getDataset(req.params.datasetId);
@@ -99,6 +103,34 @@ app.post('/api/investigations', async (req, res, next) => {
     if (!workspace) return res.status(404).json({ error: 'Workspace not found' });
     const result = await runInvestigation(workspace, question.trim(), datasetIds);
     res.status(201).json(result);
+  } catch (error) { next(error); }
+});
+
+app.get('/api/investigations', async (req, res, next) => {
+  try { res.json({ investigations: await listInvestigations(String(req.query.workspaceId || '')) }); } catch (error) { next(error); }
+});
+
+app.get('/api/investigations/:runId', async (req, res, next) => {
+  try {
+    const result = await getInvestigation(req.params.runId);
+    if (!result) return res.status(404).json({ error: 'Investigation not found' });
+    res.json({ investigation: result });
+  } catch (error) { next(error); }
+});
+
+app.post('/api/ask', async (req, res, next) => {
+  try {
+    const { workspaceId, question, runId } = req.body ?? {};
+    if (!workspaceId || !question?.trim()) return res.status(400).json({ error: 'workspaceId and question are required' });
+    const investigation = runId ? await getInvestigation(runId) : (await listInvestigations(workspaceId))[0];
+    if (!investigation) return res.status(404).json({ error: 'No investigation exists for this workspace yet' });
+    const claims = (investigation as any).findings || [];
+    const matched = claims.find((claim: any) => `${claim.claim} ${claim.evidence}`.toLowerCase().includes(question.toLowerCase().split(/\s+/).filter(Boolean)[0] || ''));
+    res.json({
+      answer: matched ? `${matched.claim} Evidence: ${matched.evidence}` : 'I can answer from the current run only when the claim is supported by its stored evidence. Open Evidence to inspect the verified findings.',
+      claim: matched || null,
+      runId: (investigation as any).runId,
+    });
   } catch (error) { next(error); }
 });
 
