@@ -1,6 +1,6 @@
 import 'dotenv/config';
 
-type Provider = 'grok' | 'gemini';
+type Provider = 'grok' | 'gemini' | 'zai';
 
 export interface LLMRequest {
   system: string;
@@ -87,13 +87,43 @@ async function callGemini(request: LLMRequest): Promise<LLMResult> {
   return { provider: 'gemini', model: process.env.GEMINI_MODEL || 'gemini-2.5-flash', text, sources: [] };
 }
 
+async function callZai(request: LLMRequest): Promise<LLMResult> {
+  const apiKey = process.env.ZAI_API_KEY;
+  if (!apiKey) throw new Error('ZAI_API_KEY is not configured');
+  const baseUrl = (process.env.ZAI_BASE_URL || 'https://api.z.ai/api/paas/v4').replace(/\/$/, '');
+  const response = await fetch(`${baseUrl}/chat/completions`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: process.env.ZAI_MODEL || 'glm-5',
+      messages: [
+        { role: 'system', content: request.system },
+        { role: 'user', content: request.prompt },
+      ],
+      temperature: 0.1,
+    }),
+    signal: timeoutSignal(),
+  });
+  if (!response.ok) throw new Error(`Z.ai API ${response.status}: ${(await response.text()).slice(0, 1000)}`);
+  const data = await response.json();
+  const text = data?.choices?.[0]?.message?.content?.trim();
+  if (!text) throw new Error('Z.ai returned an empty response');
+  return { provider: 'zai', model: data?.model || process.env.ZAI_MODEL || 'glm-5', text, sources: [] };
+}
+
 export async function askLLM(request: LLMRequest): Promise<LLMResult> {
   const primary = (process.env.LLM_PRIMARY || 'grok').toLowerCase() as Provider;
-  const providers: Provider[] = primary === 'gemini' ? ['gemini', 'grok'] : ['grok', 'gemini'];
+  const providers: Provider[] = primary === 'gemini' ? ['gemini', 'grok', 'zai'] : primary === 'zai' ? ['zai', 'grok', 'gemini'] : ['grok', 'gemini', 'zai'];
   let lastError: unknown = null;
   for (const provider of providers) {
-    try { return provider === 'grok' ? await callGrok(request) : await callGemini(request); }
-    catch (error) { lastError = error; console.warn(`${provider} provider failed:`, error instanceof Error ? error.message : error); }
+    try {
+      if (provider === 'grok') return await callGrok(request);
+      if (provider === 'gemini') return await callGemini(request);
+      return await callZai(request);
+    } catch (error) {
+      lastError = error;
+      console.warn(`${provider} provider failed:`, error instanceof Error ? error.message : error);
+    }
   }
   throw lastError instanceof Error ? lastError : new Error('All LLM providers failed');
 }
