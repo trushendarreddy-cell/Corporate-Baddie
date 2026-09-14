@@ -7,7 +7,7 @@ const DB_FILE = path.join(DATA_DIR, 'corporatebaddie.json');
 
 type Workspace = Record<string, unknown> & { id: string; createdAt: string; updatedAt: string };
 type Dataset = Record<string, any> & { id: string; workspaceId: string; createdAt: string; updatedAt: string };
-interface DB { workspaces: Workspace[]; datasets: Dataset[]; investigations: Record<string, unknown>[] }
+interface DB { workspaces: Workspace[]; datasets: Dataset[]; investigations: Record<string, any>[] }
 
 async function load(): Promise<DB> {
   try { return JSON.parse(await readFile(DB_FILE, 'utf8')) as DB; }
@@ -58,10 +58,7 @@ function summarizeDataset(dataset: Dataset, rows: Record<string, unknown>[]) {
     const values = rows.map(row => Number(row[name])).filter(Number.isFinite);
     if (!values.length) return null;
     const sum = values.reduce((a, b) => a + b, 0);
-    const avg = sum / values.length;
-    const min = Math.min(...values);
-    const max = Math.max(...values);
-    return { column: name, count: values.length, sum, average: avg, min, max };
+    return { column: name, count: values.length, sum, average: sum / values.length, min: Math.min(...values), max: Math.max(...values) };
   }).filter(Boolean);
   return { rows: rows.length, numericMetrics: metrics };
 }
@@ -91,44 +88,34 @@ export async function runInvestigation(workspace: Workspace, question: string, d
 
   const metrics = summaries.flatMap(item => item.summary.numericMetrics.map((metric: any) => ({ ...metric, dataset: item.dataset })));
   const strongestMetric = [...metrics].sort((a, b) => Math.abs(b.sum) - Math.abs(a.sum))[0];
-  const findings = usable.map(dataset => ({
+  const findings: any[] = usable.map(dataset => ({
     id: `claim-${dataset.id}`,
     type: 'FACT',
     claim: `${dataset.name} contains ${dataset.rowCount.toLocaleString()} records across ${((dataset.schema as any)?.columns || []).length} fields.`,
     source: dataset.name,
     verified: true,
-    evidence: `Ingested dataset with SHA-256 ${dataset.contentHash || 'not recorded'}.`,
+    evidence: `Ingested dataset with ${dataset.contentHash || 'no recorded hash'}.`,
   }));
 
-  if (strongestMetric) {
-    findings.push({
-      id: `metric-${strongestMetric.dataset}-${strongestMetric.column}`,
-      type: 'FACT',
-      claim: `${strongestMetric.column} has ${strongestMetric.count.toLocaleString()} numeric observations with an average of ${strongestMetric.average.toLocaleString(undefined, { maximumFractionDigits: 2 })}.`,
-      source: strongestMetric.dataset,
-      verified: true,
-      evidence: 'Calculated directly from the persisted dataset rows.',
-    });
-  }
+  if (strongestMetric) findings.push({
+    id: `metric-${strongestMetric.dataset}-${strongestMetric.column}`,
+    type: 'FACT',
+    claim: `${strongestMetric.column} has ${strongestMetric.count.toLocaleString()} numeric observations with an average of ${strongestMetric.average.toLocaleString(undefined, { maximumFractionDigits: 2 })}.`,
+    source: strongestMetric.dataset,
+    verified: true,
+    evidence: 'Calculated directly from the persisted dataset rows.',
+  });
 
   const status = usable.length ? 'completed' : 'data_insufficient';
   let recommendation = 'DATA INSUFFICIENT: connect a usable dataset before making a recommendation.';
-  if (usable.length) {
-    recommendation = signals.asksRecommendation && strongestMetric
-      ? `Start with ${strongestMetric.column} in ${strongestMetric.dataset}: validate the observed pattern against business context before changing strategy.`
-      : `Investigation ready: ${usable.length} dataset(s) were profiled and deterministic metrics were calculated from persisted rows.`;
-  }
+  if (usable.length) recommendation = signals.asksRecommendation && strongestMetric
+    ? `Start with ${strongestMetric.column} in ${strongestMetric.dataset}: validate the observed pattern against business context before changing strategy.`
+    : `Investigation ready: ${usable.length} dataset(s) were profiled and deterministic metrics were calculated from persisted rows.`;
 
   const result = {
-    runId,
-    workspaceId: workspace.id,
-    question,
-    status,
-    startedAt: new Date().toISOString(),
-    questionSignals: signals,
+    runId, workspaceId: workspace.id, question, status, startedAt: new Date().toISOString(), questionSignals: signals,
     dataSources: usable.map(d => ({ id: d.id, name: d.name, rows: d.rowCount, columns: ((d.schema as any)?.columns || []).length })),
-    findings,
-    metricSummaries: summaries,
+    findings, metricSummaries: summaries,
     marketStatus: signals.asksMarket ? 'MARKET INTELLIGENCE UNAVAILABLE' : 'NOT REQUIRED',
     forecastStatus: signals.asksForecast ? 'FORECAST REQUIRES TIME-SERIES VALIDATION' : 'NOT REQUIRED',
     recommendation,
@@ -136,4 +123,26 @@ export async function runInvestigation(workspace: Workspace, question: string, d
     audit: { evidenceBacked: usable.length > 0, persistedDataUsed: usable.length > 0, generatedAt: new Date().toISOString() },
   };
   const db = await load(); db.investigations.push(result); await save(db); return result;
+}
+
+export async function listInvestigations(workspaceId: string) {
+  return (await load()).investigations.filter(item => !workspaceId || item.workspaceId === workspaceId).sort((a, b) => String(b.startedAt).localeCompare(String(a.startedAt)));
+}
+export async function getInvestigation(runId: string) {
+  return (await load()).investigations.find(item => item.runId === runId) ?? null;
+}
+
+export async function detectRelationships(workspaceId: string) {
+  const datasets = await listDatasets(workspaceId);
+  const relationships: any[] = [];
+  for (let i = 0; i < datasets.length; i++) for (let j = i + 1; j < datasets.length; j++) {
+    const left = ((datasets[i].schema as any)?.columns || []).map((c: any) => c.name);
+    const right = new Set(((datasets[j].schema as any)?.columns || []).map((c: any) => c.name));
+    for (const column of left) if (right.has(column)) relationships.push({
+      id: `rel-${datasets[i].id}-${datasets[j].id}-${column}`,
+      sourceDatasetId: datasets[i].id, targetDatasetId: datasets[j].id,
+      fromColumn: column, toColumn: column, relationshipType: 'candidate', confidence: 75, status: 'detected', autoDetected: true,
+    });
+  }
+  return relationships;
 }
