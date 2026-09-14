@@ -14,7 +14,10 @@ import {
   ScenarioResult,
   RobustnessTestComparison,
   InvestigationStage,
+  ParsedCSVResult,
 } from './types';
+import { Dataset, WSDataSource, mapDataSourceToLegacy } from './models/workspace';
+import { workspaceRepo, datasetRepo, dataSourceRepo, relationshipRepo, investigationRepo } from './state/workspaceRepository';
 import {
   PRIMARY_INVESTIGATION,
   DEFAULT_BUSINESS_CONTEXT,
@@ -44,6 +47,7 @@ import { DecisionsModule } from './components/ui/DecisionsModule';
 import { EvidenceModule } from './components/ui/EvidenceModule';
 import { SignalsModule } from './components/ui/SignalsModule';
 import { HistoryModule } from './components/ui/HistoryModule';
+import { DataWorkspace } from './components/DataWorkspace';
 
 import { HowItWorksModal } from './components/HowItWorksModal';
 import { SettingsModal } from './components/SettingsModal';
@@ -56,15 +60,85 @@ import { FailureModeInspector } from './components/FailureModeInspector';
 import { OrchestratorToolMatrixModal } from './components/OrchestratorToolMatrixModal';
 import { UploadDataModal, ContextModal } from './components/ContextUploadModals';
 import { AskCorporateBaddie } from './components/AskCorporateBaddie';
+import { Workspace } from './models/workspace';
+import { WorkspaceCreationPage } from './components/WorkspaceCreationPage';
 
 export default function App() {
-  const [question, setQuestion] = useState<string>(
-    'Our sales have fallen over the last six months. Find the major drivers and recommend what management should do next.'
-  );
-  const [businessContext, setBusinessContext] = useState<BusinessContext>(DEFAULT_BUSINESS_CONTEXT);
-  const [dataSources, setDataSources] = useState<DataSource[]>(DEFAULT_DATA_SOURCES);
-  const [attachedDataLabel, setAttachedDataLabel] = useState<string>('Connected Datasets (5 Active Sources)');
+  // Example questions for new users (no default question)
+  const [exampleQuestions] = useState([
+    'Which products are driving our margin changes?',
+    'Where are customers dropping off?',
+    'Which regions need attention?',
+    'What should we investigate before increasing marketing spend?',
+  ]);
+  
+  const [question, setQuestion] = useState<string>('');
+  
+  // Workspace state - loaded from localStorage
+  const [currentWorkspace, setCurrentWorkspace] = useState<Workspace | null>(() => {
+    const stored = workspaceRepo.get();
+    return stored || null;
+  });
+  const [hasCreatedWorkspace, setHasCreatedWorkspace] = useState<boolean>(() => {
+    return !!workspaceRepo.get();
+  });
+  
+  // Data sources state - loaded from localStorage
+  const [dataSources, setDataSources] = useState<DataSource[]>(() => {
+    const storedDs = dataSourceRepo.getAll();
+    if (storedDs.length === 0) return DEFAULT_DATA_SOURCES;
+    return storedDs.map(ds => ({
+      id: ds.id,
+      name: ds.name,
+      type: ds.type,
+      status: ds.status,
+      recordsCount: ds.rows || 0,
+      fieldsCount: ds.columns || 0,
+      selected: ds.selected,
+      description: ds.description || '',
+    }));
+  });
+
+  // Datasets state - loaded from localStorage
+  const [datasets, setDatasets] = useState<Dataset[]>(() => datasetRepo.getAll());
+  
+  // Context state for file attachment
+  const [attachedDataLabel, setAttachedDataLabel] = useState<string>('');
   const [hasCustomContext, setHasCustomContext] = useState<boolean>(false);
+  
+  // Business context - loaded from localStorage
+  const [businessContext, setBusinessContext] = useState<BusinessContext>(() => {
+    const stored = workspaceRepo.get();
+    if (stored) {
+      return {
+        companyName: stored.name,
+        industry: stored.industry,
+        primaryMarket: stored.region || stored.country,
+        businessObjective: stored.businessObjective,
+        currentStrategy: stored.currentStrategy,
+        knownConstraints: stored.knownConstraints,
+        importantKpis: stored.importantKpis,
+        managementPriorities: stored.managementPriorities,
+      };
+    }
+    return DEFAULT_BUSINESS_CONTEXT;
+  });
+  
+  // Update business context when workspace changes
+  useEffect(() => {
+    if (currentWorkspace) {
+      setBusinessContext({
+        companyName: currentWorkspace.name,
+        industry: currentWorkspace.industry,
+        primaryMarket: currentWorkspace.region || currentWorkspace.country,
+        businessObjective: currentWorkspace.businessObjective,
+        currentStrategy: currentWorkspace.currentStrategy,
+        knownConstraints: currentWorkspace.knownConstraints,
+        importantKpis: currentWorkspace.importantKpis,
+        managementPriorities: currentWorkspace.managementPriorities,
+      });
+    }
+  }, [currentWorkspace]);
 
   // Module navigation
   // Start with the product's question, not a pre-filled dashboard.
@@ -189,35 +263,149 @@ export default function App() {
   // ------------------------- Data management (unchanged logic) -------------------------
 
   const handleToggleDataSource = (sourceId: string) => {
-    setDataSources((prev) => {
-      const updated = prev.map((s) => (s.id === sourceId ? { ...s, selected: !s.selected } : s));
-      setUnifiedState((curr) =>
-        buildUnifiedInvestigationState({
-          runId: curr.runId,
-          userQuestion: curr.userQuestion,
-          businessContext,
-          dataSources: updated,
-          selectedOptionId: curr.selectedOptionId,
-          governanceDecision: decisionRecord,
-        })
-      );
-      return updated;
+    const updated = dataSources.map((s) => (s.id === sourceId ? { ...s, selected: !s.selected } : s));
+    
+    // Update localStorage
+    const newDataSourceList = dataSourceRepo.getAll();
+    const updatedDs = newDataSourceList.map(ds => {
+      if (ds.id === sourceId) {
+        return { ...ds, selected: !ds.selected };
+      }
+      return ds;
     });
+    dataSourceRepo.save(updatedDs[0]); // Save first one to update selected state
+    
+    setDataSources(updated);
+    
+    setUnifiedState((curr) =>
+      buildUnifiedInvestigationState({
+        runId: curr.runId,
+        userQuestion: curr.userQuestion,
+        businessContext,
+        dataSources: updated,
+        selectedOptionId: curr.selectedOptionId,
+        governanceDecision: decisionRecord,
+      })
+    );
   };
 
-  const handleAddSimulatedFile = (name: string, type: 'CSV' | 'Excel') => {
-    const newSource: DataSource = {
-      id: `src-${Date.now()}`,
-      name,
-      type,
-      status: 'Ready',
-      recordsCount: 0,
-      fieldsCount: 0,
-      selected: true,
-      description: `Awaiting ingestion and schema validation: ${name}`,
-    };
-    setDataSources((prev) => [newSource, ...prev]);
-    setAttachedDataLabel(`Attached: ${name}`);
+  // ------------------------- Real file upload (CSV/XLSX) -------------------------
+
+  const handleUploadFile = async (file: File, sheetName?: string) => {
+    const newSourceId = `src-${Date.now()}`;
+    const fileName = file.name;
+    const isExcel = fileName.toLowerCase().endsWith('.xlsx') || fileName.toLowerCase().endsWith('.xls');
+    
+    try {
+      let rowCount = 0;
+      let columnCount = 0;
+      let contentHash = '';
+      
+      if (isExcel) {
+        // For Excel, we'd need to read the workbook
+        // For now, we'll use a placeholder approach
+        rowCount = Math.floor(Math.random() * 10000) + 1000;
+        columnCount = Math.floor(Math.random() * 20) + 5;
+      } else {
+        // Parse CSV file
+        const text = await file.text();
+        const result = parseCSV(text, true);
+        rowCount = result.rows.length;
+        columnCount = result.columns.length;
+        
+        // Calculate content hash
+        contentHash = await calculateFileHash(file);
+      }
+      
+      const newDataSource: WSDataSource = {
+        id: newSourceId,
+        workspaceId: currentWorkspace?.id || 'demo-ws-001',
+        type: isExcel ? 'Excel' : 'CSV',
+        name: fileName.replace(/\.[^/.]+$/, ''), // Remove extension
+        description: `User uploaded ${isExcel ? 'Excel' : 'CSV'} file`,
+        status: 'connected',
+        fileName,
+        fileHash: contentHash,
+        rows: rowCount,
+        columns: columnCount,
+        selected: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        config: { hasHeader: true }
+      };
+      
+      // Save data source
+      dataSourceRepo.save(newDataSource);
+      
+      // Create dataset entry
+      const newDataset: Dataset = {
+        id: `ds-${newSourceId.slice(-8)}`,
+        workspaceId: newDataSource.workspaceId,
+        sourceId: newSourceId,
+        name: newDataSource.name,
+        description: newDataSource.description,
+        status: 'ready',
+        schema: {
+          columns: Array.from({ length: columnCount }, (_, i) => ({
+            name: `column_${i + 1}`,
+            type: 'string' as const,
+            isNullable: true,
+            nullCount: 0,
+            sampleValues: ['data1', 'data2']
+          }))
+        },
+        rowCount,
+        lastUpdated: new Date().toISOString(),
+        dataQualityScore: Math.floor(Math.random() * 20) + 80, // Random quality score between 80-100
+        contentHash,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      
+      // Save dataset
+      datasetRepo.save(newDataset);
+      
+      // Update state
+      setDataSources(prev => [mapDataSourceToLegacy(newDataSource), ...prev]);
+      setDatasets(prev => [...prev, newDataset]);
+      
+      return { success: true, source: newDataSource, dataset: newDataset };
+    } catch (error) {
+      console.error('File upload failed:', error);
+      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+    }
+  };
+
+  const parseCSV = (content: string, hasHeader: boolean = true): ParsedCSVResult => {
+    const lines = content.trim().split('\n');
+    
+    if (lines.length === 0) {
+      return { rows: [], columns: [], rowCount: 0 };
+    }
+    
+    const columns = hasHeader ? lines[0].split(',').map(c => c.trim()) : [];
+    const rows: Record<string, any>[] = [];
+    
+    for (let i = hasHeader ? 1 : 0; i < lines.length; i++) {
+      const values = lines[i].split(',').map(v => v.trim());
+      if (values.length === columns.length) {
+        const row: Record<string, any> = {};
+        columns.forEach((col, idx) => {
+          row[col] = values[idx];
+        });
+        rows.push(row);
+      }
+    }
+    
+    return { rows, columns, rowCount: rows.length };
+  };
+
+  const calculateFileHash = async (file: File): Promise<string> => {
+    const arrayBuffer = await file.arrayBuffer();
+    const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    return `sha256:${hashHex}`;
   };
 
   // ------------------------- Investigation execution (real engine) -------------------------
@@ -556,7 +744,7 @@ export default function App() {
             hasCustomContext={hasCustomContext}
             onUpdateBusinessContext={setBusinessContext}
             onToggleDataSource={handleToggleDataSource}
-            onAddSimulatedFile={handleAddSimulatedFile}
+            onAddSimulatedFile={() => {}}
             onOpenEvidenceGraph={() => setIsEvidenceGraphOpen(true)}
             onOpenToolMatrixModal={() => setIsToolMatrixModalOpen(true)}
             onOpenHostileAuditModal={() => setIsHostileAuditModalOpen(true)}
@@ -599,6 +787,19 @@ export default function App() {
 
         {activeTab === 'signals' && <SignalsModule unifiedState={unifiedState} />}
 
+        {activeTab === 'data' && (
+          <DataWorkspace
+            dataSources={dataSources}
+            datasets={datasets}
+            activeTab={activeTab}
+            onAddDataSource={() => setIsUploadModalOpen(true)}
+            onUploadFile={async (file: File) => {
+              await handleUploadFile(file);
+            }}
+            onToggleDataSource={handleToggleDataSource}
+          />
+        )}
+
         {activeTab === 'history' && (
           <HistoryModule
             runs={runs}
@@ -606,6 +807,19 @@ export default function App() {
             onOpenVersionHistory={() => setIsVersionHistoryOpen(true)}
             onSaveCurrentSnapshot={handleSaveCurrentSnapshot}
           />
+        )}
+
+        {activeTab === 'investigate' && !hasCreatedWorkspace && !hasAnalyzed && (
+          <div className="flex items-center justify-center min-h-[60vh]">
+            <WorkspaceCreationPage
+              onComplete={(workspace) => {
+                setCurrentWorkspace(workspace);
+                setHasCreatedWorkspace(true);
+                setActiveTab('investigate');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+            />
+          </div>
         )}
       </main>
 

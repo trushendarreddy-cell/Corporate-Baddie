@@ -15,6 +15,251 @@ import {
   TrendItem,
   EmergingSignal
 } from './types';
+import { 
+  DataSource as WSDataSource,
+  Dataset,
+  DatasetColumn,
+  ColumnType,
+  Workspace,
+  DatasetRelationship,
+  QuestionClassification,
+  KeyFinding,
+  EvidenceClaim,
+  MarketSignal,
+  StrategicOption,
+  MultiDimConfidence,
+  DecisionRecord,
+  InvestigationStatus
+} from './models/workspace';
+
+// ============================================================================
+// DEMO WORKSPACE (Separate from user workspaces)
+// ============================================================================
+
+export const DEMO_WORKSPACE: Workspace = {
+  id: 'demo-ws-001',
+  name: 'Demo Retail Co.',
+  slug: 'demo-retail-co',
+  description: 'Sample retail business for demonstration purposes',
+  industry: 'Retail / E-commerce',
+  country: 'India',
+  region: 'South Asia',
+  currency: 'INR',
+  businessObjective: 'Increase profitable revenue while protecting margins',
+  currentStrategy: 'Premium product positioning in tier-1 cities',
+  knownConstraints: 'Limited marketing budget, seasonal demand fluctuations',
+  importantKpis: ['Revenue', 'Gross Margin', 'Customer Retention', 'Average Order Value'],
+  managementPriorities: 'Improve profitability without losing customers',
+  createdAt: '2026-01-01T00:00:00Z',
+  updatedAt: '2026-01-01T00:00:00Z',
+  isDemo: true
+};
+
+// ============================================================================
+// DEMO DATA SOURCES (For Demo Workspace)
+// ============================================================================
+
+export const DEMO_DATA_SOURCES: WSDataSource[] = [
+  {
+    id: 'demo-src-1',
+    workspaceId: 'demo-ws-001',
+    type: 'CSV',
+    name: 'Sales Data',
+    description: 'Consolidated transactional revenue, SKU velocity & regional channel ledger',
+    status: 'connected',
+    rows: 78420,
+    columns: 11,
+    selected: true,
+    createdAt: '2026-01-01T00:00:00Z',
+    updatedAt: '2026-09-10T00:00:00Z',
+    config: { hasHeader: true, delimiter: ',' }
+  },
+  {
+    id: 'demo-src-2',
+    workspaceId: 'demo-ws-001',
+    type: 'Excel',
+    name: 'Customer Data',
+    description: 'Cohort repeat purchase rates, customer tiering & geographic churn history',
+    status: 'connected',
+    rows: 42110,
+    columns: 9,
+    selected: true,
+    createdAt: '2026-01-01T00:00:00Z',
+    updatedAt: '2026-09-10T00:00:00Z',
+    config: { hasHeader: true }
+  },
+  {
+    id: 'demo-src-3',
+    workspaceId: 'demo-ws-001',
+    type: 'CSV',
+    name: 'Marketing Data',
+    description: 'Ad spend by region, conversion rates, CAC and promotional discount records',
+    status: 'connected',
+    rows: 21851,
+    columns: 7,
+    selected: true,
+    createdAt: '2026-01-01T00:00:00Z',
+    updatedAt: '2026-09-10T00:00:00Z',
+    config: { hasHeader: true, delimiter: ',' }
+  },
+  {
+    id: 'demo-src-4',
+    workspaceId: 'demo-ws-001',
+    type: 'PostgreSQL',
+    name: 'Warehouse & ERP Database',
+    description: 'PostgreSQL connector to regional distribution center inventory levels',
+    status: 'disconnected',
+    host: 'demo-db.corporatebaddie.internal',
+    database: 'warehouse',
+    schema: 'public',
+    table: 'inventory_levels',
+    rows: 195000,
+    columns: 34,
+    selected: false,
+    createdAt: '2026-01-01T00:00:00Z',
+    updatedAt: '2026-09-10T00:00:00Z',
+    config: { ssl: true, connectionPoolSize: 10 }
+  },
+  {
+    id: 'demo-src-5',
+    workspaceId: 'demo-ws-001',
+    type: 'API',
+    name: 'Competitor Price Tracker',
+    description: 'Live webhook scraping category pricing across e-commerce & retail portals',
+    status: 'connected',
+    rows: 12400,
+    columns: 8,
+    selected: false,
+    createdAt: '2026-01-01T00:00:00Z',
+    updatedAt: '2026-09-10T00:00:00Z',
+    config: { authType: 'api_key' }
+  }
+];
+
+// ============================================================================
+// DEMO DATASETS (For Demo Workspace)
+// ============================================================================
+
+export const DEMO_DATASETS: Dataset[] = [
+  {
+    id: 'demo-ds-1',
+    workspaceId: 'demo-ws-001',
+    sourceId: 'demo-src-1',
+    name: 'Sales Transactions',
+    description: 'Transaction-level sales data',
+    status: 'ready',
+    schema: {
+      columns: [
+        { name: 'order_id', type: 'string', isNullable: false, uniqueValues: 78420, nullCount: 0, sampleValues: ['ORD-001', 'ORD-002'] },
+        { name: 'customer_id', type: 'string', isNullable: false, uniqueValues: 42110, nullCount: 0, sampleValues: ['CUST-001', 'CUST-002'] },
+        { name: 'product_id', type: 'string', isNullable: false, uniqueValues: 4, nullCount: 0, sampleValues: ['PROD-A', 'PROD-B'] },
+        { name: 'order_date', type: 'date', isNullable: false, nullCount: 0, min: '2025-04-01', max: '2026-03-31', sampleValues: ['2026-03-15', '2026-03-16'] },
+        { name: 'region', type: 'string', isNullable: false, uniqueValues: 4, nullCount: 0, sampleValues: ['South', 'North'] },
+        { name: 'quantity', type: 'integer', isNullable: false, nullCount: 0, min: 1, max: 50, sampleValues: [1, 2] },
+        { name: 'unit_price', type: 'float', isNullable: false, nullCount: 0, min: 999, max: 4999, sampleValues: [1999, 2499] },
+        { name: 'discount_percent', type: 'float', isNullable: true, nullCount: 1240, avg: 8.5, sampleValues: [0, 10] },
+        { name: 'revenue', type: 'float', isNullable: false, nullCount: 0, min: 999, max: 249950, sampleValues: [1999, 4498] },
+        { name: 'margin_percent', type: 'float', isNullable: false, nullCount: 0, avg: 38.5, sampleValues: [35.2, 41.8] },
+        { name: 'campaign_id', type: 'string', isNullable: true, nullCount: 21851, sampleValues: ['CAMPAIGN-Q1', null] }
+      ]
+    },
+    rowCount: 78420,
+    lastUpdated: '2026-09-10T00:00:00Z',
+    dataQualityScore: 91,
+    contentHash: 'sha256:abc123def456',
+    createdAt: '2026-01-01T00:00:00Z',
+    updatedAt: '2026-09-10T00:00:00Z'
+  },
+  {
+    id: 'demo-ds-2',
+    workspaceId: 'demo-ws-001',
+    sourceId: 'demo-src-2',
+    name: 'Customer Profiles',
+    description: 'Customer cohort and retention data',
+    status: 'ready',
+    schema: {
+      columns: [
+        { name: 'customer_id', type: 'string', isNullable: false, isPrimaryKey: true, uniqueValues: 42110, nullCount: 0, sampleValues: ['CUST-001', 'CUST-002'] },
+        { name: 'region', type: 'string', isNullable: false, uniqueValues: 4, nullCount: 0, sampleValues: ['South', 'North'] },
+        { name: 'tier', type: 'string', isNullable: false, uniqueValues: 5, nullCount: 0, sampleValues: ['Premium', 'Standard'] },
+        { name: 'signup_date', type: 'date', isNullable: false, nullCount: 0, min: '2024-01-01', max: '2026-03-31', sampleValues: ['2025-06-15', '2025-09-20'] },
+        { name: 'total_orders', type: 'integer', isNullable: false, nullCount: 0, min: 1, max: 150, sampleValues: [1, 2] },
+        { name: 'repeat_rate_90d', type: 'float', isNullable: false, nullCount: 0, avg: 0.46, sampleValues: [0.428, 0.49] },
+        { name: 'churn_risk', type: 'integer', isNullable: false, nullCount: 0, min: 1, max: 100, sampleValues: [15, 45] },
+        { name: 'lifetime_value', type: 'float', isNullable: false, nullCount: 0, avg: 12500, sampleValues: [5999, 18999] },
+        { name: 'last_purchase_date', type: 'date', isNullable: true, nullCount: 2105, min: '2025-04-01', max: '2026-03-31', sampleValues: ['2026-03-15', null] }
+      ]
+    },
+    rowCount: 42110,
+    lastUpdated: '2026-09-10T00:00:00Z',
+    dataQualityScore: 88,
+    contentHash: 'sha256:def456ghi789',
+    createdAt: '2026-01-01T00:00:00Z',
+    updatedAt: '2026-09-10T00:00:00Z'
+  },
+  {
+    id: 'demo-ds-3',
+    workspaceId: 'demo-ws-001',
+    sourceId: 'demo-src-3',
+    name: 'Marketing Campaigns',
+    description: 'Campaign performance and attribution data',
+    status: 'ready',
+    schema: {
+      columns: [
+        { name: 'campaign_id', type: 'string', isNullable: false, isPrimaryKey: true, uniqueValues: 12, nullCount: 0, sampleValues: ['CAMPAIGN-Q1', 'SUMMER2025'] },
+        { name: 'channel', type: 'string', isNullable: false, uniqueValues: 4, nullCount: 0, sampleValues: ['Social', 'Search'] },
+        { name: 'spend_lakhs', type: 'float', isNullable: false, nullCount: 0, avg: 4.5, sampleValues: [1.2, 8.5] },
+        { name: 'impressions', type: 'integer', isNullable: false, nullCount: 0, min: 1000, max: 500000, sampleValues: [15000, 250000] },
+        { name: 'clicks', type: 'integer', isNullable: false, nullCount: 0, min: 50, max: 15000, sampleValues: [500, 8500] },
+        { name: 'conversions', type: 'integer', isNullable: false, nullCount: 0, min: 5, max: 2500, sampleValues: [125, 2100] },
+        { name: 'date', type: 'date', isNullable: false, nullCount: 0, min: '2025-04-01', max: '2026-03-31', sampleValues: ['2026-03-01', '2026-03-15'] }
+      ]
+    },
+    rowCount: 21851,
+    lastUpdated: '2026-09-10T00:00:00Z',
+    dataQualityScore: 94,
+    contentHash: 'sha256:ghi789jkl012',
+    createdAt: '2026-01-01T00:00:00Z',
+    updatedAt: '2026-09-10T00:00:00Z'
+  }
+];
+
+// ============================================================================
+// DEMO RELATIONSHIPS
+// ============================================================================
+
+export const DEMO_RELATIONSHIPS: DatasetRelationship[] = [
+  {
+    id: 'demo-rel-1',
+    workspaceId: 'demo-ws-001',
+    sourceDatasetId: 'demo-ds-1',
+    targetDatasetId: 'demo-ds-2',
+    fromColumn: 'customer_id',
+    toColumn: 'customer_id',
+    relationshipType: 'many_to_one',
+    confidence: 98,
+    status: 'approved',
+    autoDetected: true,
+    createdAt: '2026-01-01T00:00:00Z'
+  },
+  {
+    id: 'demo-rel-2',
+    workspaceId: 'demo-ws-001',
+    sourceDatasetId: 'demo-ds-1',
+    targetDatasetId: 'demo-ds-1',
+    fromColumn: 'product_id',
+    toColumn: 'product_id',
+    relationshipType: 'one_to_one',
+    confidence: 100,
+    status: 'approved',
+    autoDetected: true,
+    createdAt: '2026-01-01T00:00:00Z'
+  }
+];
+
+// ============================================================================
+// PRIMARY DEMO INVESTIGATION (from mockData.ts)
+// ============================================================================
 
 export const PRIMARY_INVESTIGATION: InvestigationState = {
   runId: 'CB-DEMO-001',
@@ -210,7 +455,7 @@ export const PRIMARY_INVESTIGATION: InvestigationState = {
       id: 'mkt-1',
       signal: 'Competitor pricing pressure',
       explanation: 'Competitors in the category have increased promotional activity, offering 15-20% introductory volume rebates in southern industrial hubs.',
-      source: 'Demo Market Research / Pricing Benchmarks',
+      source: 'Market Research / Pricing Benchmarks',
       date: '2026',
       type: 'External Fact',
       impactLevel: 'High',
@@ -221,7 +466,7 @@ export const PRIMARY_INVESTIGATION: InvestigationState = {
       id: 'mkt-2',
       signal: 'Regional buyer consolidation',
       explanation: 'South region distributor groups merged two centralized procurement committees, extending purchase review cycles from 14 to 38 days.',
-      source: 'Supply Chain Trade Intelligence (Demo)',
+      source: 'Supply Chain Trade Intelligence',
       date: '2026',
       type: 'External Fact',
       impactLevel: 'Medium',
@@ -232,7 +477,7 @@ export const PRIMARY_INVESTIGATION: InvestigationState = {
       id: 'mkt-3',
       signal: 'Macro input cost elasticity',
       explanation: 'Enterprise clients are delaying mid-tier SKU replenishment while grandfathering Tier-B software/hardware bundles.',
-      source: 'Sector Purchasing Sentiment Survey (Demo)',
+      source: 'Sector Purchasing Sentiment Survey',
       date: '2026',
       type: 'External Fact',
       impactLevel: 'Medium',
@@ -253,8 +498,8 @@ export const PRIMARY_INVESTIGATION: InvestigationState = {
         impact: 8,
         evidenceStrength: 6,
         feasibility: 6,
-        risk: 3, // Lower score = higher risk
-        cost: 3, // High gross margin sacrifice
+        risk: 3,
+        cost: 3,
         strategicFit: 4,
       },
       pros: [
@@ -306,8 +551,8 @@ export const PRIMARY_INVESTIGATION: InvestigationState = {
         impact: 9,
         evidenceStrength: 9,
         feasibility: 9,
-        risk: 8, // Very safe, low downside
-        cost: 8, // Highly capital efficient
+        risk: 8,
+        cost: 8,
         strategicFit: 9,
       },
       pros: [
@@ -459,6 +704,220 @@ export const PRIMARY_INVESTIGATION: InvestigationState = {
   ],
 };
 
+// ============================================================================
+// EXAMPLE QUESTIONS (No default question)
+// ============================================================================
+
+export const EXAMPLE_QUESTIONS = [
+  {
+    id: 'ex-1',
+    title: 'Product margin analysis',
+    prompt: 'Which products are driving our margin changes?',
+    description: 'Understand which products are contributing most to margin expansion or contraction'
+  },
+  {
+    id: 'ex-2',
+    title: 'Customer churn investigation',
+    prompt: 'Where are customers dropping off?',
+    description: 'Identify where in the customer journey retention is failing'
+  },
+  {
+    id: 'ex-3',
+    title: 'Regional performance',
+    prompt: 'Which regions need attention?',
+    description: 'Compare performance across all territories and identify underperforming areas'
+  },
+  {
+    id: 'ex-4',
+    title: 'Marketing effectiveness',
+    prompt: 'What should we investigate before increasing marketing spend?',
+    description: 'Evaluate current marketing efficiency and identify gaps before scaling'
+  },
+  {
+    id: 'ex-5',
+    title: 'Product lifecycle',
+    prompt: 'Are our top products aging?',
+    description: 'Analyze product performance trends over time to assess lifecycle stage'
+  },
+  {
+    id: 'ex-6',
+    title: 'Pricing strategy',
+    prompt: 'Should we adjust pricing to compete?',
+    description: 'Evaluate pricing elasticity and competitive positioning'
+  }
+];
+
+// ============================================================================
+// DEFAULT BUSINESS CONTEXT (No company, just a template)
+// ============================================================================
+
+export const DEFAULT_BUSINESS_CONTEXT: BusinessContext = {
+  companyName: '', // User must provide this
+  industry: '',
+  primaryMarket: '',
+  businessObjective: '',
+  currentStrategy: '',
+  knownConstraints: '',
+  importantKpis: [],
+  managementPriorities: '',
+};
+
+// ============================================================================
+// DECISION ROOM OPTIONS
+// ============================================================================
+
+export const DECISION_ROOM_OPTIONS: DecisionRoomOption[] = [
+  {
+    id: 'opt-1',
+    name: 'Targeted Pricing & Regional Intervention',
+    isRecommended: true,
+    expectedImpact: '+₹18.4L / month revenue recovery (+8.2%)',
+    evidenceStrength: 'Strong',
+    cost: '₹2.8L / month (Targeted promo & co-op marketing)',
+    risk: 'Low',
+    feasibility: 'High',
+    timeToImpact: '30 - 45 days',
+    strategicFit: 'High',
+    confidence: 84,
+    whyThisOption: {
+      supportingEvidence: [
+        'Isolates Product A in Region South, where 68.2% of total business decline originated [CLM-024, CLM-027].',
+        'Directly counters Competitor A localized 15-20% promotional discounts without devaluing other regions [CLM-030].',
+        'Preserves company gross margin floor (minimum 38%) and respects limited marketing budget constraints.',
+      ],
+      potentialUpside: 'Restores South repurchase rates from 42.8% back toward 48% within 60 days, recovering ~₹55L quarterly ARR.',
+      risks: [
+        'Cross-regional gray market arbitrage if regional discount exceeds 15%.',
+        'Distributor margin pushback if co-op marketing incentives are delayed.',
+      ],
+      dependencies: [
+        'Regional distributor sign-off on co-funded incentive structure in Region South.',
+        'Marketing team ready with localized South messaging highlighting premium feature superiority.',
+      ],
+      whatMustBeTrue: [
+        'Customer demand elasticity in Region South responds to value bundle vs raw price cut.',
+        'Competitor A does not escalate price war into North and West regions.',
+        'Product A inventory in Southern distribution hubs can handle +12% volume lift.',
+      ],
+    },
+  },
+  {
+    id: 'opt-2',
+    name: 'Company-wide Price Reduction',
+    isRecommended: false,
+    expectedImpact: '+₹5.2L / month revenue recovery (+2.4%)',
+    evidenceStrength: 'Moderate',
+    cost: '₹0 / month (Pure price reduction)',
+    risk: 'High',
+    feasibility: 'High',
+    timeToImpact: '0 - 7 days',
+    strategicFit: 'Low',
+    confidence: 62,
+    whyThisOption: {
+      supportingEvidence: [
+        'Simple to implement across all products and regions',
+        'Immediate effect on price-sensitive customers',
+      ],
+      potentialUpside: 'Quick revenue recovery if customers respond strongly to lower prices',
+      risks: [
+        'Across-the-board margin destruction affecting profitable products',
+        'Trains customers to expect lower prices permanently',
+        'Competitors may not match, causing unfair competitive disadvantage',
+      ],
+      dependencies: [
+        'Legal review of pricing strategy',
+        'Sales team alignment on new pricing tiers',
+      ],
+      whatMustBeTrue: [
+        'Price elasticity is high enough to offset margin loss',
+        'Competitors will not react with deeper discounts',
+        'Current customer base remains price-sensitive',
+      ],
+    },
+  },
+  {
+    id: 'opt-3',
+    name: 'Marketing Blitz Campaign',
+    isRecommended: false,
+    expectedImpact: '+₹8.6L / month revenue recovery (+4.0%)',
+    evidenceStrength: 'Weak',
+    cost: '₹8.5L / month (Aggressive acquisition spend)',
+    risk: 'Medium',
+    feasibility: 'Medium',
+    timeToImpact: '60 - 90 days',
+    strategicFit: 'Medium',
+    confidence: 58,
+    whyThisOption: {
+      supportingEvidence: [
+        'Brand awareness is below category leaders',
+        'Top-of-funnel metrics show opportunity for growth',
+      ],
+      potentialUpside: 'New customer acquisition that could offset churn',
+      risks: [
+        'Long lead time before ROI is realized',
+        'Acquisition costs may exceed customer lifetime value',
+        'Does not address root cause of Product A decline',
+      ],
+      dependencies: [
+        'Creative assets ready for multi-channel rollout',
+        'Media buying capacity scaled up',
+      ],
+      whatMustBeTrue: [
+        'CAC payback period is under 6 months',
+        'New customer quality matches existing high-value segments',
+        'Marketing channels can deliver scale quickly',
+      ],
+    },
+  },
+];
+
+// ============================================================================
+// RISK RADAR ITEMS
+// ============================================================================
+
+export const RISK_RADAR_ITEMS: RiskRadarItem[] = [
+  {
+    category: 'Margin Preservation',
+    level: 'MEDIUM',
+    evidence: 'Across-the-board price reduction would compress gross margins by 300-400 bps',
+    mitigation: 'Use targeted interventions that preserve overall margin structure'
+  },
+  {
+    category: 'Competitive Response',
+    level: 'HIGH',
+    evidence: 'Competitor has demonstrated willingness to engage in price wars',
+    mitigation: 'Build competitive moats through service and product differentiation'
+  },
+  {
+    category: 'Customer Churn',
+    level: 'HIGH',
+    evidence: '90-day repeat rate dropped 12.7% in affected regions',
+    mitigation: 'Implement retention programs before churn becomes permanent'
+  },
+  {
+    category: 'Execution Risk',
+    level: 'LOW-MEDIUM',
+    evidence: 'Distributor alignment required for regional intervention',
+    mitigation: 'Co-funding structure to align incentives with execution partners'
+  },
+  {
+    category: 'Forecast Uncertainty',
+    level: 'MEDIUM',
+    evidence: 'Projection confidence band spans -2% to +8% recovery range',
+    mitigation: 'Pilot program with measurable weekly checkpoints'
+  },
+  {
+    category: 'Data Limitations',
+    level: 'LOW',
+    evidence: 'Customer 360 CDP has 5% missing data for repeat rate calculation',
+    mitigation: 'Data quality monitoring and imputation where appropriate'
+  }
+];
+
+// ============================================================================
+// MOCK DATA (for backward compatibility with existing components)
+// ============================================================================
+
 export const MOCK_CHART_SERIES: ChartDataPoint[] = [
   { period: 'Month 1', revenue: 3.65, baseline: 3.60, productA: 1.72, productOthers: 1.93, repeatCustomers: 51.2, newCustomers: 14.8 },
   { period: 'Month 2', revenue: 3.52, baseline: 3.62, productA: 1.64, productOthers: 1.88, repeatCustomers: 49.8, newCustomers: 14.5 },
@@ -482,98 +941,9 @@ export const MOCK_REGIONS: RegionBreakdown[] = [
   { name: 'Region East', revenue: 3.20, share: 17.4, growth: -2.0, flag: 'Stable' },
 ];
 
-export const EXAMPLE_QUESTIONS = [
-  {
-    title: 'Why are our sales declining?',
-    prompt: 'Our sales have fallen over the last six months. Find the major drivers and recommend what management should do next.',
-  },
-  {
-    title: 'Which products should we prioritize?',
-    prompt: 'Which products should we prioritize across our regional channels to maximize high-margin growth in Q3/Q4?',
-  },
-  {
-    title: 'Which region has the biggest growth opportunity?',
-    prompt: 'Evaluate our performance by territory to identify which region has the highest untapped expansion potential versus risk.',
-  },
-  {
-    title: 'Should we reduce prices or increase marketing?',
-    prompt: 'Should we reduce prices or increase marketing spend to counter emerging competitor promotional pressure?',
-  },
-];
-
-export const DEFAULT_BUSINESS_CONTEXT: BusinessContext = {
-  companyName: 'Demo Retail Co.',
-  industry: 'E-commerce',
-  primaryMarket: 'India',
-  businessObjective: 'Increase profitable revenue',
-  currentStrategy: 'Premium product positioning',
-  knownConstraints: 'Limited marketing budget',
-  importantKpis: ['Revenue', 'Gross Margin', 'Customer Retention', 'Average Order Value'],
-  managementPriorities: 'Improve profitability without losing customers',
-};
-
-export const DEFAULT_DATA_SOURCES: DataSource[] = [
-  {
-    id: 'src-1',
-    name: 'Sales Data',
-    type: 'CSV',
-    status: 'Connected',
-    recordsCount: 78420,
-    fieldsCount: 11,
-    selected: true,
-    description: 'Consolidated transactional revenue, SKU velocity & regional channel ledger',
-  },
-  {
-    id: 'src-2',
-    name: 'Customer Data',
-    type: 'Excel',
-    status: 'Connected',
-    recordsCount: 42110,
-    fieldsCount: 9,
-    selected: true,
-    description: 'Cohort repeat purchase rates, customer tiering & geographic churn history',
-  },
-  {
-    id: 'src-3',
-    name: 'Marketing Data',
-    type: 'CSV',
-    status: 'Connected',
-    recordsCount: 21851,
-    fieldsCount: 7,
-    selected: true,
-    description: 'Ad spend by region, conversion rates, CAC and promotional discount records',
-  },
-  {
-    id: 'src-4',
-    name: 'Warehouse & ERP Database',
-    type: 'Database',
-    status: 'Ready',
-    recordsCount: 195000,
-    fieldsCount: 34,
-    selected: false,
-    description: 'PostgreSQL connector to regional distribution center inventory levels',
-  },
-  {
-    id: 'src-5',
-    name: 'Competitor Price Tracker API',
-    type: 'API',
-    status: 'Ready',
-    recordsCount: 12400,
-    fieldsCount: 8,
-    selected: false,
-    description: 'Live webhook scraping category pricing across e-commerce & retail portals',
-  },
-  {
-    id: 'src-6',
-    name: 'Q4 Strategic Retrospective',
-    type: 'Previous Analysis',
-    status: 'Ready',
-    recordsCount: 1,
-    fieldsCount: 14,
-    selected: false,
-    description: 'CorporateBaddie run CB-DEMO-000 historical baseline and variance logs',
-  },
-];
+// ============================================================================
+// DATA RELATIONSHIPS (Legacy format for backward compatibility)
+// ============================================================================
 
 export const DATA_RELATIONSHIPS: DataRelationship[] = [
   {
@@ -598,6 +968,10 @@ export const DATA_RELATIONSHIPS: DataRelationship[] = [
   },
 ];
 
+// ============================================================================
+// DECOMPOSED QUESTIONS (Legacy format)
+// ============================================================================
+
 export const DECOMPOSED_QUESTIONS: DecomposedQuestion[] = [
   {
     id: 1,
@@ -607,14 +981,14 @@ export const DECOMPOSED_QUESTIONS: DecomposedQuestion[] = [
     confidence: 'High',
     claimRef: 'CLM-017',
   },
-{
-     id: 2,
-     question: 'When did the decline begin?',
-     status: 'Answered',
-     evidenceFound: 'Began in Month 3, accelerating steeply in Months 4-6 following competitor campaigns.',
-     confidence: 'High',
-     claimRef: 'CLM-017',
-   },
+  {
+    id: 2,
+    question: 'When did the decline begin?',
+    status: 'Answered',
+    evidenceFound: 'Began in Month 3, accelerating steeply in Months 4-6 following competitor campaigns.',
+    confidence: 'High',
+    claimRef: 'CLM-017',
+  },
   {
     id: 3,
     question: 'Which products are responsible?',
@@ -673,6 +1047,10 @@ export const DECOMPOSED_QUESTIONS: DecomposedQuestion[] = [
   },
 ];
 
+// ============================================================================
+// DYNAMIC PLAN TASKS (Legacy format)
+// ============================================================================
+
 export const DYNAMIC_PLAN_TASKS: DynamicInvestigationTask[] = [
   {
     id: 'task-1',
@@ -727,298 +1105,428 @@ export const DYNAMIC_PLAN_TASKS: DynamicInvestigationTask[] = [
     evidenceOutcome: 'South repeat buyers defecting to competitor bundle at 2.4x higher rate',
   },
 ];
+// ============================================================================
+// DEFAULTS FOR BACKWARD COMPATIBILITY (Legacy investigation engine)
+// ============================================================================
 
-export const DECISION_ROOM_OPTIONS: DecisionRoomOption[] = [
+export const DEFAULT_DATA_SOURCES: LegacyDataSource[] = DEMO_DATA_SOURCES.map(mapWSDataSourceToLegacy);
+
+export const DEFAULT_DISCOVERED_ANOMALIES: DiscoveredAnomaly[] = [
   {
-    id: 'opt-1',
-    name: 'Targeted Pricing & Regional Intervention',
-    isRecommended: true,
-    expectedImpact: '+₹18.4L / month revenue recovery (+8.2%)',
-    evidenceStrength: 'Strong',
-    cost: '₹2.8L / month (Targeted promo & co-op marketing)',
-    risk: 'Low',
-    feasibility: 'High',
-    timeToImpact: '30 - 45 days',
-    strategicFit: 'High',
-    confidence: 84,
-    whyThisOption: {
-      supportingEvidence: [
-        'Isolates Product A in Region South, where 68.2% of total business decline originated [CLM-024, CLM-027].',
-        'Directly counters Competitor A localized 15-20% promotional discounts without devaluing other regions [CLM-030].',
-        'Preserves company gross margin floor (minimum 38%) and respects limited marketing budget constraints.',
-      ],
-      potentialUpside: 'Restores South repurchase rates from 42.8% back toward 48% within 60 days, recovering ~₹55L quarterly ARR.',
-      risks: [
-        'Cross-regional gray market arbitrage if regional discount exceeds 15%.',
-        'Distributor margin pushback if co-op marketing incentives are delayed.',
-      ],
-      dependencies: [
-        'Regional distributor sign-off on co-funded incentive structure in Region South.',
-        'Marketing team ready with localized South messaging highlighting premium feature superiority.',
-      ],
-      whatMustBeTrue: [
-        'Customer demand elasticity in Region South responds to value bundle vs raw price cut.',
-        'Competitor A does not escalate price war into North and West regions.',
-        'Product A inventory in Southern distribution hubs can handle +12% volume lift.',
-      ],
-    },
-  },
-  {
-    id: 'opt-2',
-    name: 'Marketing Expansion (Broad-Scale Awareness)',
-    isRecommended: false,
-    expectedImpact: '+₹11.2L / month revenue (+4.8%)',
-    evidenceStrength: 'Moderate',
-    cost: '₹8.5L / month (High digital acquisition spend)',
-    risk: 'Medium',
-    feasibility: 'Medium',
-    timeToImpact: '60 - 90 days',
-    strategicFit: 'Medium',
-    confidence: 62,
-    whyThisOption: {
-      supportingEvidence: [
-        'Top-of-funnel traffic has remained relatively stable; issue is churn among existing buyers [CLM-026].',
-        'Violates management constraint on limited marketing budget and does not address localized pricing friction in South.',
-      ],
-      potentialUpside: 'Increases brand visibility across India, lifting Product B and C top-of-funnel conversion.',
-      risks: [
-        'Dilutes ROAS if advertising pours into territories experiencing severe price-undercutting.',
-        'High cash burn without resolving repeat customer defection.',
-      ],
-      dependencies: ['Substantial marketing budget authorization (>₹25L quarterly).'],
-      whatMustBeTrue: ['CAC remains below ₹420 per converted account in an aggressive bidding climate.'],
-    },
-  },
-  {
-    id: 'opt-3',
-    name: 'Product Portfolio Change (Accelerate Product B & C)',
-    isRecommended: false,
-    expectedImpact: '+₹14.0L / month revenue (+6.1%)',
-    evidenceStrength: 'Moderate',
-    cost: '₹5.0L / month (R&D & SKU re-tooling)',
-    risk: 'Medium',
-    feasibility: 'Low',
-    timeToImpact: '120 - 180 days',
-    strategicFit: 'Medium',
-    confidence: 58,
-    whyThisOption: {
-      supportingEvidence: [
-        'Product B is growing (+2.1%) and Product C is stable, but cannot offset Product A 42.5% revenue weight in short term.',
-        'High execution lag time makes it ineffective for reversing trailing 6-month contraction.',
-      ],
-      potentialUpside: 'Diversifies company revenue away from Product A dependency over 12-18 months.',
-      risks: ['Product A continues contracting unmitigated while new lines ramp up.'],
-      dependencies: ['Product engineering and supply chain lead times of 3-6 months.'],
-      whatMustBeTrue: ['Product B margins can sustain higher production volume without unit cost spikes.'],
-    },
-  },
-  {
-    id: 'opt-4',
-    name: 'Do Nothing (Observe Organic Recovery)',
-    isRecommended: false,
-    expectedImpact: 'Negative: Ongoing -₹4.2L / month contraction',
-    evidenceStrength: 'Weak',
-    cost: '₹0 direct expenditure',
-    risk: 'High',
-    feasibility: 'High',
-    timeToImpact: 'Immediate',
-    strategicFit: 'Low',
-    confidence: 25,
-    whyThisOption: {
-      supportingEvidence: [
-        'Decline has worsened across three consecutive periods (-14.8% -> -18.2% -> -21.0%) with zero stabilization [CLM-017].',
-        'Competitor promotional activity is compounding customer habituation to rival alternatives.',
-      ],
-      potentialUpside: 'Avoids cash expenditure and prevents margin erosion if market churn reverses on its own.',
-      risks: [
-        'Permanent market share surrender to Competitor A in key industrial hubs.',
-        'Loss of critical distributor shelf space and high-value customer relationships.',
-      ],
-      dependencies: ['None.'],
-      whatMustBeTrue: ['Competitor A promotional blitz terminates within 30 days due to competitor insolvency or capital depletion.'],
-    },
+    metric: 'Revenue',
+    deviation: '-14.2% over 6 months',
+    dimension: 'Product A in Region South',
+    severity: 'HIGH',
+    evidenceRef: 'CLAIM-017: Internal ERP ledger audit confirms -$3.05M total contraction',
   },
 ];
 
-export const RISK_RADAR_ITEMS: RiskRadarItem[] = [
+export const DEFAULT_COUNTERFACTUAL: CounterfactualAnalysis = {
+  robustnessRating: 'SENSITIVE',
+  whyPreferred: 'Targeted intervention in Region South with Product A bundle shows highest risk-adjusted ROI with minimal margin impact',
+  evidenceAdvantageOverAlternatives: 'Strong evidence from regional sales data and customer churn interviews in South territory',
+  dependentAssumptions: [
+    'Competitor A does not escalate price war into South region',
+    'Distributor co-funding agreement is finalized within 14 days',
+    'Current product inventory in South distribution hubs can handle +12% volume lift',
+  ],
+  reversalTriggers: [
+    'Product A recovered without intervention (e.g. if backlogged orders clear naturally in next 30 days)',
+    'Region South decline was caused by a temporary event (e.g. extreme local logistics disruption)',
+    'Competitor pricing returned to normal (e.g. if rival promotional campaign was short-lived fiscal year-end blitz)',
+  ],
+  inactionDownside: 'Continued decline至 -$4.2M annualized revenue loss with 65% probability',
+  smallestSafeExperiment: 'Run 30-day controlled test with 15% budget allocation to validate South region intervention effectiveness',
+};
+
+export const DEFAULT_SCENARIOS: MultiScenarioItem[] = [
   {
-    category: 'Market Risk',
-    level: 'MEDIUM',
-    evidence: 'Competitive activity is increasing in target category (+18% category promotional share).',
-    mitigation: 'Run a controlled regional intervention before scaling.',
+    id: 'scenario-1',
+    name: 'Base Case',
+    label: 'MODELLED ESTIMATE',
+    isBaseline: true,
+    modeledOutputs: {
+      revenueDelta: 0,
+      grossMarginDelta: 0,
+    },
+    riskLevel: 'Medium',
+    feasibility: 'High',
+    timeToPayoffMonths: 60,
+    supportingEvidenceRefs: [],
+    assumptions: ['Competitor pricing stabilizes, no major economic shocks'],
+    downsides: ['No growth if market shifts unexpectedly'],
   },
   {
-    category: 'Data Risk',
-    level: 'LOW-MEDIUM',
-    evidence: 'Some customer records are incomplete (missing 9% demographic tags in West territory).',
-    mitigation: 'Validate customer-level retention metrics before execution.',
+    id: 'scenario-2',
+    name: 'Optimistic Case',
+    label: 'MODELLED ESTIMATE',
+    isRecommended: true,
+    modeledOutputs: {
+      revenueDelta: 1400000,
+      grossMarginDelta: 170000,
+    },
+    riskLevel: 'Low',
+    feasibility: 'Medium',
+    timeToPayoffMonths: 90,
+    supportingEvidenceRefs: ['CLM-031', 'CLM-032'],
+    assumptions: ['Intervention successful, competitor retreats'],
+    downsides: ['Competitor may match discount, reducing net benefit'],
   },
   {
-    category: 'Financial Risk',
-    level: 'MEDIUM',
-    evidence: 'Broad discounting could erode gross margins below the 38% hurdle rate.',
-    mitigation: 'Cap pricing incentives strictly to Product A bundles in Region South with co-op distributor offsets.',
+    id: 'scenario-3',
+    name: 'Pessimistic Case',
+    label: 'STRESS TEST',
+    modeledOutputs: {
+      revenueDelta: -1300000,
+      grossMarginDelta: -320000,
+    },
+    riskLevel: 'High',
+    feasibility: 'Medium',
+    timeToPayoffMonths: 120,
+    supportingEvidenceRefs: ['CLM-032'],
+    assumptions: ['Price war escalates, customer churn accelerates'],
+    downsides: ['Margin compression may trigger further customer attrition'],
+  },
+];
+
+export const DEFAULT_EVIDENCE_GRAPH: ExecutionGraphNode[] = [
+  {
+    id: 'node-1',
+    label: 'Investigation Started',
+    dimension: 'orchestration',
+    status: 'COMPLETED',
+    summary: 'Initial inquiry received and investigation pipeline initiated',
+    prerequisiteIds: [],
+    evidenceFound: 'Investigation pipeline started with runId CB-DEMO-001',
   },
   {
-    category: 'Customer Risk',
-    level: 'HIGH',
-    evidence: 'Repeat customer cohort retention has dropped 12.7% over the last 90 days.',
-    mitigation: 'Deploy targeted loyalty incentives and personalized account check-ins to prevent customer defection.',
+    id: 'node-2',
+    label: 'Business Question Analysis',
+    dimension: 'orchestration',
+    status: 'COMPLETED',
+    summary: 'Question classified as Diagnostic + Prescriptive type',
+    prerequisiteIds: ['node-1'],
+    evidenceFound: 'Question parsed into diagnostic root cause and prescriptive decision scope',
   },
   {
-    category: 'Execution Risk',
-    level: 'LOW',
-    evidence: 'Regional sales ops and distributor partnerships are already active in target zones.',
-    mitigation: 'Pilot intervention with top 5 regional distributors before territorial rollout.',
+    id: 'node-3',
+    label: 'Data Profiling',
+    dimension: 'data_profiling',
+    status: 'COMPLETED',
+    summary: 'Data quality verified across 284,520 rows',
+    prerequisiteIds: ['node-2'],
+    evidenceFound: '91% data completeness confirmed across 3 data sources',
   },
   {
-    category: 'Operational Risk',
-    level: 'LOW-MEDIUM',
-    evidence: 'Warehouse inventory in South requires buffer stock to support potential +12% volume recovery.',
-    mitigation: 'Pre-position 2,500 units of Product A in Bangalore distribution hub prior to campaign launch.',
+    id: 'node-4',
+    label: 'Root Cause Analysis',
+    dimension: 'diagnostics',
+    status: 'COMPLETED',
+    summary: 'Product A and Region South isolated as primary failure nodes',
+    prerequisiteIds: ['node-3'],
+    evidenceFound: 'Product A (-21.0%) and Region South (-18.4%) account for majority of decline',
+  },
+  {
+    id: 'node-5',
+    label: 'Evidence Verification',
+    dimension: 'evidence',
+    status: 'COMPLETED',
+    summary: '10/12 claims verified, 2 bounds flagged',
+    prerequisiteIds: ['node-4'],
+    evidenceFound: 'Evidence audit complete with 88% verification rate',
+  },
+  {
+    id: 'node-6',
+    label: 'Recommendation Generated',
+    dimension: 'recommendation',
+    status: 'COMPLETED',
+    summary: 'Option C (Targeted South intervention) selected as optimal',
+    prerequisiteIds: ['node-5'],
+    evidenceFound: 'Decision matrix evaluation: Option C achieves highest risk-adjusted ROI (9.1/10)',
+  },
+];
+
+// ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
+
+function mapWSDataSourceToLegacy(source: WSDataSource): LegacyDataSource {
+  return {
+    id: source.id,
+    name: source.name,
+    type: source.type,
+    status: source.status,
+    recordsCount: source.rows || 0,
+    fieldsCount: source.columns || 0,
+    selected: source.selected,
+    description: source.description || '',
+  };
+}
+// ============================================================================
+// ADDITIONAL MOCK DATA FOR BACKWARD COMPATIBILITY
+// ============================================================================
+
+export const GROUNDED_QA_PAIRS = [
+  {
+    question: 'What products are driving our margin changes?',
+    answer: 'Product A shows -21.0% decline accounting for 68.2% of total company variance',
+    source: 'Product SKU Performance Warehouse (dim_product_sales)',
+    confidence: 94,
+  },
+  {
+    question: 'Where are customers dropping off?',
+    answer: 'Region South shows 18.4% decline with 42.8% repeat purchase rate (-12.7% drop)',
+    source: 'Regional Distribution Telemetry (fct_territory_sales)',
+    confidence: 91,
+  },
+  {
+    question: 'Which regions need attention?',
+    answer: 'Region South is the geographic epicenter, down -18.4% compared to +1.2% in West',
+    source: 'Regional Distribution Telemetry (fct_territory_sales)',
+    confidence: 91,
+  },
+  {
+    question: 'What should we investigate before increasing marketing spend?',
+    answer: 'Evaluate current marketing efficiency: existing channels show 4.2x ROI, acquisition costs at 38% margin threshold',
+    source: 'Marketing Campaign Analytics (fct_marketing_attribution)',
+    confidence: 88,
   },
 ];
 
 export const OPPORTUNITY_RADAR_ITEMS: OpportunityItem[] = [
   {
-    id: 'opp-1',
-    category: 'Product',
-    title: 'Product B shows strong growth but low marketing exposure',
-    description: 'Product B grew +2.1% despite receiving only 8% of total marketing allocation. Highly resilient unit economics.',
-    potentialImpact: '+₹18L - ₹24L incremental ARR',
-    evidenceStrength: 'Strong',
-    confidence: 88,
-    recommendedNextStep: 'Reallocate 15% of generic brand ad spend to Product B search and display campaigns.',
-    filterTags: ['Revenue', 'Profit', 'Products'],
+    id: 'OPP-001',
+    category: 'Upsell to Existing Customers',
+    title: 'Upsell to Existing Customers',
+    description: '42.8% repeat rate indicates strong retention potential',
+    potentialImpact: '$2.4M revenue opportunity',
+    evidenceStrength: 'High',
+    confidence: 85,
+    recommendedNextStep: 'Launch targeted upsell campaign to high-value repeat customers',
+    filterTags: ['upsell', 'retention', 'high-confidence'],
   },
   {
-    id: 'opp-2',
-    category: 'Regional',
-    title: 'Region West has strong customer growth and relatively low competition',
-    description: 'Region West achieved +1.2% growth with low rival promotional pressure and highest repeat buyer loyalty (52%).',
-    potentialImpact: '+14% territorial revenue expansion',
-    evidenceStrength: 'Strong',
+    id: 'OPP-002',
+    category: 'Expand to New Regions',
+    title: 'Expand to New Regions',
+    description: 'West region shows +1.2% growth, model extrapolates 60% capture potential',
+    potentialImpact: '$3.8M revenue opportunity',
+    evidenceStrength: 'Medium',
+    confidence: 70,
+    recommendedNextStep: 'Conduct market analysis and pilot program in West region',
+    filterTags: ['expansion', 'regional', 'growth'],
+  },
+  {
+    id: 'OPP-003',
+    category: 'Product Bundle Optimization',
+    title: 'Product Bundle Optimization',
+    description: 'Product A-D bundle shows 23% higher retention than individual SKUs',
+    potentialImpact: '$1.6M revenue opportunity',
+    evidenceStrength: 'High',
+    confidence: 90,
+    recommendedNextStep: 'Implement optimized bundle pricing and promotion',
+    filterTags: ['product', 'bundle', 'optimization', 'high-confidence'],
+  },
+  {
+    id: 'OPP-004',
+    category: 'Pricing Tier Adjustment',
+    title: 'Pricing Tier Adjustment',
+    description: 'Tier-2 segment shows 18% price elasticity, targeted adjustment recommended',
+    potentialImpact: '$2.1M revenue opportunity',
+    evidenceStrength: 'Medium',
+    confidence: 75,
+    recommendedNextStep: 'Test price adjustments in controlled segment',
+    filterTags: ['pricing', 'optimization', 'tier-2'],
+  },
+];
+
+export const COMPETITOR_LANDSCAPE = [
+  {
+    competitor: 'Competitor A',
+    marketShare: 28.4,
+    pricingPressure: 'High',
+    productStrength: 'Premium features',
+    threatLevel: 'Critical',
+    evidence: '15-20% promotional discounts in South corridors',
+    recentMoves: 'Launched competitive bundle targeting Product A enterprise tier',
+  },
+  {
+    competitor: 'Competitor B',
+    marketShare: 19.2,
+    pricingPressure: 'Medium',
+    productStrength: 'Value segment',
+    threatLevel: 'Medium',
+    evidence: 'Aggressive channel partner incentives',
+    recentMoves: 'Extended distributor margin from 12% to 18%',
+  },
+  {
+    competitor: 'Competitor C',
+    marketShare: 12.7,
+    pricingPressure: 'Low',
+    productStrength: 'Niche enterprise',
+    threatLevel: 'Low',
+    evidence: 'Stable pricing, focus on service differentiation',
+    recentMoves: 'Acquired analytics startup to enhance reporting capabilities',
+  },
+];
+
+export const TREND_RADAR_ITEMS = [
+  {
+    category: 'Revenue Trend',
+    direction: 'down',
+    magnitude: '-14.2%',
+    timeframe: 'Last 6 months',
+    confidence: 91,
+    explanation: 'Consistent contraction across trailing periods',
+  },
+  {
+    category: 'Customer Retention',
+    direction: 'down',
+    magnitude: '-12.7% relative drop',
+    timeframe: 'Last 90 days',
+    confidence: 89,
+    explanation: 'Repeat buyer cohort showing accelerated churn',
+  },
+  {
+    category: 'Product Mix Shift',
+    direction: 'down',
+    magnitude: '-6.4% high-margin SKU share',
+    timeframe: 'Last 180 days',
+    confidence: 85,
+    explanation: 'Product A decline driving margin compression',
+  },
+  {
+    category: 'Marketing Efficiency',
+    direction: 'flat',
+    magnitude: '4.2x ROI (stable)',
+    timeframe: 'Last 60 days',
     confidence: 82,
-    recommendedNextStep: 'Accelerate distributor onboarding and partner incentives in Maharashtra and Gujarat corridors.',
-    filterTags: ['Revenue', 'Regions', 'Market'],
-  },
-  {
-    id: 'opp-3',
-    category: 'Customer',
-    title: 'High-value customers show strong repeat-purchase potential',
-    description: 'Top 15% of customer accounts have 3.4x higher LTV and remain loyal when provided exclusive bundle perks.',
-    potentialImpact: '+22% retention uplift',
-    evidenceStrength: 'Strong',
-    confidence: 86,
-    recommendedNextStep: 'Launch dedicated VIP retention program with priority delivery and customized replenishment terms.',
-    filterTags: ['Customers', 'Profit'],
-  },
-  {
-    id: 'opp-4',
-    category: 'Margin',
-    title: 'Product C has strong demand but unusually high discounting',
-    description: 'Product C averages 24% off MSRP despite steady organic demand. Price elasticity suggests low sensitivity to discount reduction.',
-    potentialImpact: '+210 bps gross margin recovery',
-    evidenceStrength: 'Moderate',
-    confidence: 78,
-    recommendedNextStep: 'Cap maximum distributor discount on Product C at 12%, immediately reclaiming margin.',
-    filterTags: ['Profit', 'Products', 'Revenue'],
+    explanation: 'Acquisition costs stable but volume lagging',
   },
 ];
 
-export const COMPETITOR_LANDSCAPE: CompetitorInfo[] = [
+export const EMERGING_SIGNALS = [
   {
-    name: 'Competitor A',
-    pricing: 'Aggressive: 15-20% localized promo discounts',
-    promotion: 'Heavy digital blitz & regional distributor incentives',
-    productPosition: 'Direct premium alternative targeting Product A',
-    marketSignal: '+18% category promotional share in Q2',
-    correlatedInternalFinding: 'Directly correlates with -31.4% Product A volume collapse in Region South.',
+    id: 'SIG-001',
+    title: 'Competitor Price War Initiated',
+    category: 'Market',
+    severity: 'High',
+    timestamp: '2026-09-05T00:00:00Z',
+    description: 'Competitor A launched 15-20% promotional discounts in southern industrial hubs targeting Product A enterprise tier',
+    source: 'Market Intelligence / Pricing Benchmarks',
+    confidence: 87,
+    potentialImpact: '-$1.8M annualized revenue at risk if unaddressed',
+    recommendedActions: [
+      'Implement targeted counter-bundle in Region South',
+      'Monitor competitor response to intervention',
+      'Prepare contingency pricing tiers',
+    ],
   },
   {
-    name: 'Competitor B',
-    pricing: 'Stable / Premium parity with Demo Retail Co.',
-    promotion: 'Focused on enterprise B2B contracts',
-    productPosition: 'Institutional & enterprise supply',
-    marketSignal: 'Steady market share across North and West',
-    correlatedInternalFinding: 'Explains why Region North has remained relatively stable (-3.1%).',
+    id: 'SIG-002',
+    title: 'Regional Buyer Consolidation',
+    category: 'Operational',
+    severity: 'Medium',
+    timestamp: '2026-09-08T00:00:00Z',
+    description: 'South region distributor groups merged two centralized procurement committees, extending purchase review cycles from 14 to 38 days',
+    source: 'Supply Chain Trade Intelligence',
+    confidence: 82,
+    potentialImpact: '-$0.9M quarterly revenue due to extended sales cycles',
+    recommendedActions: [
+      'Engage distributor executives directly',
+      'Implement JIT inventory sharing',
+      'Prepare temporary sales force incentives',
+    ],
   },
   {
-    name: 'Competitor C',
-    pricing: 'Value tier / budget packaging',
-    promotion: 'Low / sporadic discount coupons',
-    productPosition: 'Entry-level consumers with lower build quality',
-    marketSignal: 'Minimal market movement in premium segments',
-    correlatedInternalFinding: 'No meaningful customer cannibalization detected among high-LTV accounts.',
-  },
-];
-
-export const TREND_RADAR_ITEMS: TrendItem[] = [
-  { metric: 'Revenue', status: 'Declining', detail: '-14.2% top-line contraction over trailing 6 months (-$3.05M total variance).' },
-  { metric: 'Customer behavior', status: 'Declining', detail: 'Repeat cohort repurchase rate slipped from 49.0% to 42.8% (-12.7% drop).' },
-  { metric: 'Product demand', status: 'Declining', detail: 'Product A volume dropped -21.0%; other product lines remain resilient (+0.8% to +2.1%).' },
-  { metric: 'Pricing', status: 'Emerging', detail: 'Market pricing pressure intensifying; category rivals running localized 15-20% discounts.' },
-  { metric: 'Margins', status: 'Declining', detail: 'Gross margin compressed by 180 bps due to loss of high-margin Product A sales mix.' },
-  { metric: 'Market activity', status: 'Increasing', detail: 'Competitor promotional intensity up +18% in Southern regional corridors.' },
-];
-
-export const EMERGING_SIGNALS: EmergingSignal[] = [
-  {
-    id: 'sig-1',
-    title: 'Repeat customer decline is accelerating',
-    signalType: 'Customer Retention Risk',
-    evidence: '90-day repurchase rate dropped from 49.0% to 42.8% across three consecutive cohorts [CLM-026].',
-    confidence: 'High',
-    recommendedInvestigation: 'Conduct structured customer feedback interviews with 50 recently churned southern distributor accounts.',
-  },
-  {
-    id: 'sig-2',
-    title: 'Product A demand has weakened for three consecutive periods',
-    signalType: 'Product Lifecycle Friction',
-    evidence: 'Monthly contraction progressed from -14.8% -> -18.2% -> -21.0% [CLM-024].',
-    confidence: 'High',
-    recommendedInvestigation: 'Analyze SKU feature parity against Competitor A latest bundle release.',
-  },
-  {
-    id: 'sig-3',
-    title: 'Competitor promotional activity appears to be increasing',
-    signalType: 'External Market Pressure',
-    evidence: '3 independent external signals confirm localized 15-20% promotional incentives [CLM-030].',
-    confidence: 'Medium',
-    recommendedInvestigation: 'Track whether Competitor A promotional blitz transitions into permanent MSRP repricing.',
+    id: 'SIG-003',
+    title: 'Macro Input Cost Elasticity',
+    category: 'Economic',
+    severity: 'Medium',
+    timestamp: '2026-09-10T00:00:00Z',
+    description: 'Enterprise clients delaying mid-tier SKU replenishment while grandfathering Tier-B software/hardware bundles',
+    source: 'Sector Purchasing Sentiment Survey',
+    confidence: 79,
+    potentialImpact: 'Shift in demand from Product A/B to legacy Tier-B bundles',
+    recommendedActions: [
+      'Accelerate Product A bundling to retain enterprise clients',
+      'Prepare legacy Tier-B inventory clearance campaign',
+      'Monitor procurement budget cycles',
+    ],
   },
 ];
 
-export const GROUNDED_QA_PAIRS = [
-  {
-    question: 'Why did you recommend Product A?',
-    answer:
-      'CorporateBaddie recommended Product A because it represents 42.5% of total company revenue and accounted for 68.2% of the net top-line decline [CLM-024]. While Product B and D are stable, reversing the business decline requires addressing the primary driver rather than secondary lines.',
-    referencedClaims: ['CLM-017', 'CLM-024'],
-  },
-  {
-    question: 'Show me the evidence for Region South.',
-    answer:
-      'In Region South, sales declined by -18.4% [CLM-027], and Product A velocity fell -31.4%—more than three times the rate of any other territory. Furthermore, external market intelligence verified that Competitor A launched a localized 15-20% promotional blitz in this specific territory [CLM-030].',
-    referencedClaims: ['CLM-027', 'CLM-030'],
-  },
-  {
-    question: "What if we don't reduce prices?",
-    answer:
-      'If prices are not adjusted, the scenario simulator and causal chain project an ongoing -₹4.2L/month top-line erosion as repeat buyers continue defecting to Competitor A [CLM-026]. However, CorporateBaddie specifically advises against company-wide price cuts—recommending instead a targeted regional value bundle in Region South to preserve overall gross margin.',
-    referencedClaims: ['CLM-026', 'CLM-031'],
-  },
-  {
-    question: 'Which customers are most at risk?',
-    answer:
-      'Existing repeat customers in Region South represent the highest immediate risk. Cohort repurchase rates plummeted from 49.0% to 42.8% (-12.7%) [CLM-026], indicating defection to cheaper rival bundles rather than top-of-funnel acquisition failure.',
-    referencedClaims: ['CLM-026', 'CLM-028'],
-  },
-  {
-    question: 'What would happen if marketing budget increased?',
-    answer:
-      'Simulations indicate broad marketing expansion would only deliver +4.8% revenue recovery at a high cost of ₹8.5L/month [CLM-031]. Because top-of-funnel discovery remains healthy, spending marketing dollars without fixing the price/value friction in Region South yields poor ROAS.',
-    referencedClaims: ['CLM-026', 'CLM-031'],
-  },
-];
+// ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
 
+// ============================================================================
+// TYPE ALIASES FOR BACKWARD COMPATIBILITY WITH types.ts
+// ============================================================================
+
+export type LegacyDataSource = {
+  id: string;
+  name: string;
+  type: string;
+  status: string;
+  recordsCount: number;
+  fieldsCount: number;
+  selected: boolean;
+  description: string;
+};
+
+export type DiscoveredAnomaly = {
+  metric: string;
+  deviation: string;
+  dimension: string;
+  severity: 'HIGH' | 'MEDIUM' | 'LOW';
+  evidenceRef: string;
+};
+
+export type CounterfactualAnalysis = {
+  robustnessRating: 'ROBUST' | 'SENSITIVE' | 'FRAGILE';
+  whyPreferred: string;
+  evidenceAdvantageOverAlternatives: string;
+  dependentAssumptions: string[];
+  reversalTriggers: string[];
+  inactionDownside: string;
+  smallestSafeExperiment: string;
+};
+
+export type MultiScenarioItem = {
+  id: string;
+  name: string;
+  label: 'MODELLED ESTIMATE' | 'STRESS TEST' | string;
+  isRecommended?: boolean;
+  isBaseline?: boolean;
+  modeledOutputs: {
+    revenueDelta: number;
+    grossMarginDelta: number;
+  };
+  riskLevel: 'Low' | 'Medium' | 'High' | string;
+  feasibility: 'Low' | 'Medium' | 'High' | string;
+  timeToPayoffMonths: number;
+  supportingEvidenceRefs: string[];
+  assumptions: string[];
+  downsides: string[];
+};
+
+export type ExecutionGraphNode = {
+  id: string;
+  label: string;
+  dimension: string;
+  status: 'COMPLETED' | 'RUNNING' | 'PLANNED' | 'SKIPPED' | 'BLOCKED' | 'REQUIRES MORE DATA';
+  summary: string;
+  prerequisiteIds: string[];
+  isAdaptiveBranch?: boolean;
+  evidenceFound?: string;
+  requiresDataSourceId?: string;
+  anomalyDetected?: boolean;
+  whySelected?: string;
+  inputRequired?: string[];
+  sufficiencyCheck?: string;
+  nextToolIfInsufficient?: string;
+  executorId?: string;
+  executorName?: string;
+  executorCategory?: 'REASONING_AGENT' | 'ANALYTICAL_SERVICE';
+};

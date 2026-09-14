@@ -571,3 +571,13 @@ export interface InvestigationState {
   risks?: string[];
   auditEvents?: AuditEvent[];
 }
+
+// ============================================================================
+// CSV PARSING TYPES
+// ============================================================================
+
+export interface ParsedCSVResult {
+  rows: Record<string, any>[];
+  columns: string[];
+  rowCount: number;
+}

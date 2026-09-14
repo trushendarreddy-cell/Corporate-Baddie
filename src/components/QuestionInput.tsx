@@ -8,7 +8,7 @@ import {
   CheckCircle2,
   Loader2,
 } from 'lucide-react';
-import { DEFAULT_BUSINESS_CONTEXT, DEFAULT_DATA_SOURCES, DATA_RELATIONSHIPS } from '../mockData';
+import { EXAMPLE_QUESTIONS, DEFAULT_BUSINESS_CONTEXT, DEFAULT_DATA_SOURCES, DATA_RELATIONSHIPS } from '../mockData';
 import { BusinessContext, DataSource } from '../types';
 import { BusinessContextPanel } from './BusinessContextPanel';
 import { DataSourcesPanel } from './DataSourcesPanel';
@@ -223,31 +223,24 @@ export const QuestionInput: React.FC<QuestionInputProps> = ({
           <span className="cb-kicker">Try a real business question</span>
         </div>
         <div className="flex flex-wrap gap-2">
-          {[
-            'Why are our margins falling?',
-            'Which products are driving the revenue decline?',
-            'Should we change our pricing?',
-            'Which region should we invest in?',
-            'Why are customers leaving?',
-            'What is causing the increase in operating costs?',
-            'Are competitors putting pressure on our category?',
-            'What should we do about declining sales?',
-            'Which strategy gives us the best risk-adjusted outcome?',
-          ].map((prompt, idx) => (
+          {EXAMPLE_QUESTIONS.map((example, idx) => (
             <button
-              key={idx}
+              key={example.id}
               type="button"
-              onClick={() => handleSelectExample(prompt, idx)}
+              onClick={() => handleSelectExample(example.prompt, idx)}
               className={`text-left px-3.5 py-2.5 rounded-md border text-xs transition-all group ${
-                activeExampleIndex === idx && question === prompt
+                activeExampleIndex === idx && question === example.prompt
                   ? 'cb-selected text-emerald-100'
                   : 'bg-[#0e121b]/70 hover:bg-[#0e121b] border-slate-800/80 hover:border-slate-700 text-slate-300'
               }`}
             >
-              <span className="font-medium group-hover:text-amber-200 transition-colors">{prompt}</span>
+              <span className="font-medium group-hover:text-amber-200 transition-colors">{example.prompt}</span>
             </button>
           ))}
         </div>
+        <p className="text-xs text-slate-500 italic">
+          These are examples only. CorporateBaddie investigates your actual data to generate findings.
+        </p>
       </div>
 
       {previewStage >= 0 && (

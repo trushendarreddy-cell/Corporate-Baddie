@@ -1,7 +1,7 @@
 import React from 'react';
 import { BrainCircuit, Sparkles, Download, HelpCircle, Settings2 } from 'lucide-react';
 
-export type ModuleTab = 'overview' | 'investigate' | 'decisions' | 'evidence' | 'signals' | 'history';
+export type ModuleTab = 'overview' | 'investigate' | 'decisions' | 'evidence' | 'signals' | 'data' | 'history';
 
 interface CommandHeaderProps {
   activeTab: ModuleTab;
