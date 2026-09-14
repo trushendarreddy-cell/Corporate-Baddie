@@ -235,101 +235,112 @@ export const IntroExperience: React.FC<IntroExperienceProps> = ({ onEnter }) => 
       sphereGroup.add(vertex);
     });
 
-    // ========== VISIBLE ORBITAL RINGS (MOON-LIKE PATHS) ==========
-    const createOrbitRing = (radius: number, tiltX: number, tiltY: number, color: number, opacity: number) => {
-      const points: THREE.Vector3[] = [];
-      const segments = 128;
-      for (let i = 0; i <= segments; i++) {
-        const angle = (i / segments) * Math.PI * 2;
-        const x = Math.cos(angle) * radius;
-        const y = Math.sin(angle) * radius * 0.15; // Elliptical
-        const z = Math.sin(angle) * radius;
-        points.push(new THREE.Vector3(x, y, z));
-      }
-      const geo = new THREE.BufferGeometry().setFromPoints(points);
+    // ========== VISIBLE ORBITAL RINGS (CLEAR MOON-LIKE PATHS) ==========
+    const createOrbitRing = (radius: number, tiltX: number, tiltY: number, tiltZ: number, color: number, opacity: number, thickness: number = 0.01) => {
+      const curve = new THREE.EllipseCurve(
+        0, 0,
+        radius, radius * 0.8, // More elliptical
+        0, 2 * Math.PI,
+        false,
+        0
+      );
+      
+      const points = curve.getPoints(128);
+      const points3D = points.map(p => new THREE.Vector3(p.x, 0, p.y));
+      
+      const geo = new THREE.BufferGeometry().setFromPoints(points3D);
       const mat = new THREE.LineBasicMaterial({ 
         color, 
         transparent: true, 
-        opacity 
+        opacity,
+        linewidth: thickness
       });
       const ring = new THREE.Line(geo, mat);
       ring.rotation.x = tiltX;
       ring.rotation.y = tiltY;
+      ring.rotation.z = tiltZ;
       return ring;
     };
 
-    // Create 6 visible orbital rings with different colors and tilts
-    const ring1 = createOrbitRing(5.2, 0.3, 0, 0x8eb397, 0.35);
-    const ring2 = createOrbitRing(5.4, 0.6, 0.8, 0x6fa0d9, 0.3);
-    const ring3 = createOrbitRing(5.0, 0.2, 1.4, 0xb47d78, 0.35);
-    const ring4 = createOrbitRing(5.6, 0.8, 0.4, 0x7a9cc6, 0.25);
-    const ring5 = createOrbitRing(5.3, 0.4, 1.0, 0x9cb3a8, 0.3);
-    const ring6 = createOrbitRing(5.5, 0.5, 1.8, 0xc48e87, 0.25);
+    // Create 6 CLEARLY visible orbital rings with better spacing
+    const orbitalRings = [
+      { radius: 6.5, tiltX: Math.PI / 6, tiltY: 0, tiltZ: 0, color: 0x8eb397, opacity: 0.5, speed: 0.0005 },
+      { radius: 7.2, tiltX: Math.PI / 4, tiltY: Math.PI / 3, tiltZ: 0, color: 0x6fa0d9, opacity: 0.45, speed: -0.0004 },
+      { radius: 6.8, tiltX: Math.PI / 8, tiltY: Math.PI / 2, tiltZ: 0, color: 0xb47d78, opacity: 0.5, speed: 0.0006 },
+      { radius: 7.5, tiltX: Math.PI / 3, tiltY: Math.PI / 6, tiltZ: Math.PI / 12, color: 0x7a9cc6, opacity: 0.4, speed: -0.0003 },
+      { radius: 7.0, tiltX: Math.PI / 5, tiltY: Math.PI / 4, tiltZ: -Math.PI / 12, color: 0x9cb3a8, opacity: 0.45, speed: 0.0007 },
+      { radius: 7.8, tiltX: Math.PI / 2.5, tiltY: Math.PI / 1.5, tiltZ: 0, color: 0xc48e87, opacity: 0.4, speed: -0.0005 },
+    ];
     
-    world.add(ring1, ring2, ring3, ring4, ring5, ring6);
-    
-    const allRings = [ring1, ring2, ring3, ring4, ring5, ring6];
+    const allRings: THREE.Line[] = [];
+    orbitalRings.forEach(config => {
+      const ring = createOrbitRing(config.radius, config.tiltX, config.tiltY, config.tiltZ, config.color, config.opacity);
+      ring.userData.speed = config.speed;
+      world.add(ring);
+      allRings.push(ring);
+    });
 
-    // ========== 6 ORBITING NODES (MOON-LIKE VARIED ORBITS) ==========
+    // ========== 6 ORBITING NODES (CLEARLY VISIBLE WITH TRAILS) ==========
     const nodeMeshes = new Map<NodeKey, THREE.Group>();
     const connectorLines = new Map<NodeKey, THREE.Line>();
+    const nodeTrails = new Map<NodeKey, THREE.Points>();
     
-    // Each node has unique orbital characteristics like moons
+    // Orbital configurations matching the ring radii
     const nodeOrbitalData: Record<NodeKey, { 
       angle: number; 
       radius: number; 
       tiltX: number; 
-      tiltY: number; 
+      tiltY: number;
+      tiltZ: number;
       speed: number;
-      wobble: number;
     }> = {
       DATA: { 
         angle: 0, 
-        radius: 5.2, 
-        tiltX: 0.3, 
-        tiltY: 0, 
-        speed: 0.8,
-        wobble: 0.15
+        radius: 6.5,
+        tiltX: Math.PI / 6, 
+        tiltY: 0,
+        tiltZ: 0,
+        speed: 0.4
       },
       ANALYSIS: { 
         angle: Math.PI / 3, 
-        radius: 5.4, 
-        tiltX: 0.6, 
-        tiltY: 0.8, 
-        speed: 1.1,
-        wobble: 0.2
+        radius: 7.2,
+        tiltX: Math.PI / 4, 
+        tiltY: Math.PI / 3,
+        tiltZ: 0,
+        speed: 0.5
       },
       MARKET: { 
         angle: Math.PI * 2 / 3, 
-        radius: 5.6, 
-        tiltX: 0.8, 
-        tiltY: 0.4, 
-        speed: 0.65,
-        wobble: 0.1
+        radius: 6.8,
+        tiltX: Math.PI / 8, 
+        tiltY: Math.PI / 2,
+        tiltZ: 0,
+        speed: 0.35
       },
       EVIDENCE: { 
         angle: Math.PI, 
-        radius: 5.0, 
-        tiltX: 0.2, 
-        tiltY: 1.4, 
-        speed: 1.3,
-        wobble: 0.25
+        radius: 7.5,
+        tiltX: Math.PI / 3, 
+        tiltY: Math.PI / 6,
+        tiltZ: Math.PI / 12,
+        speed: 0.6
       },
       RISK: { 
         angle: Math.PI * 4 / 3, 
-        radius: 5.3, 
-        tiltX: 0.4, 
-        tiltY: 1.0, 
-        speed: 0.9,
-        wobble: 0.18
+        radius: 7.0,
+        tiltX: Math.PI / 5, 
+        tiltY: Math.PI / 4,
+        tiltZ: -Math.PI / 12,
+        speed: 0.45
       },
       DECISION: { 
         angle: Math.PI * 5 / 3, 
-        radius: 5.5, 
-        tiltX: 0.5, 
-        tiltY: 1.8, 
-        speed: 1.0,
-        wobble: 0.12
+        radius: 7.8,
+        tiltX: Math.PI / 2.5, 
+        tiltY: Math.PI / 1.5,
+        tiltZ: 0,
+        speed: 0.5
       },
     };
 
@@ -340,44 +351,61 @@ export const IntroExperience: React.FC<IntroExperienceProps> = ({ onEnter }) => 
       const nodeGroup = new THREE.Group();
       nodeGroup.userData.nodeKey = name;
       nodeGroup.userData.orbital = orbital;
+      nodeGroup.userData.trailHistory = [];
       
-      // Larger, more visible node markers with glow
+      // MUCH larger, more visible nodes
       const nodeGeo = name === 'DECISION' 
-        ? new THREE.OctahedronGeometry(0.35, 0)
-        : new THREE.OctahedronGeometry(0.28, 0);
+        ? new THREE.SphereGeometry(0.45, 16, 16)
+        : new THREE.SphereGeometry(0.38, 16, 16);
       
       const nodeMat = new THREE.MeshStandardMaterial({ 
         color, 
-        metalness: 0.3, 
-        roughness: 0.2,
+        metalness: 0.4, 
+        roughness: 0.1,
         emissive: color,
-        emissiveIntensity: 0.4
+        emissiveIntensity: 0.6
       });
       
       const nodeMesh = new THREE.Mesh(nodeGeo, nodeMat);
       nodeGroup.add(nodeMesh);
       
       // Larger glowing halo
-      const haloGeo = new THREE.SphereGeometry(0.6, 16, 16);
+      const haloGeo = new THREE.SphereGeometry(0.8, 16, 16);
       const haloMat = new THREE.MeshBasicMaterial({
         color,
         transparent: true,
-        opacity: 0.15,
+        opacity: 0.2,
         side: THREE.BackSide
       });
       const halo = new THREE.Mesh(haloGeo, haloMat);
       halo.userData.isHalo = true;
       nodeGroup.add(halo);
       
-      // Calculate initial position using orbital parameters
+      // Particle trail system
+      const trailCount = 30;
+      const trailPositions = new Float32Array(trailCount * 3);
+      const trailGeo = new THREE.BufferGeometry();
+      trailGeo.setAttribute('position', new THREE.BufferAttribute(trailPositions, 3));
+      const trailMat = new THREE.PointsMaterial({
+        color,
+        size: 0.15,
+        transparent: true,
+        opacity: 0.6,
+        sizeAttenuation: true,
+        blending: THREE.AdditiveBlending
+      });
+      const trail = new THREE.Points(trailGeo, trailMat);
+      world.add(trail);
+      nodeTrails.set(name, trail);
+      
+      // Calculate initial position
       const calcPosition = (angle: number) => {
         const baseX = Math.cos(angle) * orbital.radius;
-        const baseY = Math.sin(angle) * orbital.radius * 0.15; // Elliptical
-        const baseZ = Math.sin(angle) * orbital.radius;
+        const baseY = 0;
+        const baseZ = Math.sin(angle) * orbital.radius * 0.8; // Elliptical
         
-        // Apply 3D rotation for tilted orbit
         const pos = new THREE.Vector3(baseX, baseY, baseZ);
-        pos.applyEuler(new THREE.Euler(orbital.tiltX, orbital.tiltY, 0));
+        pos.applyEuler(new THREE.Euler(orbital.tiltX, orbital.tiltY, orbital.tiltZ));
         return pos;
       };
       
@@ -387,15 +415,15 @@ export const IntroExperience: React.FC<IntroExperienceProps> = ({ onEnter }) => 
       world.add(nodeGroup);
       nodeMeshes.set(name, nodeGroup);
       
-      // Colorful connector line to sphere
+      // Colorful connector line
       const lineGeo = new THREE.BufferGeometry().setFromPoints([
         initialPos.clone(),
-        initialPos.clone().normalize().multiplyScalar(3.2)
+        new THREE.Vector3(0, 0, 0)
       ]);
       const lineMat = new THREE.LineBasicMaterial({ 
         color, 
         transparent: true, 
-        opacity: 0.2
+        opacity: 0.15
       });
       const line = new THREE.Line(lineGeo, lineMat);
       line.userData.nodeKey = name;
@@ -404,26 +432,46 @@ export const IntroExperience: React.FC<IntroExperienceProps> = ({ onEnter }) => 
     });
 
     // Sparse dust field
-    const dustCount = 120;
+    const dustCount = 200;
     const dustPos = new Float32Array(dustCount * 3);
+    const dustColors = new Float32Array(dustCount * 3);
+    const dustSizes = new Float32Array(dustCount);
+    
     for (let i = 0; i < dustCount; i++) {
-      const r = 4.5 + Math.random() * 4.5;
+      const r = 8 + Math.random() * 8;
       const theta = Math.random() * Math.PI * 2;
       const phi = Math.acos(2 * Math.random() - 1);
       dustPos[i * 3] = r * Math.sin(phi) * Math.cos(theta);
       dustPos[i * 3 + 1] = r * Math.cos(phi) * 0.5;
       dustPos[i * 3 + 2] = r * Math.sin(phi) * Math.sin(theta);
+      
+      // Random colors
+      const colorChoice = Math.random();
+      if (colorChoice < 0.33) {
+        dustColors[i * 3] = 0.56; dustColors[i * 3 + 1] = 0.7; dustColors[i * 3 + 2] = 0.59; // Green
+      } else if (colorChoice < 0.66) {
+        dustColors[i * 3] = 0.44; dustColors[i * 3 + 1] = 0.63; dustColors[i * 3 + 2] = 0.85; // Blue
+      } else {
+        dustColors[i * 3] = 0.71; dustColors[i * 3 + 1] = 0.49; dustColors[i * 3 + 2] = 0.47; // Terracotta
+      }
+      
+      dustSizes[i] = Math.random() * 0.05 + 0.02;
     }
+    
     const dustGeo = new THREE.BufferGeometry();
     dustGeo.setAttribute('position', new THREE.BufferAttribute(dustPos, 3));
+    dustGeo.setAttribute('color', new THREE.BufferAttribute(dustColors, 3));
+    dustGeo.setAttribute('size', new THREE.BufferAttribute(dustSizes, 1));
+    
     const dust = new THREE.Points(
       dustGeo, 
       new THREE.PointsMaterial({ 
-        color: 0x9ca79f, 
-        size: 0.018, 
+        size: 0.025,
         transparent: true, 
-        opacity: 0.28, 
-        sizeAttenuation: true 
+        opacity: 0.6, 
+        sizeAttenuation: true,
+        vertexColors: true,
+        blending: THREE.AdditiveBlending
       })
     );
     world.add(dust);
@@ -618,45 +666,56 @@ export const IntroExperience: React.FC<IntroExperienceProps> = ({ onEnter }) => 
           mainWireframe.rotation.y += amp * 0.0015;
           innerWireframe.rotation.x += amp * 0.001;
           core.rotation.z += amp * 0.0008;
+          
+          // Ambient particle rotation
+          dust.rotation.y += amp * 0.0001;
 
-          // Orbital rings rotation - each at different speed
-          allRings.forEach((ring, index) => {
-            const speed = 0.0003 + (index * 0.0002);
-            ring.rotation.z += amp * speed * (index % 2 === 0 ? 1 : -1);
+          // Orbital rings rotation - visible movement
+          allRings.forEach((ring) => {
+            ring.rotation.z += amp * ring.userData.speed;
           });
 
-          // Node orbital motion - moon-like varied paths
+          // Node orbital motion with particle trails
           nodeMeshes.forEach((nodeGroup, name) => {
             const orbital = nodeGroup.userData.orbital;
             
-            // Calculate orbital angle with unique speed and wobble
-            const orbitAngle = orbital.angle + t * 0.08 * orbital.speed * amp;
-            const wobble = Math.sin(t * 0.5 * orbital.speed) * orbital.wobble;
+            // Calculate orbital position
+            const orbitAngle = orbital.angle + t * 0.15 * orbital.speed * amp;
             
-            // Calculate position on elliptical orbit
             const baseX = Math.cos(orbitAngle) * orbital.radius;
-            const baseY = Math.sin(orbitAngle) * orbital.radius * 0.15 + wobble;
-            const baseZ = Math.sin(orbitAngle) * orbital.radius;
+            const baseY = 0;
+            const baseZ = Math.sin(orbitAngle) * orbital.radius * 0.8;
             
-            // Apply 3D rotation for tilted orbit
             const pos = new THREE.Vector3(baseX, baseY, baseZ);
-            pos.applyEuler(new THREE.Euler(orbital.tiltX, orbital.tiltY, 0));
+            pos.applyEuler(new THREE.Euler(orbital.tiltX, orbital.tiltY, orbital.tiltZ));
             
             nodeGroup.position.copy(pos);
-            nodeGroup.rotation.y += delta * 0.3 * amp;
+            nodeGroup.rotation.y += delta * 0.5 * amp;
             
-            // Pulse effect on node
-            const basePulse = 1 + Math.sin(t * 2 + orbital.angle) * 0.05;
-            nodeGroup.scale.setScalar(basePulse);
+            // Pulse animation
+            const pulse = 1 + Math.sin(t * 3 + orbital.angle) * 0.08;
+            nodeGroup.scale.setScalar(pulse);
+            
+            // Update particle trail
+            const trail = nodeTrails.get(name);
+            if (trail) {
+              const history = nodeGroup.userData.trailHistory as THREE.Vector3[];
+              history.push(pos.clone());
+              if (history.length > 30) history.shift();
+              
+              const positions = trail.geometry.attributes.position.array as Float32Array;
+              history.forEach((p, i) => {
+                positions[i * 3] = p.x;
+                positions[i * 3 + 1] = p.y;
+                positions[i * 3 + 2] = p.z;
+              });
+              trail.geometry.attributes.position.needsUpdate = true;
+            }
             
             // Update connector line
             const line = connectorLines.get(name);
             if (line) {
-              const points = [
-                nodeGroup.position.clone(),
-                nodeGroup.position.clone().normalize().multiplyScalar(3.2)
-              ];
-              line.geometry.setFromPoints(points);
+              line.geometry.setFromPoints([pos.clone(), new THREE.Vector3(0, 0, 0)]);
             }
           });
 
