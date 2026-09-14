@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 
@@ -34,9 +34,10 @@ export async function listDatasets(workspaceId: string) { return (await load()).
 export async function getDataset(id: string) { return (await load()).datasets.find(d => d.id === id) ?? null; }
 export async function addDataset(dataset: Dataset) { const db = await load(); db.datasets.push(dataset); await save(db); return dataset; }
 export async function deleteDataset(id: string) {
-  const db = await load(); const before = db.datasets.length;
+  const db = await load(); const dataset = db.datasets.find(d => d.id === id);
+  if (!dataset) return false;
   db.datasets = db.datasets.filter(d => d.id !== id);
-  if (db.datasets.length === before) return false;
+  if (dataset.storagePath) await unlink(dataset.storagePath).catch(() => undefined);
   await save(db); return true;
 }
 
@@ -51,7 +52,6 @@ async function readRows(dataset: Dataset): Promise<Record<string, unknown>[]> {
 function numericColumns(dataset: Dataset) {
   return ((dataset.schema as any)?.columns || []).filter((column: any) => column.type === 'number').map((column: any) => column.name);
 }
-
 function summarizeDataset(dataset: Dataset, rows: Record<string, unknown>[]) {
   const numeric = numericColumns(dataset);
   const metrics = numeric.map(name => {
@@ -62,7 +62,6 @@ function summarizeDataset(dataset: Dataset, rows: Record<string, unknown>[]) {
   }).filter(Boolean);
   return { rows: rows.length, numericMetrics: metrics };
 }
-
 function questionSignals(question: string) {
   const q = question.toLowerCase();
   return {
@@ -88,23 +87,8 @@ export async function runInvestigation(workspace: Workspace, question: string, d
 
   const metrics = summaries.flatMap(item => item.summary.numericMetrics.map((metric: any) => ({ ...metric, dataset: item.dataset })));
   const strongestMetric = [...metrics].sort((a, b) => Math.abs(b.sum) - Math.abs(a.sum))[0];
-  const findings: any[] = usable.map(dataset => ({
-    id: `claim-${dataset.id}`,
-    type: 'FACT',
-    claim: `${dataset.name} contains ${dataset.rowCount.toLocaleString()} records across ${((dataset.schema as any)?.columns || []).length} fields.`,
-    source: dataset.name,
-    verified: true,
-    evidence: `Ingested dataset with ${dataset.contentHash || 'no recorded hash'}.`,
-  }));
-
-  if (strongestMetric) findings.push({
-    id: `metric-${strongestMetric.dataset}-${strongestMetric.column}`,
-    type: 'FACT',
-    claim: `${strongestMetric.column} has ${strongestMetric.count.toLocaleString()} numeric observations with an average of ${strongestMetric.average.toLocaleString(undefined, { maximumFractionDigits: 2 })}.`,
-    source: strongestMetric.dataset,
-    verified: true,
-    evidence: 'Calculated directly from the persisted dataset rows.',
-  });
+  const findings: any[] = usable.map(dataset => ({ id: `claim-${dataset.id}`, type: 'FACT', claim: `${dataset.name} contains ${dataset.rowCount.toLocaleString()} records across ${((dataset.schema as any)?.columns || []).length} fields.`, source: dataset.name, verified: true, evidence: `Ingested dataset with ${dataset.contentHash || 'no recorded hash'}.` }));
+  if (strongestMetric) findings.push({ id: `metric-${strongestMetric.dataset}-${strongestMetric.column}`, type: 'FACT', claim: `${strongestMetric.column} has ${strongestMetric.count.toLocaleString()} numeric observations with an average of ${strongestMetric.average.toLocaleString(undefined, { maximumFractionDigits: 2 })}.`, source: strongestMetric.dataset, verified: true, evidence: 'Calculated directly from the persisted dataset rows.' });
 
   const status = usable.length ? 'completed' : 'data_insufficient';
   let recommendation = 'DATA INSUFFICIENT: connect a usable dataset before making a recommendation.';
@@ -125,12 +109,19 @@ export async function runInvestigation(workspace: Workspace, question: string, d
   const db = await load(); db.investigations.push(result); await save(db); return result;
 }
 
+export async function updateInvestigation(runId: string, patch: Record<string, unknown>) {
+  const db = await load();
+  const index = db.investigations.findIndex(item => item.runId === runId);
+  if (index < 0) return null;
+  db.investigations[index] = { ...db.investigations[index], ...patch };
+  await save(db);
+  return db.investigations[index];
+}
+
 export async function listInvestigations(workspaceId: string) {
   return (await load()).investigations.filter(item => !workspaceId || item.workspaceId === workspaceId).sort((a, b) => String(b.startedAt).localeCompare(String(a.startedAt)));
 }
-export async function getInvestigation(runId: string) {
-  return (await load()).investigations.find(item => item.runId === runId) ?? null;
-}
+export async function getInvestigation(runId: string) { return (await load()).investigations.find(item => item.runId === runId) ?? null; }
 
 export async function detectRelationships(workspaceId: string) {
   const datasets = await listDatasets(workspaceId);
@@ -138,11 +129,7 @@ export async function detectRelationships(workspaceId: string) {
   for (let i = 0; i < datasets.length; i++) for (let j = i + 1; j < datasets.length; j++) {
     const left = ((datasets[i].schema as any)?.columns || []).map((c: any) => c.name);
     const right = new Set(((datasets[j].schema as any)?.columns || []).map((c: any) => c.name));
-    for (const column of left) if (right.has(column)) relationships.push({
-      id: `rel-${datasets[i].id}-${datasets[j].id}-${column}`,
-      sourceDatasetId: datasets[i].id, targetDatasetId: datasets[j].id,
-      fromColumn: column, toColumn: column, relationshipType: 'candidate', confidence: 75, status: 'detected', autoDetected: true,
-    });
+    for (const column of left) if (right.has(column)) relationships.push({ id: `rel-${datasets[i].id}-${datasets[j].id}-${column}`, sourceDatasetId: datasets[i].id, targetDatasetId: datasets[j].id, fromColumn: column, toColumn: column, relationshipType: 'candidate', confidence: 75, status: 'detected', autoDetected: true });
   }
   return relationships;
 }
