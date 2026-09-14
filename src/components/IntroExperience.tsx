@@ -112,55 +112,83 @@ export const IntroExperience: React.FC<IntroExperienceProps> = ({ onEnter }) => 
     backLight.position.set(0, -3, -6);
     scene.add(backLight);
 
-    // ========== CENTRAL SPHERE - WIREFRAME GEODESIC (ENHANCED) ==========
+    // ========== CENTRAL SPHERE - COLORFUL WIREFRAME GEODESIC ==========
     const sphereGroup = new THREE.Group();
     world.add(sphereGroup);
 
-    // Main wireframe sphere - geodesic structure
+    // Main wireframe sphere - colorful geodesic structure with gradient colors
     const mainWireframeGeo = new THREE.IcosahedronGeometry(3.2, 4);
+    
+    // Create gradient effect with vertex colors
+    const positionAttribute = mainWireframeGeo.attributes.position;
+    const colors = [];
+    const color1 = new THREE.Color(0x8eb397); // Sage green
+    const color2 = new THREE.Color(0x6fa0d9); // Blue
+    const color3 = new THREE.Color(0xb47d78); // Terracotta
+    
+    for (let i = 0; i < positionAttribute.count; i++) {
+      const y = positionAttribute.getY(i);
+      let color: THREE.Color;
+      
+      if (y > 1) {
+        color = color1; // Top: green
+      } else if (y > -1) {
+        color = color2; // Middle: blue
+      } else {
+        color = color3; // Bottom: terracotta
+      }
+      
+      colors.push(color.r, color.g, color.b);
+    }
+    
+    mainWireframeGeo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+    
     const mainWireframeMat = new THREE.MeshBasicMaterial({
-      color: 0x8eb397,
       wireframe: true,
       transparent: true,
-      opacity: 0.45
+      opacity: 0.6,
+      vertexColors: true
     });
     const mainWireframe = new THREE.Mesh(mainWireframeGeo, mainWireframeMat);
     sphereGroup.add(mainWireframe);
 
-    // Secondary wireframe for depth
+    // Inner wireframe with different color
     const innerWireframeGeo = new THREE.IcosahedronGeometry(2.8, 3);
     const innerWireframeMat = new THREE.MeshBasicMaterial({
-      color: 0x7e8b82,
+      color: 0x9cb3a8,
       wireframe: true,
       transparent: true,
-      opacity: 0.25
+      opacity: 0.3
     });
     const innerWireframe = new THREE.Mesh(innerWireframeGeo, innerWireframeMat);
     sphereGroup.add(innerWireframe);
 
-    // Core structure with subtle glow
+    // Core with colorful emission
     const coreGeo = new THREE.IcosahedronGeometry(2.4, 2);
     const coreMat = new THREE.MeshPhysicalMaterial({
-      color: 0x6f8875,
-      metalness: 0.1,
-      roughness: 0.2,
-      transmission: 0.6,
-      thickness: 1.0,
+      color: 0x4a7c6f,
+      metalness: 0.2,
+      roughness: 0.1,
+      transmission: 0.5,
+      thickness: 1.2,
       transparent: true,
-      opacity: 0.15,
-      emissive: 0x8eb397,
-      emissiveIntensity: 0.05,
+      opacity: 0.25,
+      emissive: 0x6fa0d9,
+      emissiveIntensity: 0.15,
       side: THREE.DoubleSide
     });
     const core = new THREE.Mesh(coreGeo, coreMat);
     sphereGroup.add(core);
 
-    // Connection lines from center to vertices (structural beams)
-    const beamMaterial = new THREE.LineBasicMaterial({
-      color: 0x8eb397,
-      transparent: true,
-      opacity: 0.1
-    });
+    // Colorful connection beams from center
+    const beamColors = [
+      0x8eb397, // Green
+      0x6fa0d9, // Blue
+      0xb47d78, // Terracotta
+      0x9cb3a8, // Light green
+      0x7a9cc6, // Light blue
+      0xc48e87, // Light terracotta
+    ];
     
     const beamPositions = [
       [0, 0, 0, 0, 3.2, 0],
@@ -171,75 +199,138 @@ export const IntroExperience: React.FC<IntroExperienceProps> = ({ onEnter }) => 
       [0, 0, 0, 0, 0, -3.2],
     ];
     
-    beamPositions.forEach(coords => {
+    beamPositions.forEach((coords, index) => {
       const points = [
         new THREE.Vector3(coords[0], coords[1], coords[2]),
         new THREE.Vector3(coords[3], coords[4], coords[5])
       ];
       const beamGeo = new THREE.BufferGeometry().setFromPoints(points);
-      const beam = new THREE.Line(beamGeo, beamMaterial);
+      const beamMat = new THREE.LineBasicMaterial({
+        color: beamColors[index % beamColors.length],
+        transparent: true,
+        opacity: 0.25
+      });
+      const beam = new THREE.Line(beamGeo, beamMat);
       sphereGroup.add(beam);
     });
 
-    // Vertex markers at key positions
-    const vertexGeo = new THREE.SphereGeometry(0.06, 8, 8);
-    const vertexMat = new THREE.MeshBasicMaterial({
-      color: 0x8eb397,
-      transparent: true,
-      opacity: 0.6
-    });
-    
+    // Colorful vertex markers
+    const vertexColors = [0x8eb397, 0x6fa0d9, 0xb47d78];
     const vertexPositions = [
       [0, 3.2, 0], [0, -3.2, 0], [3.2, 0, 0], [-3.2, 0, 0],
       [2.2, 2.2, 0], [-2.2, 2.2, 0], [2.2, -2.2, 0], [-2.2, -2.2, 0],
       [0, 2.2, 2.2], [0, -2.2, 2.2], [0, 2.2, -2.2], [0, -2.2, -2.2],
       [2.2, 0, 2.2], [-2.2, 0, 2.2], [2.2, 0, -2.2], [-2.2, 0, -2.2]
     ];
-    vertexPositions.forEach(([x, y, z]) => {
-      const vertex = new THREE.Mesh(vertexGeo, vertexMat.clone());
+    
+    vertexPositions.forEach(([x, y, z], index) => {
+      const vertexGeo = new THREE.SphereGeometry(0.08, 8, 8);
+      const vertexMat = new THREE.MeshBasicMaterial({
+        color: vertexColors[index % vertexColors.length],
+        transparent: true,
+        opacity: 0.8
+      });
+      const vertex = new THREE.Mesh(vertexGeo, vertexMat);
       vertex.position.set(x, y, z);
       sphereGroup.add(vertex);
     });
 
-    // ========== ORBITAL RINGS ==========
-    const createOrbitRing = (radius: number, inclination: number, twist: number, opacity: number) => {
+    // ========== VISIBLE ORBITAL RINGS (MOON-LIKE PATHS) ==========
+    const createOrbitRing = (radius: number, tiltX: number, tiltY: number, color: number, opacity: number) => {
       const points: THREE.Vector3[] = [];
       const segments = 128;
       for (let i = 0; i <= segments; i++) {
         const angle = (i / segments) * Math.PI * 2;
         const x = Math.cos(angle) * radius;
-        const y = Math.sin(angle) * radius * Math.sin(inclination) * 0.3;
-        const z = Math.sin(angle) * radius * Math.cos(inclination);
+        const y = Math.sin(angle) * radius * 0.15; // Elliptical
+        const z = Math.sin(angle) * radius;
         points.push(new THREE.Vector3(x, y, z));
       }
       const geo = new THREE.BufferGeometry().setFromPoints(points);
       const mat = new THREE.LineBasicMaterial({ 
-        color: 0x8c9b91, 
+        color, 
         transparent: true, 
         opacity 
       });
-      const ring = new THREE.LineLoop(geo, mat);
-      ring.rotation.y = twist;
+      const ring = new THREE.Line(geo, mat);
+      ring.rotation.x = tiltX;
+      ring.rotation.y = tiltY;
       return ring;
     };
 
-    const ring1 = createOrbitRing(5.2, 0.4, 0, 0.14);
-    const ring2 = createOrbitRing(5.6, 0.6, 0.8, 0.10);
-    const ring3 = createOrbitRing(5.0, 0.2, 1.4, 0.12);
-    world.add(ring1, ring2, ring3);
+    // Create 6 visible orbital rings with different colors and tilts
+    const ring1 = createOrbitRing(5.2, 0.3, 0, 0x8eb397, 0.35);
+    const ring2 = createOrbitRing(5.4, 0.6, 0.8, 0x6fa0d9, 0.3);
+    const ring3 = createOrbitRing(5.0, 0.2, 1.4, 0xb47d78, 0.35);
+    const ring4 = createOrbitRing(5.6, 0.8, 0.4, 0x7a9cc6, 0.25);
+    const ring5 = createOrbitRing(5.3, 0.4, 1.0, 0x9cb3a8, 0.3);
+    const ring6 = createOrbitRing(5.5, 0.5, 1.8, 0xc48e87, 0.25);
+    
+    world.add(ring1, ring2, ring3, ring4, ring5, ring6);
+    
+    const allRings = [ring1, ring2, ring3, ring4, ring5, ring6];
 
-    // ========== 6 ORBITING NODES ==========
+    // ========== 6 ORBITING NODES (MOON-LIKE VARIED ORBITS) ==========
     const nodeMeshes = new Map<NodeKey, THREE.Group>();
     const connectorLines = new Map<NodeKey, THREE.Line>();
     
-    // Node positions on different orbital paths - 6 nodes evenly distributed
-    const nodeOrbitalData: Record<NodeKey, { angle: number; radius: number; inclination: number; speed: number }> = {
-      DATA: { angle: 0, radius: 5.2, inclination: 0.4, speed: 1.0 },
-      ANALYSIS: { angle: Math.PI / 3, radius: 5.4, inclination: 0.3, speed: 1.08 },
-      MARKET: { angle: Math.PI * 2 / 3, radius: 5.6, inclination: 0.6, speed: 0.85 },
-      EVIDENCE: { angle: Math.PI, radius: 5.0, inclination: 0.2, speed: 1.15 },
-      RISK: { angle: Math.PI * 4 / 3, radius: 5.4, inclination: 0.5, speed: 0.95 },
-      DECISION: { angle: Math.PI * 5 / 3, radius: 5.3, inclination: 0.35, speed: 1.05 },
+    // Each node has unique orbital characteristics like moons
+    const nodeOrbitalData: Record<NodeKey, { 
+      angle: number; 
+      radius: number; 
+      tiltX: number; 
+      tiltY: number; 
+      speed: number;
+      wobble: number;
+    }> = {
+      DATA: { 
+        angle: 0, 
+        radius: 5.2, 
+        tiltX: 0.3, 
+        tiltY: 0, 
+        speed: 0.8,
+        wobble: 0.15
+      },
+      ANALYSIS: { 
+        angle: Math.PI / 3, 
+        radius: 5.4, 
+        tiltX: 0.6, 
+        tiltY: 0.8, 
+        speed: 1.1,
+        wobble: 0.2
+      },
+      MARKET: { 
+        angle: Math.PI * 2 / 3, 
+        radius: 5.6, 
+        tiltX: 0.8, 
+        tiltY: 0.4, 
+        speed: 0.65,
+        wobble: 0.1
+      },
+      EVIDENCE: { 
+        angle: Math.PI, 
+        radius: 5.0, 
+        tiltX: 0.2, 
+        tiltY: 1.4, 
+        speed: 1.3,
+        wobble: 0.25
+      },
+      RISK: { 
+        angle: Math.PI * 4 / 3, 
+        radius: 5.3, 
+        tiltX: 0.4, 
+        tiltY: 1.0, 
+        speed: 0.9,
+        wobble: 0.18
+      },
+      DECISION: { 
+        angle: Math.PI * 5 / 3, 
+        radius: 5.5, 
+        tiltX: 0.5, 
+        tiltY: 1.8, 
+        speed: 1.0,
+        wobble: 0.12
+      },
     };
 
     NODE_ORDER.forEach((name) => {
@@ -250,52 +341,61 @@ export const IntroExperience: React.FC<IntroExperienceProps> = ({ onEnter }) => 
       nodeGroup.userData.nodeKey = name;
       nodeGroup.userData.orbital = orbital;
       
-      // Node marker - small diamond/geometric shape
+      // Larger, more visible node markers with glow
       const nodeGeo = name === 'DECISION' 
-        ? new THREE.OctahedronGeometry(0.3, 0)
-        : new THREE.OctahedronGeometry(0.24, 0);
+        ? new THREE.OctahedronGeometry(0.35, 0)
+        : new THREE.OctahedronGeometry(0.28, 0);
       
       const nodeMat = new THREE.MeshStandardMaterial({ 
         color, 
-        metalness: 0.2, 
-        roughness: 0.3,
+        metalness: 0.3, 
+        roughness: 0.2,
         emissive: color,
-        emissiveIntensity: 0.1
+        emissiveIntensity: 0.4
       });
       
       const nodeMesh = new THREE.Mesh(nodeGeo, nodeMat);
       nodeGroup.add(nodeMesh);
       
-      // Subtle halo
-      const haloGeo = new THREE.SphereGeometry(0.42, 16, 16);
+      // Larger glowing halo
+      const haloGeo = new THREE.SphereGeometry(0.6, 16, 16);
       const haloMat = new THREE.MeshBasicMaterial({
         color,
         transparent: true,
-        opacity: 0.08,
+        opacity: 0.15,
         side: THREE.BackSide
       });
       const halo = new THREE.Mesh(haloGeo, haloMat);
       halo.userData.isHalo = true;
       nodeGroup.add(halo);
       
-      // Initial position
-      const x = Math.cos(orbital.angle) * orbital.radius;
-      const y = Math.sin(orbital.angle) * orbital.radius * Math.sin(orbital.inclination) * 0.3;
-      const z = Math.sin(orbital.angle) * orbital.radius * Math.cos(orbital.inclination);
-      nodeGroup.position.set(x, y, z);
+      // Calculate initial position using orbital parameters
+      const calcPosition = (angle: number) => {
+        const baseX = Math.cos(angle) * orbital.radius;
+        const baseY = Math.sin(angle) * orbital.radius * 0.15; // Elliptical
+        const baseZ = Math.sin(angle) * orbital.radius;
+        
+        // Apply 3D rotation for tilted orbit
+        const pos = new THREE.Vector3(baseX, baseY, baseZ);
+        pos.applyEuler(new THREE.Euler(orbital.tiltX, orbital.tiltY, 0));
+        return pos;
+      };
+      
+      const initialPos = calcPosition(orbital.angle);
+      nodeGroup.position.copy(initialPos);
       
       world.add(nodeGroup);
       nodeMeshes.set(name, nodeGroup);
       
-      // Connector line to sphere
+      // Colorful connector line to sphere
       const lineGeo = new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(0, 0, 0),
-        nodeGroup.position.clone().normalize().multiplyScalar(2.5)
+        initialPos.clone(),
+        initialPos.clone().normalize().multiplyScalar(3.2)
       ]);
       const lineMat = new THREE.LineBasicMaterial({ 
         color, 
         transparent: true, 
-        opacity: 0.12 
+        opacity: 0.2
       });
       const line = new THREE.Line(lineGeo, lineMat);
       line.userData.nodeKey = name;
@@ -479,7 +579,7 @@ export const IntroExperience: React.FC<IntroExperienceProps> = ({ onEnter }) => 
           });
           
           // Orbital rings tighten and fade
-          [ring1, ring2, ring3].forEach(ring => {
+          allRings.forEach(ring => {
             ring.scale.setScalar(1 - easeProgress * 0.6);
             const mat = ring.material as THREE.LineBasicMaterial;
             mat.opacity = (mat.userData.initialOpacity || mat.opacity) * (1 - easeProgress * 0.8);
@@ -519,29 +619,42 @@ export const IntroExperience: React.FC<IntroExperienceProps> = ({ onEnter }) => 
           innerWireframe.rotation.x += amp * 0.001;
           core.rotation.z += amp * 0.0008;
 
-          // Orbital rings rotation
-          ring1.rotation.z += amp * 0.0008;
-          ring2.rotation.z -= amp * 0.0006;
-          ring3.rotation.z += amp * 0.0010;
+          // Orbital rings rotation - each at different speed
+          allRings.forEach((ring, index) => {
+            const speed = 0.0003 + (index * 0.0002);
+            ring.rotation.z += amp * speed * (index % 2 === 0 ? 1 : -1);
+          });
 
-          // Node orbital motion
+          // Node orbital motion - moon-like varied paths
           nodeMeshes.forEach((nodeGroup, name) => {
             const orbital = nodeGroup.userData.orbital;
+            
+            // Calculate orbital angle with unique speed and wobble
             const orbitAngle = orbital.angle + t * 0.08 * orbital.speed * amp;
+            const wobble = Math.sin(t * 0.5 * orbital.speed) * orbital.wobble;
             
-            const x = Math.cos(orbitAngle) * orbital.radius;
-            const y = Math.sin(orbitAngle) * orbital.radius * Math.sin(orbital.inclination) * 0.3;
-            const z = Math.sin(orbitAngle) * orbital.radius * Math.cos(orbital.inclination);
+            // Calculate position on elliptical orbit
+            const baseX = Math.cos(orbitAngle) * orbital.radius;
+            const baseY = Math.sin(orbitAngle) * orbital.radius * 0.15 + wobble;
+            const baseZ = Math.sin(orbitAngle) * orbital.radius;
             
-            nodeGroup.position.set(x, y, z);
-            nodeGroup.rotation.y += delta * 0.2 * amp;
+            // Apply 3D rotation for tilted orbit
+            const pos = new THREE.Vector3(baseX, baseY, baseZ);
+            pos.applyEuler(new THREE.Euler(orbital.tiltX, orbital.tiltY, 0));
+            
+            nodeGroup.position.copy(pos);
+            nodeGroup.rotation.y += delta * 0.3 * amp;
+            
+            // Pulse effect on node
+            const basePulse = 1 + Math.sin(t * 2 + orbital.angle) * 0.05;
+            nodeGroup.scale.setScalar(basePulse);
             
             // Update connector line
             const line = connectorLines.get(name);
             if (line) {
               const points = [
                 nodeGroup.position.clone(),
-                nodeGroup.position.clone().normalize().multiplyScalar(2.5)
+                nodeGroup.position.clone().normalize().multiplyScalar(3.2)
               ];
               line.geometry.setFromPoints(points);
             }
