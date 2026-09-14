@@ -31,6 +31,7 @@ interface DecisionsModuleProps {
   onApplyScenarioToDecision?: (sc: MultiScenarioItem) => void;
   onParamsChange?: (params: ScenarioParams, result: ScenarioResult) => void;
   onSelectCitation: (citation: CitationRef) => void;
+  onSelectOption?: (optionId: string) => void;
 }
 
 /**
@@ -48,6 +49,7 @@ export const DecisionsModule: React.FC<DecisionsModuleProps> = ({
   onApplyScenarioToDecision,
   onParamsChange,
   onSelectCitation,
+  onSelectOption,
 }) => {
   const hasReliableInternalEvidence =
     unifiedState.empiricalFindings.length > 0 &&
@@ -98,7 +100,8 @@ export const DecisionsModule: React.FC<DecisionsModuleProps> = ({
           options={DECISION_ROOM_OPTIONS}
           decisionConfidence={unifiedState.recommendationConfidence.overallScore}
           decisionConfidenceLabel="Decision Confidence"
-          onSelectOption={() => {}}
+          selectedOptionId={unifiedState.selectedOptionId}
+          onSelectOption={onSelectOption}
         />
       ) : (
         <div className="cb-glass rounded-2xl p-5 text-xs text-rose-200">

@@ -398,6 +398,9 @@ export interface ExecutionGraphNode {
   inputRequired?: string[];
   sufficiencyCheck?: string;
   nextToolIfInsufficient?: string;
+  executorId?: string;
+  executorName?: string;
+  executorCategory?: 'REASONING_AGENT' | 'ANALYTICAL_SERVICE';
 }
 
 export interface DiscoveredAnomaly {
@@ -532,6 +535,8 @@ export interface InvestigationStage {
   logMessage: string;
   durationMs: number;
   findingsCount?: number;
+  executorName?: string;
+  executorCategory?: 'REASONING_AGENT' | 'ANALYTICAL_SERVICE';
 }
 
 export interface RootCauseStep {

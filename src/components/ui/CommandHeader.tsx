@@ -18,8 +18,8 @@ interface CommandHeaderProps {
 }
 
 const NAV: Array<{ id: ModuleTab; label: string; meaning: string }> = [
-  { id: 'overview', label: 'Overview', meaning: 'What should I know?' },
   { id: 'investigate', label: 'Investigate', meaning: 'Ask a question' },
+  { id: 'overview', label: 'Overview', meaning: 'Understand the answer' },
   { id: 'decisions', label: 'Decisions', meaning: 'Compare actions' },
   { id: 'evidence', label: 'Evidence', meaning: 'Prove the answer' },
   { id: 'signals', label: 'Signals', meaning: "What's changing?" },
@@ -51,9 +51,9 @@ export const CommandHeader: React.FC<CommandHeaderProps> = ({
           {/* Brand */}
           <button
             type="button"
-            onClick={() => onNavigate('overview')}
+            onClick={() => onNavigate('investigate')}
             className="flex items-center gap-2.5 group shrink-0 cb-btn"
-            title="Overview"
+            title="Start an investigation"
           >
             <BrainCircuit className="w-[18px] h-[18px] text-[#8eb397]" />
             <span className="flex items-baseline gap-2 min-w-0">

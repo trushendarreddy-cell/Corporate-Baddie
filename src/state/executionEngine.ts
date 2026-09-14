@@ -66,6 +66,9 @@ export interface StageLogEntry {
   error?: string;
   nextStage?: StageId | 'END';
   summary?: string;
+  executorId?: string;
+  executorName?: string;
+  executorCategory?: 'REASONING_AGENT' | 'ANALYTICAL_SERVICE';
 }
 
 export interface StageResult {
@@ -80,6 +83,9 @@ export interface StageResult {
   /** Whether the pipeline may continue after this stage. */
   canContinue: boolean;
   durationMs: number;
+  executorId?: string;
+  executorName?: string;
+  executorCategory?: 'REASONING_AGENT' | 'ANALYTICAL_SERVICE';
 }
 
 // ----------------------------------------------------------------------------
@@ -641,6 +647,19 @@ const stageToPlanNodeId: Partial<Record<StageId, string>> = {
   EVIDENCE_VERIFICATION: 'evidence-verification',
 };
 
+const stageExecutor = (stage: StageDefinition, plannedNodes: Map<string, ExecutionGraphNode>) => {
+  if (stage.id === 'REQUIREMENT_ANALYSIS') {
+    return { executorId: 'agent-orch', executorName: 'CorporateBaddie Orchestrator', executorCategory: 'REASONING_AGENT' as const };
+  }
+  if (stage.id === 'RECOMMENDATION') {
+    return { executorId: 'agent-rec', executorName: 'Recommendation Agent', executorCategory: 'REASONING_AGENT' as const };
+  }
+  const node = stage.planNodeId ? plannedNodes.get(stage.planNodeId) : undefined;
+  return node?.executorId
+    ? { executorId: node.executorId, executorName: node.executorName, executorCategory: node.executorCategory }
+    : undefined;
+};
+
 // ----------------------------------------------------------------------------
 // Execution engine
 // ----------------------------------------------------------------------------
@@ -718,6 +737,7 @@ export const executeInvestigation = async (
     });
 
     if (!required.required) {
+      const executor = stageExecutor(stage, plannedNodes);
       const entry: StageLogEntry = {
         runId,
         stage: stage.id,
@@ -730,6 +750,7 @@ export const executeInvestigation = async (
         error: undefined,
         nextStage: 'END',
         summary: required.reason,
+        ...executor,
       };
       writeLog(entry);
       results.push({
@@ -739,6 +760,7 @@ export const executeInvestigation = async (
         summary: required.reason || 'Not required by this question.',
         canContinue: true,
         durationMs: 0,
+        ...executor,
       });
       previousStage = stage.id;
       continue;
@@ -769,6 +791,7 @@ export const executeInvestigation = async (
           log: writeLog,
           clock: safeClock,
         });
+        result = { ...result, ...stageExecutor(stage, plannedNodes) };
       } catch (err) {
         // TOOL FAILED — recorded, never swallowed into fake success.
         const errMsg = err instanceof Error ? err.message : String(err);
@@ -817,6 +840,9 @@ export const executeInvestigation = async (
       error: failed ? result.summary : undefined,
       nextStage: result.canContinue ? 'END' : 'END',
       summary: result.summary,
+      executorId: result.executorId,
+      executorName: result.executorName,
+      executorCategory: result.executorCategory,
     });
 
     // Emit to UI observer
@@ -974,6 +1000,8 @@ export const deriveDisplayStages = (
   logMessage: string;
   durationMs: number;
   findingsCount?: number;
+  executorName?: string;
+  executorCategory?: 'REASONING_AGENT' | 'ANALYTICAL_SERVICE';
 }> => {
   const titleFor: Record<StageId, string> = {
     REQUIREMENT_ANALYSIS: 'Understanding the business question',
@@ -1002,6 +1030,8 @@ export const deriveDisplayStages = (
       explanation: r.summary,
       logMessage: `${r.stage}: ${r.status} — ${r.summary}`,
       durationMs: r.durationMs,
+      executorName: r.executorName,
+      executorCategory: r.executorCategory,
     };
   });
 };

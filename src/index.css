@@ -278,25 +278,35 @@ body[class*="bg-"], .cb-ambient {
   pointer-events: none;
   white-space: nowrap;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 9.5px;
+  font-size: 10.5px;
   font-weight: 600;
-  letter-spacing: 0.14em;
-  color: rgba(148, 163, 184, 0.55);
+  letter-spacing: 0.1em;
+  color: rgba(210, 216, 208, 0.72);
   transition: color 160ms ease, opacity 160ms ease;
   will-change: transform;
   text-shadow: 0 1px 14px rgba(2, 6, 23, 0.8);
+  border: 0;
+  background: transparent;
+  padding: 3px 5px;
+  cursor: pointer;
+  text-align: left;
 }
 
 .cb-core-label[data-lit='true'] {
-  color: #e2e8f0;
+  color: #b8d4bd;
 }
 
-/* On narrow viewports the 3D stage shrinks; hide node labels to prevent
-   collisions with the center confidence readout. Hover explanations still
-   convey the information. */
+.cb-core-label:focus-visible {
+  outline: 1px solid #8eb397;
+  outline-offset: 3px;
+}
+
+/* On narrow viewports labels stay compact and remain tappable. */
 @media (max-width: 420px) {
   .cb-core-label {
-    display: none;
+    font-size: 9px;
+    letter-spacing: 0.08em;
+    padding: 2px 3px;
   }
 }
 

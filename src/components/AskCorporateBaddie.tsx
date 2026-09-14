@@ -26,7 +26,7 @@ interface MessageEntry {
   text: string;
   referencedClaims?: string[];
   providerName?: string;
-  providerStatus?: 'ready' | 'fallback';
+  providerStatus?: 'ready' | 'fallback' | 'offline';
   timestamp: string;
 }
 
@@ -178,7 +178,7 @@ export const AskCorporateBaddie: React.FC<AskCorporateBaddieProps> = ({
                 {m.providerName && (
                   <div className="mt-2 pt-2 border-t border-slate-700/60 flex items-center justify-between gap-2">
                     <span className="text-[10px] text-slate-400">Answer source</span>
-                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${m.providerStatus === 'fallback' ? 'bg-amber-500/10 text-amber-300 border border-amber-500/30' : 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/30'}`}>
+                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${m.providerStatus === 'ready' ? 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/30' : 'bg-amber-500/10 text-amber-300 border border-amber-500/30'}`}>
                       {m.providerName}
                     </span>
                   </div>

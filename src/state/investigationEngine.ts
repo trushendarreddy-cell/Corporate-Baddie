@@ -23,6 +23,7 @@ import {
 } from '../mockData';
 import {
   AVAILABLE_TOOLS,
+  getToolExecutor,
   INTENT_TO_TOOL_MAPPING,
 } from './orchestratorEngine';
 import { calculateDecisionConfidence } from './confidenceEngine';
@@ -165,6 +166,7 @@ export const selectToolsForInvestigation = (
   return selected.map(({ tool, why, status }, index) => {
     const previous = selected[index - 1]?.tool.id;
     const isBlocked = status === 'BLOCKED' || status === 'REQUIRES MORE DATA';
+    const executor = getToolExecutor(tool.id);
     return {
       id: tool.id,
       label: tool.name,
@@ -180,6 +182,9 @@ export const selectToolsForInvestigation = (
       inputRequired: tool.inputRequired,
       sufficiencyCheck: `Accept output only when ${tool.outputProvides.join(', ')} are present and internally consistent.`,
       nextToolIfInsufficient: tool.id === 'data-profiler' ? 'INVESTIGATION BLOCKED' : 'evidence-verification',
+      executorId: executor?.id,
+      executorName: executor?.name,
+      executorCategory: executor?.category,
     };
   });
 };

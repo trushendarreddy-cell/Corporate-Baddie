@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { lazy, Suspense, useEffect, useState } from 'react';
 import {
   UnifiedInvestigationState,
   InvestigationState,
@@ -17,6 +17,11 @@ import { KeyFindings } from '../KeyFindings';
 import { Charts } from '../Charts';
 import { DynamicInvestigationPlanner } from '../DynamicInvestigationPlanner';
 import { DECOMPOSED_QUESTIONS } from '../../mockData';
+import type { CoreNodeAction } from './DecisionCore3D';
+
+const DecisionCore3D = lazy(() =>
+  import('./DecisionCore3D').then((module) => ({ default: module.DecisionCore3D }))
+);
 
 interface InvestigateModuleProps {
   unifiedState: UnifiedInvestigationState;
@@ -47,6 +52,7 @@ interface InvestigateModuleProps {
   onExportBrief: () => void;
   onViewEvidence: (finding: KeyFinding) => void;
   onSelectCitation: (citation: CitationRef) => void;
+  onOpenNode: (action: CoreNodeAction) => void;
 }
 
 /**
@@ -82,7 +88,18 @@ export const InvestigateModule: React.FC<InvestigateModuleProps> = ({
   onExportBrief,
   onViewEvidence,
   onSelectCitation,
+  onOpenNode,
 }) => {
+  const [reducedMotion, setReducedMotion] = useState(false);
+
+  useEffect(() => {
+    const media = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const update = () => setReducedMotion(media.matches);
+    update();
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, []);
+
   const hasReliableInternalEvidence =
     unifiedState.empiricalFindings.length > 0 &&
     !(unifiedState.issues || []).some(
@@ -149,6 +166,23 @@ export const InvestigateModule: React.FC<InvestigateModuleProps> = ({
           onToggleDataSource={onToggleDataSource}
           onAddSimulatedFile={onAddSimulatedFile}
         />
+      )}
+
+      {!hasAnalyzed && !isAnalyzing && (
+        <section className="border-y cb-hairline py-5" aria-label="Decision Core preview">
+          <div className="flex flex-wrap items-end justify-between gap-3 mb-3">
+            <div>
+              <p className="cb-kicker">Interactive decision map</p>
+              <p className="text-xs text-slate-500 mt-1">The same investigation model connects your data, evidence, market signals, risk, and scenarios.</p>
+            </div>
+            <span className="cb-meta">Select a dimension to explore</span>
+          </div>
+          <div className="max-w-[420px] mx-auto">
+            <Suspense fallback={<div className="aspect-square flex items-center justify-center text-sm text-slate-500">Loading decision map...</div>}>
+              <DecisionCore3D state={unifiedState} onOpenNode={onOpenNode} reducedMotion={reducedMotion} />
+            </Suspense>
+          </div>
+        </section>
       )}
 
       {/* Findings workspace (after analysis) */}

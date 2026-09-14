@@ -1,12 +1,14 @@
-import React, { useRef, useEffect, useMemo, useState, useCallback } from 'react';
+import React, { useRef, useEffect, useMemo, useState } from 'react';
 import * as THREE from 'three';
-import { UnifiedInvestigationState } from '../../types';
+import { ScenarioResult, UnifiedInvestigationState } from '../../types';
+import { DECISION_ROOM_OPTIONS } from '../../mockData';
 
 export type CoreNodeAction = 'data' | 'evidence' | 'market' | 'risk' | 'scenario';
 
 interface DecisionCore3DProps {
   state: UnifiedInvestigationState;
   onOpenNode: (action: CoreNodeAction) => void;
+  scenarioOverride?: ScenarioResult;
   /** Reduced-motion flag: freezes ambient animation, keeps static depth. */
   reducedMotion?: boolean;
 }
@@ -18,6 +20,22 @@ interface NodeSpec {
   /** Semantic accent. */
   color: THREE.Color;
   label: string;
+}
+
+interface DecisionCoreDimension {
+  label: string;
+  detail: string;
+  score: number;
+  available: boolean;
+}
+
+interface DecisionCoreState {
+  data: DecisionCoreDimension;
+  evidence: DecisionCoreDimension;
+  market: DecisionCoreDimension;
+  risk: DecisionCoreDimension;
+  scenario: DecisionCoreDimension;
+  recommendation: { confidence: number; optionName: string };
 }
 
 const NODE_ACCENTS: Record<CoreNodeAction, number> = {
@@ -43,6 +61,7 @@ const NODE_ACCENTS: Record<CoreNodeAction, number> = {
 export const DecisionCore3D: React.FC<DecisionCore3DProps> = ({
   state,
   onOpenNode,
+  scenarioOverride,
   reducedMotion = false,
 }) => {
   const mountRef = useRef<HTMLDivElement>(null);
@@ -50,11 +69,21 @@ export const DecisionCore3D: React.FC<DecisionCore3DProps> = ({
   const frameRef = useRef<number>(0);
   const hoveredRef = useRef<CoreNodeAction | null>(null);
   const pointerRef = useRef({ x: 0, y: 0, active: false });
+  const dragRef = useRef({ active: false, moved: false, x: 0, y: 0 });
   const nodeMeshesRef = useRef<Map<CoreNodeAction, THREE.Object3D>>(new Map());
   const nodeMaterialsRef = useRef<Map<CoreNodeAction, THREE.MeshStandardMaterial>>(new Map());
   const lineRefs = useRef<THREE.Line[]>([]);
   const groupRef = useRef<THREE.Group | null>(null);
+  const targetRotationRef = useRef({ x: 0, y: 0 });
+  const rotationVelocityRef = useRef({ x: 0, y: 0 });
+  const focusedRef = useRef<CoreNodeAction | null>(null);
+  const targetConfidenceRef = useRef(0);
+  const displayedConfidenceRef = useRef(0);
+  const dimensionScoresRef = useRef<Record<CoreNodeAction, number>>({ data: 0, evidence: 0, market: 0, risk: 0, scenario: 0 });
+  const confidence = state.recommendationConfidence.overallScore;
   const [hovered, setHovered] = useState<CoreNodeAction | null>(null);
+  const [focused, setFocused] = useState<CoreNodeAction | null>(null);
+  const [displayedConfidence, setDisplayedConfidence] = useState(confidence);
   const [labelPos, setLabelPos] = useState<Record<string, { x: number; y: number }>>({});
   const [stageSize, setStageSize] = useState({ width: 480, height: 480 });
 
@@ -69,7 +98,57 @@ export const DecisionCore3D: React.FC<DecisionCore3DProps> = ({
     []
   );
 
-  const confidence = state.recommendationConfidence.overallScore;
+  if (targetConfidenceRef.current === 0) {
+    targetConfidenceRef.current = confidence;
+    displayedConfidenceRef.current = confidence;
+  }
+  const decisionCoreState = useMemo<DecisionCoreState>(() => {
+    const sources = state.activeDataSources.filter((source) => source.selected);
+    const records = sources.reduce((total, source) => total + source.recordsCount, 0);
+    const verified = state.claims.filter((claim) => claim.verified).length;
+    const marketSignals = state.marketIntelligence.length;
+    const scenarios = state.scenarioResults.length;
+    const selectedOption = DECISION_ROOM_OPTIONS.find((option) => option.id === state.selectedOptionId) || DECISION_ROOM_OPTIONS.find((option) => option.isRecommended);
+    const optionName = selectedOption?.name.toLowerCase() || '';
+    const riskIssues = state.issues?.filter((issue) => issue.status === 'EVIDENCE CONFLICT' || issue.status === 'TOOL FAILURE').length || 0;
+    const optionEmphasis = {
+      market: optionName.includes('marketing') ? 18 : 0,
+      risk: optionName.includes('do nothing') ? 22 : optionName.includes('pricing') ? 10 : 0,
+      scenario: optionName.includes('scenario') || optionName.includes('intervention') ? 14 : 0,
+      data: optionName.includes('product') ? 12 : 0,
+    };
+    return {
+      data: { label: 'Your business data', detail: `${sources.length} sources · ${(records / 1000).toFixed(0)}K records · ${state.dataQuality.overallPercent}% quality`, score: Math.min(100, state.dataQuality.overallPercent + optionEmphasis.data), available: sources.length > 0 },
+      evidence: { label: 'What supports the answer', detail: `${verified} verified claims · ${state.claims.length} total`, score: state.claims.length ? (verified / state.claims.length) * 100 : 0, available: verified > 0 },
+      market: { label: 'What is happening outside', detail: marketSignals ? `${marketSignals} market signals · external research available` : 'No market research selected', score: Math.min(100, (marketSignals ? 70 : 0) + optionEmphasis.market), available: marketSignals > 0 },
+      risk: { label: 'What could go wrong', detail: riskIssues ? `${riskIssues} active risk${riskIssues === 1 ? '' : 's'} · review evidence conflict` : '1 high · 2 medium · downside monitored', score: Math.min(100, riskIssues * 25 + 35 + optionEmphasis.risk), available: true },
+      scenario: { label: 'What happens if we change the plan', detail: scenarioOverride ? `What-If: revenue ${scenarioOverride.revenueDelta >= 0 ? '+' : ''}${scenarioOverride.revenueDelta}% · margin ${scenarioOverride.grossMarginDelta >= 0 ? '+' : ''}${scenarioOverride.grossMarginDelta}% · risk ${scenarioOverride.riskLevel}` : `${scenarios} strategies tested · sensitivity available`, score: scenarioOverride ? Math.max(0, 100 - (scenarioOverride.riskLevel === 'High' ? 35 : scenarioOverride.riskLevel === 'Medium' ? 18 : 8)) : Math.min(100, (scenarios ? 72 : 0) + optionEmphasis.scenario), available: scenarios > 0 || !!scenarioOverride },
+      recommendation: { confidence, optionName: selectedOption?.name || 'Current recommendation' },
+    };
+  }, [confidence, scenarioOverride, state]);
+
+  useEffect(() => {
+    focusedRef.current = focused;
+  }, [focused]);
+
+  useEffect(() => {
+    const clearFocus = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setFocused(null);
+    };
+    window.addEventListener('keydown', clearFocus);
+    return () => window.removeEventListener('keydown', clearFocus);
+  }, []);
+
+  useEffect(() => {
+    targetConfidenceRef.current = decisionCoreState.recommendation.confidence;
+    dimensionScoresRef.current = {
+      data: decisionCoreState.data.score,
+      evidence: decisionCoreState.evidence.score,
+      market: decisionCoreState.market.score,
+      risk: decisionCoreState.risk.score,
+      scenario: decisionCoreState.scenario.score,
+    };
+  }, [decisionCoreState]);
 
   // Build scene once
   useEffect(() => {
@@ -260,6 +339,17 @@ export const DecisionCore3D: React.FC<DecisionCore3DProps> = ({
       const py = -((e.clientY - rect.top) / rect.height) * 2 + 1;
       pointerNDC.set(px, py);
       pointerRef.current = { x: px, y: py, active: true };
+      if (dragRef.current.active) {
+        const dx = e.clientX - dragRef.current.x;
+        const dy = e.clientY - dragRef.current.y;
+        dragRef.current.x = e.clientX;
+        dragRef.current.y = e.clientY;
+        dragRef.current.moved = dragRef.current.moved || Math.abs(dx) + Math.abs(dy) > 2;
+        targetRotationRef.current.y += dx * 0.004;
+        targetRotationRef.current.x += dy * 0.003;
+      } else {
+        targetRotationRef.current = { x: -py * 0.08, y: px * 0.12 };
+      }
 
       raycaster.setFromCamera(pointerNDC, camera);
       const hits = raycaster.intersectObjects(world.children, true);
@@ -272,6 +362,10 @@ export const DecisionCore3D: React.FC<DecisionCore3DProps> = ({
     };
 
     const handleClick = (e: MouseEvent) => {
+      if (dragRef.current.moved) {
+        dragRef.current.moved = false;
+        return;
+      }
       const rect = mount.getBoundingClientRect();
       pointerNDC.set(
         ((e.clientX - rect.left) / rect.width) * 2 - 1,
@@ -280,11 +374,25 @@ export const DecisionCore3D: React.FC<DecisionCore3DProps> = ({
       raycaster.setFromCamera(pointerNDC, camera);
       const hits = raycaster.intersectObjects(world.children, true);
       const hitNode = hits.length ? findNodeKey(hits[0].object) : null;
-      if (hitNode) onOpenNode(hitNode);
+      if (hitNode) {
+        setFocused(hitNode);
+        onOpenNode(hitNode);
+      }
+    };
+
+    const handlePointerDown = (e: PointerEvent) => {
+      dragRef.current = { active: true, moved: false, x: e.clientX, y: e.clientY };
+      mount.setPointerCapture?.(e.pointerId);
+    };
+
+    const handlePointerUp = (e: PointerEvent) => {
+      dragRef.current.active = false;
+      mount.releasePointerCapture?.(e.pointerId);
     };
 
     const handlePointerLeave = () => {
       pointerRef.current.active = false;
+      targetRotationRef.current = { x: 0, y: 0 };
       if (hoveredRef.current) {
         hoveredRef.current = null;
         setHovered(null);
@@ -293,6 +401,8 @@ export const DecisionCore3D: React.FC<DecisionCore3DProps> = ({
     };
 
     mount.addEventListener('pointermove', handlePointerMove);
+    mount.addEventListener('pointerdown', handlePointerDown);
+    mount.addEventListener('pointerup', handlePointerUp);
     mount.addEventListener('click', handleClick);
     mount.addEventListener('pointerleave', handlePointerLeave);
 
@@ -318,53 +428,59 @@ export const DecisionCore3D: React.FC<DecisionCore3DProps> = ({
       frameRef.current = requestAnimationFrame(animate);
       if (!visible) return;
 
-      const t = clock.getElapsedTime();
+      const delta = Math.min(clock.getDelta(), 0.05);
+      const t = clock.elapsedTime;
       const amp = reducedMotion ? 0 : 1;
 
       // Ambient core rotation (very slow)
-      coreGroup.rotation.y = t * 0.08 * amp;
-      wireMesh.rotation.y = -t * 0.05 * amp;
-      wireMesh.rotation.x = t * 0.02 * amp;
-      ring1.rotation.z = t * 0.03 * amp;
-      ring2.rotation.z = -t * 0.02 * amp;
+      coreGroup.rotation.y += delta * 0.08 * amp;
+      wireMesh.rotation.y += delta * -0.05 * amp;
+      wireMesh.rotation.x += delta * 0.02 * amp;
+      ring1.rotation.z += delta * 0.03 * amp;
+      ring2.rotation.z += delta * -0.02 * amp;
 
       // Node float: gentle bob + slow orbital drift
       nodeGroups.forEach(({ spec, group, phase }, i) => {
         const lit = hoveredRef.current === spec.key;
-        group.position.y = Math.sin(t * 0.6 + phase) * 0.16 * amp;
-        group.rotation.y = t * 0.4 * amp + i;
+        group.position.y = Math.sin(t * 0.6 + phase) * 0.12 * amp;
+        group.rotation.y += delta * 0.16 * amp;
 
         const mat = nodeMaterialsRef.current.get(spec.key);
         if (mat) {
-          const target = lit ? 0.24 : 0.06;
+          const stateStrength = dimensionScoresRef.current[spec.key] / 100;
+          const target = lit || focusedRef.current === spec.key ? 0.2 + stateStrength * 0.12 : 0.035 + stateStrength * 0.035;
           mat.emissiveIntensity += (target - mat.emissiveIntensity) * 0.12;
         }
         // Scale pulse on hover
-        const targetScale = lit ? 1.28 : 1;
+        const targetScale = lit || focusedRef.current === spec.key ? 1.18 : 1;
         const cur = group.scale.x;
-        group.scale.setScalar(cur + (targetScale - cur) * 0.14);
+        group.scale.setScalar(cur + (targetScale - cur) * Math.min(1, delta * 8));
       });
 
       // Connector illumination
       lineRefs.current.forEach((line) => {
         const mat = line.material as THREE.LineBasicMaterial;
         const lit = hoveredRef.current === (line.userData.nodeKey as CoreNodeAction);
-        const target = hoveredRef.current ? (lit ? 0.28 : 0.025) : 0.06;
-        mat.opacity += (target - mat.opacity) * 0.1;
+        const target = hoveredRef.current || focused ? (lit ? 0.25 : 0.02) : 0.05;
+        mat.opacity += (target - mat.opacity) * Math.min(1, delta * 7);
       });
 
       // Confidence-driven inner shell breathing
       const breathe = 1 + Math.sin(t * 0.45) * 0.02 * amp;
       innerMesh.scale.setScalar(breathe);
 
+      displayedConfidenceRef.current += (targetConfidenceRef.current - displayedConfidenceRef.current) * Math.min(1, delta * 5);
+      if (Math.round(t * 10) % 3 === 0) setDisplayedConfidence(Math.round(displayedConfidenceRef.current));
+
       // Cursor parallax (subtle)
-      if (pointerRef.current.active) {
-        world.rotation.y += ((pointerRef.current.x * 0.14) - world.rotation.y) * 0.04;
-        world.rotation.x += ((-pointerRef.current.y * 0.08) - world.rotation.x) * 0.04;
-      } else {
-        world.rotation.y += (0 - world.rotation.y) * 0.02;
-        world.rotation.x += (0 - world.rotation.x) * 0.02;
-      }
+      const targetX = targetRotationRef.current.x;
+      const targetY = targetRotationRef.current.y;
+      rotationVelocityRef.current.x += (targetX - world.rotation.x) * delta * 3.5;
+      rotationVelocityRef.current.y += (targetY - world.rotation.y) * delta * 3.5;
+      rotationVelocityRef.current.x *= Math.pow(0.08, delta);
+      rotationVelocityRef.current.y *= Math.pow(0.08, delta);
+      world.rotation.x += rotationVelocityRef.current.x * delta;
+      world.rotation.y += rotationVelocityRef.current.y * delta;
 
       renderer.render(scene, camera);
 
@@ -381,7 +497,7 @@ export const DecisionCore3D: React.FC<DecisionCore3DProps> = ({
         v.project(camera);
         next[spec.key] = { x: (v.x * 0.5 + 0.5) * currentWidth, y: (-v.y * 0.5 + 0.5) * currentHeight };
       });
-      setLabelPos(next);
+      if (Math.round(t * 12) % 2 === 0) setLabelPos(next);
     };
     animate();
 
@@ -403,6 +519,8 @@ export const DecisionCore3D: React.FC<DecisionCore3DProps> = ({
       io.disconnect();
       ro.disconnect();
       mount.removeEventListener('pointermove', handlePointerMove);
+      mount.removeEventListener('pointerdown', handlePointerDown);
+      mount.removeEventListener('pointerup', handlePointerUp);
       mount.removeEventListener('click', handleClick);
       mount.removeEventListener('pointerleave', handlePointerLeave);
       renderer.dispose();
@@ -449,11 +567,12 @@ export const DecisionCore3D: React.FC<DecisionCore3DProps> = ({
             : 'No market sources selected',
         };
       case 'risk': {
+        const highRiskCount = state.issues?.filter((issue) => issue.status === 'EVIDENCE CONFLICT' || issue.status === 'TOOL FAILURE').length || 0;
         return {
           label: 'What could go wrong',
           detail: state.issues?.some((issue) => issue.status === 'EVIDENCE CONFLICT')
-            ? 'Evidence conflict needs review'
-            : 'Retention risk · review the downside',
+            ? `${highRiskCount || 1} active risk${highRiskCount === 1 ? '' : 's'} · evidence conflict`
+            : '1 high · 2 medium · review the downside',
         };
       }
       case 'scenario': {
@@ -500,20 +619,28 @@ export const DecisionCore3D: React.FC<DecisionCore3DProps> = ({
         );
         const clampedY = Math.min(Math.max(baseY, 12), Math.max(12, h - 24));
         return (
-          <span
+          <button
             key={spec.key}
             className="cb-core-label"
             data-lit={hovered === spec.key}
+            type="button"
+            aria-label={`${spec.label} layer. ${decisionCoreState[spec.key].detail}`}
+            onFocus={() => setFocused(spec.key)}
+            onBlur={() => setFocused(null)}
+            onClick={() => {
+              setFocused(spec.key);
+              onOpenNode(spec.key);
+            }}
             style={{
               transform: `translate(${clampedX}px, ${clampedY}px)`,
               fontSize: '8.4px',
               letterSpacing: '0.14em',
               maxWidth: '90px',
-              color: hovered === spec.key ? '#b8d4bd' : undefined,
+              color: hovered === spec.key || focused === spec.key ? '#b8d4bd' : undefined,
             }}
           >
             {spec.label}
-          </span>
+          </button>
         );
       })}
 
@@ -524,7 +651,7 @@ export const DecisionCore3D: React.FC<DecisionCore3DProps> = ({
             className="cb-metric text-white"
             style={{ fontSize: 'clamp(28px, 9vw, 40px)', textShadow: '0 2px 18px rgba(0,0,0,0.45)' }}
           >
-            {confidence}
+            {displayedConfidence}
             <span style={{ fontSize: '0.5em', opacity: 0.55 }}>%</span>
           </div>
           <div className="cb-meta mt-1.5" style={{ color: 'rgba(148,163,184,0.75)' }}>

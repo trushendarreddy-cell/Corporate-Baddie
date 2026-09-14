@@ -255,6 +255,24 @@ export const ARCHITECTURE_COMPONENTS: AgentDescriptor[] = [
   },
 ];
 
+/** Runtime ownership map: every planned tool has one accountable executor. */
+export const TOOL_EXECUTOR_MAP: Record<string, string> = {
+  'data-profiler': 'svc-prof',
+  'sql-pandas-analytics': 'svc-biz',
+  'anomaly-detection': 'agent-inv',
+  'root-cause-analysis': 'agent-inv',
+  'market-search': 'agent-mkt',
+  forecasting: 'svc-fore',
+  'scenario-simulation': 'svc-fore',
+  'evidence-verification': 'agent-ver',
+  visualization: 'svc-vis',
+};
+
+export const getToolExecutor = (toolId: string): AgentDescriptor | undefined => {
+  const executorId = TOOL_EXECUTOR_MAP[toolId];
+  return ARCHITECTURE_COMPONENTS.find((component) => component.id === executorId);
+};
+
 // Investigation intent classifications for dynamic tool selection
 export const INTENT_TO_TOOL_MAPPING = {
   'diagnostic': [

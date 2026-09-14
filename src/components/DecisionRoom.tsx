@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Target,
   ChevronDown,
@@ -9,6 +9,7 @@ import { DecisionRoomOption } from '../types';
 interface DecisionRoomProps {
   options: DecisionRoomOption[];
   onSelectOption?: (optionId: string) => void;
+  selectedOptionId?: string;
   decisionConfidence?: number;
   decisionConfidenceLabel?: string;
 }
@@ -31,14 +32,21 @@ const riskTone = (risk: DecisionRoomOption['risk']) => {
 export const DecisionRoom: React.FC<DecisionRoomProps> = ({
   options,
   onSelectOption,
+  selectedOptionId,
   decisionConfidence,
   decisionConfidenceLabel,
 }) => {
-  const [selectedId, setSelectedId] = useState<string>(options.find((o) => o.isRecommended)?.id || options[0]?.id);
+  const [selectedId, setSelectedId] = useState<string>(selectedOptionId || options.find((o) => o.isRecommended)?.id || options[0]?.id);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showMatrix, setShowMatrix] = useState<boolean>(false);
 
   const selectedOption = options.find((o) => o.id === selectedId) || options[0];
+
+  useEffect(() => {
+    if (selectedOptionId && options.some((option) => option.id === selectedOptionId)) {
+      setSelectedId(selectedOptionId);
+    }
+  }, [options, selectedOptionId]);
 
   const handleSelect = (id: string) => {
     setSelectedId(id);
@@ -89,11 +97,12 @@ export const DecisionRoom: React.FC<DecisionRoomProps> = ({
                 <div
                   key={opt.id}
                   className={`cb-rise cb-lift cb-press rounded-lg p-4 border cursor-pointer relative ${
-                    opt.isRecommended
+                    isSelected
+                      ? 'border-emerald-500/45 bg-emerald-950/[0.10] ring-1 ring-emerald-500/20'
+                      : opt.isRecommended
                       ? 'border-amber-500/35 bg-amber-950/[0.08]'
-                      : isSelected
-                      ? 'border-slate-600 bg-slate-900/50'
-                      : 'border-slate-800/80 bg-slate-950/40 hover:border-slate-700'
+                      :
+                      'border-slate-800/80 bg-slate-950/40 hover:border-slate-700'
                   }`}
                   style={{
                     animationDelay: `${options.indexOf(opt) * 50}ms`,
@@ -272,7 +281,7 @@ export const DecisionRoom: React.FC<DecisionRoomProps> = ({
         )}
 
         {/* Selected option deep-dive banner */}
-        <div className="mt-6 rounded-lg border border-amber-500/20 bg-amber-950/[0.06] px-5 py-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="mt-6 rounded-lg border border-emerald-500/20 bg-emerald-950/[0.06] px-5 py-4 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3.5">
             <Target className="w-4 h-4 text-amber-400" />
             <div>

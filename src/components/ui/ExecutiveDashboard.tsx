@@ -1,6 +1,6 @@
 import React, { useEffect, useState, Suspense, lazy } from 'react';
 import { ArrowRight, AlertTriangle } from 'lucide-react';
-import { UnifiedInvestigationState, InvestigationRun } from '../../types';
+import { ScenarioResult, UnifiedInvestigationState, InvestigationRun } from '../../types';
 import type { CoreNodeAction } from './DecisionCore3D';
 
 // Three.js payload is code-split: only fetched when the overview renders.
@@ -31,6 +31,7 @@ interface ExecutiveDashboardProps {
   onOpenSignals: () => void;
   onOpenHistory: () => void;
   onViewFindingEvidence: (findingId: string) => void;
+  scenarioOverride?: ScenarioResult;
 }
 
 /**
@@ -48,6 +49,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
   onOpenSignals,
   onOpenHistory,
   onViewFindingEvidence,
+  scenarioOverride,
 }) => {
   const blocked = (state.issues || []).some(
     (i) => i.status === 'DATA INSUFFICIENT' || i.status === 'INVESTIGATION BLOCKED'
@@ -237,7 +239,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
                 </div>
               }
             >
-              <DecisionCore3D state={state} onOpenNode={onOpenNode} reducedMotion={reducedMotion} />
+              <DecisionCore3D state={state} onOpenNode={onOpenNode} scenarioOverride={scenarioOverride} reducedMotion={reducedMotion} />
             </Suspense>
           </div>
         </section>

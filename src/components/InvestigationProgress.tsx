@@ -185,6 +185,11 @@ export const InvestigationProgress: React.FC<InvestigationProgressProps> = ({
             </span>
           </div>
           <h3 className="text-base sm:text-lg font-bold text-white">{activeStage?.title}</h3>
+          {activeStage?.executorName && (
+            <p className="text-[11px] text-slate-500 mt-1">
+              Assigned to {activeStage.executorName}{activeStage.executorCategory === 'ANALYTICAL_SERVICE' ? ' · deterministic service' : ' · reasoning agent'}
+            </p>
+          )}
           <p className="text-xs sm:text-sm text-amber-200/80 mt-1.5 italic">
             &ldquo;{activeStage?.dynamicMessage}&rdquo;
           </p>

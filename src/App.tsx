@@ -148,6 +148,7 @@ export default function App() {
   const [selectedFindingForEvidence, setSelectedFindingForEvidence] = useState<KeyFinding | null>(null);
   const [selectedClaimForEvidence, setSelectedClaimForEvidence] = useState<EvidenceClaim | null>(null);
   const [robustnessComparison, setRobustnessComparison] = useState<RobustnessTestComparison | undefined>(undefined);
+  const [scenarioOverride, setScenarioOverride] = useState<ScenarioResult | undefined>(undefined);
 
   // Stages definition for live simulation
   const stages: InvestigationStage[] = PRIMARY_INVESTIGATION.stages || [];
@@ -155,7 +156,9 @@ export default function App() {
   // ------------------------- Navigation helpers -------------------------
 
   const handleNavigate = (tab: ModuleTab) => {
-    setActiveTab(tab);
+    // Overview is a result workspace. Keep new users in the question-led home
+    // until an investigation has actually produced a result.
+    setActiveTab(tab === 'overview' && !hasAnalyzed ? 'investigate' : tab);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -415,6 +418,10 @@ export default function App() {
     );
   };
 
+  const handleSelectDecisionOption = (optionId: string) => {
+    setUnifiedState((previous) => ({ ...previous, selectedOptionId: optionId }));
+  };
+
   // ------------------------- Export (unchanged) -------------------------
 
   const handleExportBrief = () => {
@@ -517,6 +524,7 @@ export default function App() {
           <ExecutiveDashboard
             state={unifiedState}
             runs={runs}
+            scenarioOverride={scenarioOverride}
             onOpenInvestigation={() => handleNavigate('investigate')}
             onViewEvidence={() => setIsEvidenceGraphOpen(true)}
             onOpenNode={handleCoreNode}
@@ -557,6 +565,7 @@ export default function App() {
             onExportBrief={handleExportBrief}
             onViewEvidence={handleViewEvidence}
             onSelectCitation={handleSelectCitation}
+            onOpenNode={handleCoreNode}
           />
         )}
 
@@ -572,8 +581,9 @@ export default function App() {
             onOpenRobustnessModal={() => setIsRobustnessModalOpen(true)}
             onExportBrief={handleExportBrief}
             onApplyScenarioToDecision={undefined}
-            onParamsChange={undefined}
+            onParamsChange={(_params, result) => setScenarioOverride(result)}
             onSelectCitation={handleSelectCitation}
+            onSelectOption={handleSelectDecisionOption}
           />
         )}
 

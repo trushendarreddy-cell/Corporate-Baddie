@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ArrowRight,
   Database,
@@ -44,10 +44,12 @@ export const QuestionInput: React.FC<QuestionInputProps> = ({
   onToggleDataSource,
   onAddSimulatedFile,
 }) => {
+  const questionInputRef = useRef<HTMLTextAreaElement>(null);
   const [activeExampleIndex, setActiveExampleIndex] = useState<number>(0);
   const [showInlineContext, setShowInlineContext] = useState<boolean>(false);
   const [showInlineDataSources, setShowInlineDataSources] = useState<boolean>(false);
   const [previewStage, setPreviewStage] = useState(-1);
+  const [activeCapability, setActiveCapability] = useState<string | null>(null);
 
   const previewStages = [
     'Checking your data',
@@ -56,6 +58,16 @@ export const QuestionInput: React.FC<QuestionInputProps> = ({
     'Checking market signals',
     'Verifying evidence',
     'Building a recommendation',
+  ];
+
+  const capabilities = [
+    ['UNDERSTAND', 'What changed in your business?', 'Why did revenue, margin, or demand move?'],
+    ['DIAGNOSE', 'Why is it happening?', 'Why did our gross margin fall in Q3?'],
+    ['INVESTIGATE', 'Which parts are driving it?', 'Which products, regions, customers, or channels matter most?'],
+    ['MARKET', 'What is happening outside?', 'Are competitors changing prices in our category?'],
+    ['FORECAST', 'What could happen next?', 'What happens if the current trend continues?'],
+    ['DECIDE', 'Which action has the strongest evidence?', 'Should we increase pricing or protect volume?'],
+    ['VERIFY', 'Can we support the recommendation?', 'Which source and calculation support this conclusion?'],
   ];
 
   useEffect(() => {
@@ -98,7 +110,7 @@ export const QuestionInput: React.FC<QuestionInputProps> = ({
             htmlFor="business-question-input"
             className="cb-kicker !text-slate-400"
           >
-            Start with a question
+            Start with a business question
           </label>
           <span className="text-[11px] text-slate-500 hidden sm:inline">
             <kbd className="px-1.5 py-0.5 rounded bg-slate-900 text-slate-400 border border-slate-800 font-mono text-[10px]">Cmd + Enter</kbd> to analyze
@@ -109,6 +121,7 @@ export const QuestionInput: React.FC<QuestionInputProps> = ({
         <div className="relative mb-4">
           <textarea
             id="business-question-input"
+            ref={questionInputRef}
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -212,10 +225,14 @@ export const QuestionInput: React.FC<QuestionInputProps> = ({
         <div className="flex flex-wrap gap-2">
           {[
             'Why are our margins falling?',
+            'Which products are driving the revenue decline?',
             'Should we change our pricing?',
             'Which region should we invest in?',
+            'Why are customers leaving?',
+            'What is causing the increase in operating costs?',
+            'Are competitors putting pressure on our category?',
             'What should we do about declining sales?',
-            'Which product deserves more budget?',
+            'Which strategy gives us the best risk-adjusted outcome?',
           ].map((prompt, idx) => (
             <button
               key={idx}
@@ -237,10 +254,10 @@ export const QuestionInput: React.FC<QuestionInputProps> = ({
         <div className="cb-glass-hero cb-edge rounded-xl p-5 sm:p-6 space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <p className="cb-kicker text-amber-400/90">Live example</p>
+              <p className="cb-kicker text-amber-400/90">Illustrative investigation</p>
               <p className="text-base sm:text-lg font-semibold text-white mt-2">“{question}”</p>
             </div>
-            <span className="cb-meta text-emerald-300">{previewStage === previewStages.length - 1 ? 'Example ready' : 'Example running'}</span>
+            <span className="cb-meta text-emerald-300">{previewStage === previewStages.length - 1 ? 'Example complete' : 'Example flow'}</span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
@@ -274,6 +291,84 @@ export const QuestionInput: React.FC<QuestionInputProps> = ({
           )}
         </div>
       )}
+
+      <section className="pt-3 border-t cb-hairline" aria-label="What CorporateBaddie investigates">
+        <div className="flex flex-wrap items-end justify-between gap-3 mb-3">
+          <div>
+            <p className="cb-kicker">What CorporateBaddie investigates</p>
+            <p className="text-xs text-slate-500 mt-1">One investigation, from business question to defensible decision.</p>
+          </div>
+          <span className="cb-meta">Select a capability to see an example</span>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 border-y cb-hairline">
+          {capabilities.map(([label, description, example]) => {
+            const active = activeCapability === label;
+            return (
+              <button
+                key={label}
+                type="button"
+                onClick={() => setActiveCapability(active ? null : label)}
+                className={`text-left px-3 py-3.5 border-b sm:border-b-0 sm:border-r border-slate-800/80 last:border-r-0 transition-colors ${active ? 'cb-selected' : 'hover:bg-white/[0.025]'}`}
+              >
+                <span className={`cb-meta block ${active ? 'text-[#b8d4bd]' : ''}`}>{label}</span>
+                <span className="text-[11px] text-slate-300 leading-snug block mt-2">{description}</span>
+                {active && <span className="text-[11px] text-[#b8d4bd] leading-snug block mt-2">“{example}”</span>}
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className="pt-3" aria-label="Investigation workflow">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+          <p className="cb-kicker">How an investigation moves</p>
+          <span className="text-[11px] text-slate-500">The system checks each step before it recommends an action.</span>
+        </div>
+        <div className="flex flex-wrap items-center gap-y-2 text-[11px] text-slate-400">
+          {['Question', 'Your data', 'Analysis', 'Why', 'Market signals', 'Evidence check', 'Recommendation'].map((step, index, steps) => (
+            <React.Fragment key={step}>
+              <span className="inline-flex items-center gap-2 whitespace-nowrap">
+                <span className="w-5 h-5 rounded-full border border-slate-700 flex items-center justify-center text-[10px] text-[#a9c9ae]">{index + 1}</span>
+                {step}
+              </span>
+              {index < steps.length - 1 && <ArrowRight className="w-3.5 h-3.5 mx-2 text-slate-700" />}
+            </React.Fragment>
+          ))}
+        </div>
+      </section>
+
+      <section className="cb-glass rounded-xl p-4 sm:p-5" aria-label="Example investigation">
+        <div className="flex flex-wrap items-start justify-between gap-3 border-b cb-hairline pb-3">
+          <div>
+            <p className="cb-kicker">Example investigation</p>
+            <p className="text-sm font-semibold text-white mt-1">What is driving our sales decline?</p>
+          </div>
+          <span className="cb-meta">Illustrative example</span>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-4">
+          <div><p className="cb-kicker">What we found</p><p className="text-xs text-slate-300 mt-2 leading-relaxed">Revenue ↓14.2% · Product A ↓21.0% · South retention ↓18.4%</p></div>
+          <div><p className="cb-kicker">Why</p><p className="text-xs text-slate-300 mt-2 leading-relaxed">The decline is concentrated in Product A and the South region.</p></div>
+          <div><p className="cb-kicker">Market signal</p><p className="text-xs text-slate-300 mt-2 leading-relaxed">Competitor promotional activity has increased in the region.</p></div>
+          <div><p className="cb-kicker">Recommendation</p><p className="text-xs text-[#b8d4bd] mt-2 leading-relaxed">Run a targeted pricing intervention, not a broad discount.</p><p className="cb-meta mt-2">82% confidence · 7 verified claims</p></div>
+        </div>
+      </section>
+
+      <section className="flex flex-wrap items-center justify-between gap-4 border-t cb-hairline pt-5" aria-label="Start an investigation">
+        <div>
+          <p className="text-sm font-semibold text-white">Have a business question?</p>
+          <p className="text-xs text-slate-500 mt-1">Bring the decision you are working through. CorporateBaddie will investigate it step by step.</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            questionInputRef.current?.focus();
+            questionInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }}
+          className="cb-primary-action cb-btn px-4 py-2 rounded-md text-xs font-semibold"
+        >
+          Start with your question
+        </button>
+      </section>
     </div>
   );
 };
