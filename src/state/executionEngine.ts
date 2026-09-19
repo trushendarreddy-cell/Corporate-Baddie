@@ -66,6 +66,17 @@ export const executeInvestigation = async (options: ExecuteInvestigationOptions)
   try {
     await emit('REQUIREMENT_ANALYSIS', 'COMPLETED', 'Question accepted and routed to the backend investigation API.', ['question', 'workspaceId'], true);
     if (!datasetIds.length) {
+      try {
+        const remote = await api.datasets(workspaceId);
+        if (remote.datasets?.length) {
+          datasetIds.push(...remote.datasets.map((d) => d.id));
+        }
+      } catch {
+        // Continue to check
+      }
+    }
+
+    if (!datasetIds.length) {
       const blocked = makeIssue('DATA INSUFFICIENT', 'Data intake', 'No persisted dataset can support an evidence-backed investigation.', 'Upload and select at least one CSV or Excel dataset.');
       await emit('DATA_PROFILER', 'DATA INSUFFICIENT', blocked.impact, [], false);
       return { runId: options.runId, results, log: logs, state: {}, terminalStatus: 'DATA INSUFFICIENT', issues: [blocked], backend: { runId: options.runId, workspaceId, question: options.question, status: 'data_insufficient', dataSources: [], findings: [], metricSummaries: [], marketStatus: 'NOT RUN', forecastStatus: 'NOT RUN', recommendation: blocked.nextAction, confidence: 0, audit: { backend: true } } };
