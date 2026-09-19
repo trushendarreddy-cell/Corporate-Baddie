@@ -44,27 +44,58 @@ function extractGrokSources(data: any) {
 }
 
 async function callGrok(request: LLMRequest): Promise<LLMResult> {
-  const apiKey = process.env.XAI_API_KEY;
-  if (!apiKey) throw new Error('XAI_API_KEY is not configured');
-  const tools = request.useWebSearch ? [{ type: 'web_search' }] : undefined;
-  const response = await fetch('https://api.x.ai/v1/responses', {
+  const apiKey = process.env.XAI_API_KEY || process.env.GROQ_API_KEY;
+  if (!apiKey) throw new Error('XAI_API_KEY / GROQ_API_KEY is not configured');
+
+  const isGroq = apiKey.startsWith('gsk_');
+  const defaultModel = isGroq ? 'qwen/qwen3.8-27b' : 'grok-4.6';
+  const model = process.env.XAI_MODEL || defaultModel;
+  const endpoint = isGroq
+    ? 'https://api.groq.com/openai/v1/chat/completions'
+    : 'https://api.x.ai/v1/chat/completions';
+
+  const response = await fetch(endpoint, {
     method: 'POST',
     headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model: process.env.XAI_MODEL || 'grok-4.6',
-      input: [
+      model,
+      messages: [
         { role: 'system', content: request.system },
         { role: 'user', content: request.prompt },
       ],
-      ...(tools ? { tools } : {}),
+      temperature: 0.1,
     }),
     signal: timeoutSignal(),
   });
-  if (!response.ok) throw new Error(`Grok API ${response.status}: ${(await response.text()).slice(0, 1000)}`);
+
+  if (!response.ok) {
+    // If x.ai /responses is needed fallback for older endpoints:
+    if (!isGroq) {
+      const fallbackResp = await fetch('https://api.x.ai/v1/responses', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model,
+          input: [
+            { role: 'system', content: request.system },
+            { role: 'user', content: request.prompt },
+          ],
+        }),
+        signal: timeoutSignal(),
+      });
+      if (fallbackResp.ok) {
+        const data = await fallbackResp.json();
+        const text = extractGrokText(data);
+        if (text) return { provider: 'grok', model, text, sources: extractGrokSources(data) };
+      }
+    }
+    throw new Error(`${isGroq ? 'Groq' : 'Grok'} API ${response.status}: ${(await response.text()).slice(0, 1000)}`);
+  }
+
   const data = await response.json();
-  const text = extractGrokText(data);
-  if (!text) throw new Error('Grok returned an empty response');
-  return { provider: 'grok', model: data?.model || process.env.XAI_MODEL || 'grok-4.6', text, sources: extractGrokSources(data) };
+  const text = data?.choices?.[0]?.message?.content?.trim() || extractGrokText(data);
+  if (!text) throw new Error(`${isGroq ? 'Groq' : 'Grok'} returned an empty response`);
+  return { provider: 'grok', model: data?.model || model, text, sources: extractGrokSources(data) };
 }
 
 async function callGemini(request: LLMRequest): Promise<LLMResult> {
