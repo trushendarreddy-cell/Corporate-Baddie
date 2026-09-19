@@ -16,6 +16,7 @@ interface UploadModalProps {
   onClose: () => void;
   selectedDataset: string;
   onSelectDataset: (name: string) => void;
+  onUploadFile?: (file: File) => Promise<any>;
 }
 
 export const UploadDataModal: React.FC<UploadModalProps> = ({
@@ -23,9 +24,13 @@ export const UploadDataModal: React.FC<UploadModalProps> = ({
   onClose,
   selectedDataset,
   onSelectDataset,
+  onUploadFile,
 }) => {
   const [dragOver, setDragOver] = useState(false);
   const [customFile, setCustomFile] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   if (!isOpen) return null;
 
@@ -58,14 +63,35 @@ export const UploadDataModal: React.FC<UploadModalProps> = ({
     onClose();
   };
 
+  const processFile = async (file: File) => {
+    setIsUploading(true);
+    setUploadError(null);
+    try {
+      if (onUploadFile) {
+        await onUploadFile(file);
+      }
+      setCustomFile(file.name);
+      onSelectDataset(`Uploaded: ${file.name}`);
+      setTimeout(() => onClose(), 800);
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : 'File upload failed');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setDragOver(false);
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      const name = e.dataTransfer.files[0].name;
-      setCustomFile(name);
-      onSelectDataset(`Uploaded: ${name}`);
-      setTimeout(() => onClose(), 600);
+      void processFile(e.dataTransfer.files[0]);
+    }
+  };
+
+  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      void processFile(e.target.files[0]);
+      e.target.value = '';
     }
   };
 
@@ -93,28 +119,52 @@ export const UploadDataModal: React.FC<UploadModalProps> = ({
         </div>
 
         <div className="p-6 space-y-4 text-xs">
+          {uploadError && (
+            <div className="p-3 rounded-lg bg-rose-950/40 border border-rose-500/40 text-rose-300 text-xs">
+              {uploadError}
+            </div>
+          )}
+
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileInput}
+            accept=".csv,.xlsx,.xls"
+            className="hidden"
+          />
+
           {/* Drag and drop zone */}
           <div
             onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
             onDragLeave={() => setDragOver(false)}
             onDrop={handleDrop}
+            onClick={() => fileInputRef.current?.click()}
             className={`border-2 border-dashed rounded-xl p-6 text-center transition-all cursor-pointer ${
               dragOver
                 ? 'border-amber-400 bg-amber-950/20'
                 : 'border-slate-700 hover:border-slate-600 bg-slate-950/50'
             }`}
           >
-            <Upload className="w-7 h-7 text-slate-400 mx-auto mb-2" />
-            <p className="font-semibold text-slate-200">
-              Drag & drop CSV, Excel, or Parquet datasets
-            </p>
-            <p className="text-slate-500 text-[11px] mt-1">
-              Supports .csv, .xlsx, .parquet, .json up to 100MB
-            </p>
-            {customFile && (
-              <p className="text-emerald-400 font-mono text-[11px] mt-2 font-bold">
-                ✓ Uploaded: {customFile}
-              </p>
+            {isUploading ? (
+              <div className="py-2 flex flex-col items-center justify-center">
+                <span className="w-6 h-6 border-2 border-amber-400 border-t-transparent rounded-full animate-spin mb-2" />
+                <p className="font-semibold text-amber-300">Ingesting and profiling dataset...</p>
+              </div>
+            ) : (
+              <>
+                <Upload className="w-7 h-7 text-slate-400 mx-auto mb-2" />
+                <p className="font-semibold text-slate-200">
+                  Click to select or drag & drop CSV, Excel datasets
+                </p>
+                <p className="text-slate-500 text-[11px] mt-1">
+                  Supports .csv, .xlsx, .xls up to 100MB
+                </p>
+                {customFile && (
+                  <p className="text-emerald-400 font-mono text-[11px] mt-2 font-bold">
+                    ✓ Uploaded: {customFile}
+                  </p>
+                )}
+              </>
             )}
           </div>
 
