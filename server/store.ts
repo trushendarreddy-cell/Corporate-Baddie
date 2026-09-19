@@ -9,12 +9,27 @@ type Workspace = Record<string, unknown> & { id: string; createdAt: string; upda
 type Dataset = Record<string, any> & { id: string; workspaceId: string; createdAt: string; updatedAt: string };
 interface DB { workspaces: Workspace[]; datasets: Dataset[]; investigations: Record<string, any>[] }
 
+const DEFAULT_DEMO_WS: Workspace = {
+  id: 'demo-ws-001',
+  name: 'Acme Retail Group',
+  industry: 'Retail & Consumer Goods',
+  country: 'United States',
+  region: 'North America',
+  currency: 'USD',
+  description: 'Multi-region omnichannel retail distributor',
+  objective: 'Diagnose margin contraction and protect H2 operating profitability',
+  kpis: ['Revenue', 'Gross Margin', 'Customer Retention', 'AOV'],
+  createdAt: '2026-09-01T00:00:00.000Z',
+  updatedAt: '2026-09-01T00:00:00.000Z',
+};
+
 async function load(): Promise<DB> {
   try {
     const parsed = JSON.parse(await readFile(DB_FILE, 'utf8')) as Partial<DB>;
-    return { workspaces: Array.isArray(parsed.workspaces) ? parsed.workspaces : [], datasets: Array.isArray(parsed.datasets) ? parsed.datasets : [], investigations: Array.isArray(parsed.investigations) ? parsed.investigations : [] };
+    const workspaces = Array.isArray(parsed.workspaces) && parsed.workspaces.length > 0 ? parsed.workspaces : [DEFAULT_DEMO_WS];
+    return { workspaces, datasets: Array.isArray(parsed.datasets) ? parsed.datasets : [], investigations: Array.isArray(parsed.investigations) ? parsed.investigations : [] };
   } catch {
-    return { workspaces: [], datasets: [], investigations: [] };
+    return { workspaces: [DEFAULT_DEMO_WS], datasets: [], investigations: [] };
   }
 }
 
@@ -26,8 +41,14 @@ async function save(db: DB) {
 }
 
 export async function listWorkspaces() { return (await load()).workspaces; }
-export async function getWorkspace(id: string) { return (await load()).workspaces.find(w => w.id === id) ?? null; }
-export async function createWorkspace(input: Record<string, unknown>) { const db = await load(); const now = new Date().toISOString(); const workspace = { ...input, id: `ws-${randomUUID()}`, createdAt: now, updatedAt: now } as Workspace; db.workspaces.push(workspace); await save(db); return workspace; }
+export async function getWorkspace(id: string) {
+  const db = await load();
+  const found = db.workspaces.find(w => w.id === id);
+  if (found) return found;
+  if (id === 'demo-ws-001') return DEFAULT_DEMO_WS;
+  return null;
+}
+export async function createWorkspace(input: Record<string, unknown>) { const db = await load(); const now = new Date().toISOString(); const id = input.id ? String(input.id) : `ws-${randomUUID()}`; const workspace = { ...input, id, createdAt: now, updatedAt: now } as Workspace; const existingIdx = db.workspaces.findIndex(w => w.id === id); if (existingIdx >= 0) { db.workspaces[existingIdx] = workspace; } else { db.workspaces.push(workspace); } await save(db); return workspace; }
 export async function updateWorkspace(id: string, patch: Record<string, unknown>) { const db = await load(); const index = db.workspaces.findIndex(w => w.id === id); if (index < 0) return null; db.workspaces[index] = { ...db.workspaces[index], ...patch, id, updatedAt: new Date().toISOString() }; await save(db); return db.workspaces[index]; }
 export async function listDatasets(workspaceId: string) { return (await load()).datasets.filter(d => d.workspaceId === workspaceId); }
 export async function getDataset(id: string) { return (await load()).datasets.find(d => d.id === id) ?? null; }
@@ -102,7 +123,7 @@ function questionSignals(question: string) { const q = question.toLowerCase(); r
 export async function runInvestigation(workspace: Workspace, question: string, datasetIds?: string[]) {
   const datasets = await listDatasets(workspace.id); const selected = datasetIds?.length ? datasets.filter(d => datasetIds.includes(d.id)) : datasets; const usable = selected.filter(d => d.status === 'ready' && d.rowCount > 0); const runId = `RUN-${Date.now().toString(36).toUpperCase()}`; const signals = questionSignals(question);
   const summaries: any[] = []; const anomalies: any[] = []; const trends: any[] = []; const forecasts: any[] = [];
-  for (const dataset of usable) { const rows = await readRows(dataset); summaries.push({ datasetId: dataset.id, dataset: dataset.name, summary: summarizeDataset(dataset, rows), dataQualityScore: dataset.dataQualityScore ?? null }); anomalies.push(...analyzeAnomalies(dataset, rows)); trends.push({ datasetId: dataset.id, dataset: dataset.name, trend: analyzeTrend(dataset, rows) }); if (signals.asksForecast) forecasts.push({ datasetId: dataset.id, dataset: dataset.name, forecast: forecast(dataset, rows) }); }
+  for (const dataset of usable) { const rows = await readRows(dataset); summaries.push({ datasetId: dataset.id, dataset: dataset.name, summary: summarizeDataset(dataset, rows), sampleRows: rows.slice(0, 25), dataQualityScore: dataset.dataQualityScore ?? null }); anomalies.push(...analyzeAnomalies(dataset, rows)); trends.push({ datasetId: dataset.id, dataset: dataset.name, trend: analyzeTrend(dataset, rows) }); if (signals.asksForecast) forecasts.push({ datasetId: dataset.id, dataset: dataset.name, forecast: forecast(dataset, rows) }); }
   const metrics = summaries.flatMap(item => item.summary.numericMetrics.map((metric: any) => ({ ...metric, dataset: item.dataset }))); const strongestMetric = [...metrics].sort((a, b) => Math.abs(b.sum) - Math.abs(a.sum))[0];
   const findings: any[] = usable.map(dataset => ({ id: `claim-${dataset.id}`, type: 'FACT', claim: `${dataset.name} contains ${dataset.rowCount.toLocaleString()} records across ${columns(dataset).length} fields.`, source: dataset.name, verified: true, evidence: `Persisted dataset hash: ${dataset.contentHash || 'not recorded'}.`, evidenceRef: { datasetId: dataset.id, datasetHash: dataset.contentHash || null } }));
   if (strongestMetric) findings.push({ id: `metric-${strongestMetric.dataset}-${strongestMetric.column}`, type: 'FACT', claim: `${strongestMetric.column} has ${strongestMetric.count.toLocaleString()} numeric observations with an average of ${strongestMetric.average.toLocaleString(undefined, { maximumFractionDigits: 2 })}.`, source: strongestMetric.dataset, verified: true, evidence: 'Calculated directly from persisted dataset rows.', evidenceRef: { dataset: strongestMetric.dataset, column: strongestMetric.column, calculation: 'mean' } });
