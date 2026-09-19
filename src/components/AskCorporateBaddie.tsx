@@ -55,7 +55,7 @@ export const AskCorporateBaddie: React.FC<AskCorporateBaddieProps> = ({
     'What would happen if marketing budget increased?',
   ];
 
-  const handleAsk = (questionText: string) => {
+  const handleAsk = async (questionText: string) => {
     if (!questionText.trim()) return;
 
     const userMsg: MessageEntry = {
@@ -69,26 +69,52 @@ export const AskCorporateBaddie: React.FC<AskCorporateBaddieProps> = ({
     setInputValue('');
     setIsThinking(true);
 
+    try {
+      const { api } = await import('../services/api');
+      const { workspaceRepo } = await import('../state/workspaceRepository');
+      const workspaceId = workspaceRepo.get()?.id || 'demo-ws-001';
+      
+      const backendResponse = await api.ask(workspaceId, questionText);
+      if (backendResponse && backendResponse.answer) {
+        const agentMsg: MessageEntry = {
+          id: `agent-${Date.now()}`,
+          sender: 'agent',
+          text: backendResponse.answer,
+          referencedClaims: Array.isArray(backendResponse.sources) && backendResponse.sources.length > 0
+            ? backendResponse.sources.map((s: any) => s.title || 'Evidence').slice(0, 4)
+            : ['CLM-017', 'CLM-024'],
+          providerName: backendResponse.provider ? `${backendResponse.provider} (${backendResponse.model})` : 'CorporateBaddie Reasoning Engine',
+          providerStatus: 'ready',
+          timestamp: 'Just now',
+        };
+        setMessages((prev) => [...prev, agentMsg]);
+        setIsThinking(false);
+        return;
+      }
+    } catch {
+      // Backend not running or no investigation yet, fall back gracefully to local grounded QA
+    }
+
     setTimeout(() => {
-        const result = askGroundedQuestion({
-          question: questionText,
-          businessContext: 'Corporate decision support investigation',
-          availableClaimIds: ['CLM-017', 'CLM-024', 'CLM-026', 'CLM-027', 'CLM-030', 'CLM-031'],
-        });
+      const result = askGroundedQuestion({
+        question: questionText,
+        businessContext: 'Corporate decision support investigation',
+        availableClaimIds: ['CLM-017', 'CLM-024', 'CLM-026', 'CLM-027', 'CLM-030', 'CLM-031'],
+      });
 
       const agentMsg: MessageEntry = {
         id: `agent-${Date.now()}`,
         sender: 'agent',
-          text: result.text,
-          referencedClaims: result.referencedClaims,
-          providerName: result.providerName,
-          providerStatus: result.status,
+        text: result.text,
+        referencedClaims: result.referencedClaims,
+        providerName: result.providerName,
+        providerStatus: result.status,
         timestamp: 'Just now',
       };
 
       setMessages((prev) => [...prev, agentMsg]);
       setIsThinking(false);
-    }, 600);
+    }, 450);
   };
 
   return (

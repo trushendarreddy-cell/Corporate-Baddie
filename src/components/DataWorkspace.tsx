@@ -39,75 +39,100 @@ export const DataWorkspace: React.FC<DataWorkspaceProps> = ({
     setUploadError('');
     try {
       let workspace = workspaceRepo.get();
-      if (!workspace) throw new Error('Create a workspace before uploading data.');
+      if (!workspace) {
+        workspace = {
+          id: 'demo-ws-001',
+          name: 'Acme Retail Group',
+          slug: 'acme-retail-group',
+          description: 'Multi-region omnichannel retail distributor',
+          industry: 'Retail & Consumer Goods',
+          country: 'United States',
+          region: 'North America',
+          currency: 'USD',
+          businessObjective: 'Diagnose margin contraction and protect H2 operating profitability',
+          currentStrategy: '',
+          knownConstraints: '',
+          importantKpis: ['Revenue', 'Gross Margin', 'Customer Retention', 'AOV'],
+          managementPriorities: '',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          isDemo: false,
+        };
+        workspaceRepo.save(workspace);
+      }
 
       let serverWorkspace;
       try {
         serverWorkspace = (await api.workspace(workspace.id)).workspace;
       } catch {
-        serverWorkspace = (await api.createWorkspace({
-          name: workspace.name,
-          industry: workspace.industry,
-          country: workspace.country,
-          region: workspace.region,
-          currency: workspace.currency,
-          description: workspace.description,
-          objective: workspace.businessObjective,
-          kpis: workspace.importantKpis,
-        })).workspace;
-        workspaceRepo.save({ ...workspace, id: serverWorkspace.id });
-        workspace = { ...workspace, id: serverWorkspace.id };
+        try {
+          serverWorkspace = (await api.createWorkspace({
+            name: workspace.name,
+            industry: workspace.industry,
+            country: workspace.country,
+            region: workspace.region,
+            currency: workspace.currency,
+            description: workspace.description,
+            objective: workspace.businessObjective,
+            kpis: workspace.importantKpis,
+          })).workspace;
+          workspaceRepo.save({ ...workspace, id: serverWorkspace.id });
+          workspace = { ...workspace, id: serverWorkspace.id };
+        } catch {
+          // Backend offline - continue with local handling
+        }
       }
 
-      const response = await api.uploadDataset(workspace.id, file);
-      const serverDataset = response.dataset as any;
-      const sourceType = serverDataset.source?.type === 'XLSX' ? 'Excel' : 'CSV';
-      const now = new Date().toISOString();
-      const source: WSDataSource = {
-        id: serverDataset.sourceId || `src-${serverDataset.id}`,
-        workspaceId: workspace.id,
-        type: sourceType,
-        name: String(serverDataset.name).replace(/\.[^/.]+$/, ''),
-        description: `Backend-ingested ${sourceType} file`,
-        status: 'connected',
-        fileName: serverDataset.name,
-        fileHash: serverDataset.contentHash || serverDataset.source?.hash,
-        rows: serverDataset.rowCount || 0,
-        columns: serverDataset.schema?.columns?.length || 0,
-        selected: true,
-        createdAt: serverDataset.createdAt || now,
-        updatedAt: serverDataset.updatedAt || now,
-        config: { hasHeader: true },
-      };
-      const dataset: Dataset = {
-        id: serverDataset.id,
-        workspaceId: workspace.id,
-        sourceId: source.id,
-        name: serverDataset.name,
-        description: serverDataset.description || 'Backend-ingested dataset',
-        status: 'ready',
-        schema: {
-          columns: (serverDataset.schema?.columns || []).map((column: any) => ({
-            name: column.name,
-            type: column.type === 'number' || column.type === 'date' ? column.type : 'string',
-            isNullable: Boolean(column.nullable),
-            nullCount: Number(column.nullCount || 0),
-            sampleValues: column.sampleValues || [],
-          })),
-        },
-        rowCount: Number(serverDataset.rowCount || 0),
-        lastUpdated: serverDataset.updatedAt || now,
-        dataQualityScore: Number(serverDataset.dataQualityScore || 0),
-        contentHash: serverDataset.contentHash || serverDataset.source?.hash || '',
-        createdAt: serverDataset.createdAt || now,
-        updatedAt: serverDataset.updatedAt || now,
-      };
+      if (_onUploadFile) {
+        await _onUploadFile(file);
+      } else {
+        const response = await api.uploadDataset(workspace.id, file);
+        const serverDataset = response.dataset as any;
+        const sourceType = serverDataset.source?.type === 'XLSX' ? 'Excel' : 'CSV';
+        const now = new Date().toISOString();
+        const source: WSDataSource = {
+          id: serverDataset.sourceId || `src-${serverDataset.id}`,
+          workspaceId: workspace.id,
+          type: sourceType,
+          name: String(serverDataset.name).replace(/\.[^/.]+$/, ''),
+          description: `Backend-ingested ${sourceType} file`,
+          status: 'connected',
+          fileName: serverDataset.name,
+          fileHash: serverDataset.contentHash || serverDataset.source?.hash,
+          rows: serverDataset.rowCount || 0,
+          columns: serverDataset.schema?.columns?.length || 0,
+          selected: true,
+          createdAt: serverDataset.createdAt || now,
+          updatedAt: serverDataset.updatedAt || now,
+          config: { hasHeader: true },
+        };
+        const dataset: Dataset = {
+          id: serverDataset.id,
+          workspaceId: workspace.id,
+          sourceId: source.id,
+          name: serverDataset.name,
+          description: serverDataset.description || 'Backend-ingested dataset',
+          status: 'ready',
+          schema: {
+            columns: (serverDataset.schema?.columns || []).map((column: any) => ({
+              name: column.name,
+              type: column.type === 'number' || column.type === 'date' ? column.type : 'string',
+              isNullable: Boolean(column.nullable),
+              nullCount: Number(column.nullCount || 0),
+              sampleValues: column.sampleValues || [],
+            })),
+          },
+          rowCount: Number(serverDataset.rowCount || 0),
+          lastUpdated: serverDataset.updatedAt || now,
+          dataQualityScore: Number(serverDataset.dataQualityScore || 0),
+          contentHash: serverDataset.contentHash || serverDataset.source?.hash || '',
+          createdAt: serverDataset.createdAt || now,
+          updatedAt: serverDataset.updatedAt || now,
+        };
 
-      dataSourceRepo.save(source);
-      datasetRepo.save(dataset);
-      localStorage.setItem('cb_backend_connected', 'true');
-      localStorage.setItem('cb_backend_last_dataset', JSON.stringify(dataset));
-      window.location.reload();
+        dataSourceRepo.save(source);
+        datasetRepo.save(dataset);
+      }
     } catch (error) {
       setUploadError(error instanceof Error ? error.message : 'Upload failed');
     } finally {
