@@ -15,14 +15,16 @@ interface CommandHeaderProps {
   onOpenHowItWorks: () => void;
   onOpenSettings: () => void;
   onNewInvestigation: () => void;
+  onReplayIntro?: () => void;
 }
 
 const NAV: Array<{ id: ModuleTab; label: string; meaning: string }> = [
+  { id: 'overview', label: 'Dashboard', meaning: 'Executive Overview' },
   { id: 'investigate', label: 'Investigate', meaning: 'Ask a question' },
-  { id: 'overview', label: 'Overview', meaning: 'Understand the answer' },
   { id: 'decisions', label: 'Decisions', meaning: 'Compare actions' },
   { id: 'evidence', label: 'Evidence', meaning: 'Prove the answer' },
   { id: 'signals', label: 'Signals', meaning: "What's changing?" },
+  { id: 'data', label: 'Data', meaning: 'Datasets & uploads' },
   { id: 'history', label: 'History', meaning: 'Previous investigations' },
 ];
 
@@ -43,6 +45,7 @@ export const CommandHeader: React.FC<CommandHeaderProps> = ({
   onOpenHowItWorks,
   onOpenSettings,
   onNewInvestigation,
+  onReplayIntro,
 }) => {
   return (
     <header className="sticky top-0 z-40 w-full border-b cb-hairline bg-[#191b1a]/95 backdrop-blur-xl">
@@ -142,6 +145,18 @@ export const CommandHeader: React.FC<CommandHeaderProps> = ({
             >
               <Settings2 className="w-4 h-4" />
             </button>
+
+            {onReplayIntro && (
+              <button
+                type="button"
+                onClick={onReplayIntro}
+                className="flex items-center gap-1.5 px-2.5 py-1 text-slate-400 hover:text-emerald-300 rounded-md hover:bg-white/[0.04] border border-white/10 text-xs transition cb-btn"
+                title="View 3D Intro Experience"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                <span className="hidden sm:inline">Intro</span>
+              </button>
+            )}
 
             <button
               type="button"

@@ -55,6 +55,10 @@ interface InvestigateModuleProps {
   onOpenNode: (action: CoreNodeAction) => void;
 }
 
+/**
+ * INVESTIGATE module — question input, cinematic agent execution pipeline,
+ * decomposition, root cause, findings, charts, adaptive planner, audit tools.
+ */
 export const InvestigateModule: React.FC<InvestigateModuleProps> = ({
   unifiedState,
   investigationState,
@@ -96,19 +100,6 @@ export const InvestigateModule: React.FC<InvestigateModuleProps> = ({
     return () => media.removeEventListener('change', update);
   }, []);
 
-  useEffect(() => {
-    if (question.trim()) return;
-    try {
-      const pendingQuestion = sessionStorage.getItem('corporatebaddie:intro-entry-question');
-      if (pendingQuestion?.trim()) {
-        setQuestion(pendingQuestion.trim());
-        sessionStorage.removeItem('corporatebaddie:intro-entry-question');
-      }
-    } catch {
-      // Session storage is optional; the normal question input remains available.
-    }
-  }, [question, setQuestion]);
-
   const hasReliableInternalEvidence =
     unifiedState.empiricalFindings.length > 0 &&
     !(unifiedState.issues || []).some(
@@ -117,20 +108,48 @@ export const InvestigateModule: React.FC<InvestigateModuleProps> = ({
 
   return (
     <div className="max-w-[1240px] mx-auto px-5 sm:px-8 py-6 sm:py-8 space-y-6">
+      {/* Entry header — the question is the product's first action */}
       <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b cb-hairline">
         <div>
           <p className="cb-kicker text-amber-400/90">New investigation</p>
           <p className="text-[13px] text-slate-400 mt-1">Ask a question. We will show you what changed, why it matters, and what to do next.</p>
         </div>
         <div className="flex flex-wrap gap-x-4 gap-y-2">
-          <button type="button" onClick={onOpenHostileAuditModal} className="cb-btn text-[11px] font-medium text-slate-500 hover:text-rose-300" title="Red-team stress test the recommendations">Red-Team Audit</button>
-          <button type="button" onClick={onOpenFailureModeModal} className="cb-btn text-[11px] font-medium text-slate-500 hover:text-orange-300" title="Pre-mortem blind spots and failure modes">Failure Modes</button>
-          <button type="button" onClick={onOpenToolMatrixModal} className="cb-btn text-[11px] font-medium text-slate-500 hover:text-cyan-300" title="Inspect 5 Reasoning Agents & 4 Analytical Services">Agent Matrix</button>
+          <button
+            type="button"
+            onClick={onOpenHostileAuditModal}
+            className="cb-btn text-[11px] font-medium text-slate-500 hover:text-rose-300"
+            title="Red-team stress test the recommendations"
+          >
+            Red-Team Audit
+          </button>
+          <button
+            type="button"
+            onClick={onOpenFailureModeModal}
+            className="cb-btn text-[11px] font-medium text-slate-500 hover:text-orange-300"
+            title="Pre-mortem blind spots and failure modes"
+          >
+            Failure Modes
+          </button>
+          <button
+            type="button"
+            onClick={onOpenToolMatrixModal}
+            className="cb-btn text-[11px] font-medium text-slate-500 hover:text-cyan-300"
+            title="Inspect 5 Reasoning Agents & 4 Analytical Services"
+          >
+            Agent Matrix
+          </button>
         </div>
       </div>
 
+      {/* Cinematic agent execution */}
       {isAnalyzing ? (
-        <InvestigationProgress stages={stages} currentStageIndex={currentStageIndex} terminalLogs={terminalLogs} onSkip={onSkipAnalysis} />
+        <InvestigationProgress
+          stages={stages}
+          currentStageIndex={currentStageIndex}
+          terminalLogs={terminalLogs}
+          onSkip={onSkipAnalysis}
+        />
       ) : (
         <QuestionInput
           question={question}
@@ -166,16 +185,46 @@ export const InvestigateModule: React.FC<InvestigateModuleProps> = ({
         </section>
       )}
 
+      {/* Findings workspace (after analysis) */}
       {hasAnalyzed && !isAnalyzing && (
         <>
-          <InvestigationStatus state={investigationState} decisionConfidence={unifiedState.recommendationConfidence} onOpenEvidenceGraph={onOpenEvidenceGraph} />
+          <InvestigationStatus
+            state={investigationState}
+            decisionConfidence={unifiedState.recommendationConfidence}
+            onOpenEvidenceGraph={onOpenEvidenceGraph}
+          />
+
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            <div className="lg:col-span-6"><QuestionDecomposition originalQuestion={unifiedState.userQuestion} questions={DECOMPOSED_QUESTIONS} onSelectClaim={() => onOpenEvidenceGraph()} /></div>
-            <div className="lg:col-span-6"><RootCauseInvestigation chain={hasReliableInternalEvidence ? investigationState.rootCauseChain || [] : []} onSelectClaim={() => onOpenEvidenceGraph()} /></div>
+            <div className="lg:col-span-6">
+              <QuestionDecomposition
+                originalQuestion={unifiedState.userQuestion}
+                questions={DECOMPOSED_QUESTIONS}
+                onSelectClaim={() => onOpenEvidenceGraph()}
+              />
+            </div>
+            <div className="lg:col-span-6">
+              <RootCauseInvestigation
+                chain={hasReliableInternalEvidence ? investigationState.rootCauseChain || [] : []}
+                onSelectClaim={() => onOpenEvidenceGraph()}
+              />
+            </div>
           </div>
-          <KeyFindings findings={unifiedState.empiricalFindings} onViewEvidence={onViewEvidence} onSelectCitation={onSelectCitation} />
+
+          <KeyFindings
+            findings={unifiedState.empiricalFindings}
+            onViewEvidence={onViewEvidence}
+            onSelectCitation={onSelectCitation}
+          />
+
           <Charts hasEvidence={hasReliableInternalEvidence} />
-          <DynamicInvestigationPlanner plan={unifiedState.investigationPlan} classifiedQuestionTypes={unifiedState.classifiedQuestionTypes} userQuestion={unifiedState.userQuestion} anomalies={unifiedState.discoveredAnomalies} onSelectNode={() => {}} />
+
+          <DynamicInvestigationPlanner
+            plan={unifiedState.investigationPlan}
+            classifiedQuestionTypes={unifiedState.classifiedQuestionTypes}
+            userQuestion={unifiedState.userQuestion}
+            anomalies={unifiedState.discoveredAnomalies}
+            onSelectNode={() => {}}
+          />
         </>
       )}
     </div>
