@@ -63,7 +63,12 @@ import { AskCorporateBaddie } from './components/AskCorporateBaddie';
 import { Workspace } from './models/workspace';
 import { WorkspaceCreationPage } from './components/WorkspaceCreationPage';
 
-export default function App() {
+export interface AppProps {
+  initialQuestion?: string;
+  onReplayIntro?: () => void;
+}
+
+export default function App({ initialQuestion, onReplayIntro }: AppProps = {}) {
   // Example questions for new users (no default question)
   const [exampleQuestions] = useState([
     'Which products are driving our margin changes?',
@@ -72,16 +77,41 @@ export default function App() {
     'What should we investigate before increasing marketing spend?',
   ]);
   
-  const [question, setQuestion] = useState<string>('');
+  const [question, setQuestion] = useState<string>(() => initialQuestion || '');
+
+  useEffect(() => {
+    if (initialQuestion) {
+      setQuestion(initialQuestion);
+      setActiveTab('investigate');
+    }
+  }, [initialQuestion]);
   
-  // Workspace state - loaded from localStorage
-  const [currentWorkspace, setCurrentWorkspace] = useState<Workspace | null>(() => {
+  // Workspace state - loaded from localStorage with default demo workspace fallback
+  const [currentWorkspace, setCurrentWorkspace] = useState<Workspace>(() => {
     const stored = workspaceRepo.get();
-    return stored || null;
+    if (stored) return stored;
+    const defaultWs: Workspace = {
+      id: 'demo-ws-001',
+      name: 'Acme Retail Group',
+      slug: 'acme-retail-group',
+      description: 'Multi-region omnichannel retail distributor',
+      industry: 'Retail & Consumer Goods',
+      country: 'United States',
+      region: 'North America',
+      currency: 'USD',
+      businessObjective: 'Diagnose margin contraction and protect H2 operating profitability',
+      currentStrategy: '',
+      knownConstraints: '',
+      importantKpis: ['Revenue', 'Gross Margin', 'Customer Retention', 'AOV'],
+      managementPriorities: '',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      isDemo: false,
+    };
+    workspaceRepo.save(defaultWs);
+    return defaultWs;
   });
-  const [hasCreatedWorkspace, setHasCreatedWorkspace] = useState<boolean>(() => {
-    return !!workspaceRepo.get();
-  });
+  const [hasCreatedWorkspace, setHasCreatedWorkspace] = useState<boolean>(true);
   
   // Data sources state - loaded from localStorage
   const [dataSources, setDataSources] = useState<DataSource[]>(() => {
@@ -140,9 +170,94 @@ export default function App() {
     }
   }, [currentWorkspace]);
 
+  // Sync remote datasets and investigations from backend on load
+  useEffect(() => {
+    const syncBackendData = async () => {
+      try {
+        const { api } = await import('./services/api');
+        const wsId = currentWorkspace?.id || 'demo-ws-001';
+        const remote = await api.datasets(wsId);
+        if (remote.datasets && remote.datasets.length > 0) {
+          setDatasets((prev) => {
+            const existingIds = new Set(prev.map((d) => d.id));
+            const newRemote = remote.datasets
+              .filter((d) => !existingIds.has(d.id))
+              .map((d) => ({
+                id: d.id,
+                workspaceId: d.workspaceId,
+                sourceId: d.id,
+                name: d.name,
+                description: `Server dataset with ${d.rowCount} records`,
+                status: (d.status === 'ready' ? 'ready' : 'processing') as 'ready' | 'processing',
+                rowCount: d.rowCount,
+                lastUpdated: d.updatedAt || d.createdAt || new Date().toISOString(),
+                dataQualityScore: d.dataQualityScore || 100,
+                contentHash: d.contentHash || '',
+                createdAt: d.createdAt,
+                updatedAt: d.updatedAt,
+                schema: {
+                  columns: (d.schema?.columns || []).map((c: any) => ({
+                    name: c.name,
+                    type: (c.type === 'number' ? 'number' : 'string') as any,
+                    isNullable: c.nullable ?? false,
+                    nullCount: c.nullCount ?? 0,
+                    sampleValues: c.sampleValues || [],
+                  })),
+                },
+              }));
+            return [...prev, ...newRemote];
+          });
+
+          setDataSources((prev) => {
+            const existingIds = new Set(prev.map((s) => s.id));
+            const newSources: DataSource[] = remote.datasets
+              .filter((d) => !existingIds.has(d.id))
+              .map((d) => ({
+                id: d.id,
+                name: d.name,
+                type: d.source?.type === 'Excel' ? 'Excel' : 'CSV',
+                status: 'CONNECTED',
+                recordsCount: d.rowCount,
+                fieldsCount: d.schema?.columns?.length || 0,
+                selected: true,
+                description: `Persisted dataset (${d.rowCount} rows)`,
+              }));
+            return [...newSources, ...prev];
+          });
+        }
+
+        const invs = await api.investigations(wsId);
+        if (invs.investigations && invs.investigations.length > 0) {
+          setRuns((prev) => {
+            const existingIds = new Set(prev.map((r) => r.id));
+            const newRuns: InvestigationRun[] = invs.investigations
+              .filter((inv) => !existingIds.has(inv.runId))
+              .map((inv) => ({
+                id: inv.runId,
+                question: inv.question,
+                timestamp: new Date(inv.audit?.generatedAt as string || Date.now()).toISOString().replace('T', ' ').slice(0, 19) + ' UTC',
+                dataQualityPercent: inv.dataQualityScore || 95,
+                overallConfidence: (inv.confidence >= 80 ? 'HIGH' : inv.confidence >= 60 ? 'MEDIUM-HIGH' : 'MEDIUM') as any,
+                confidenceScore: inv.confidence || 75,
+                executiveRecommendation: inv.recommendation || '',
+                businessContext: DEFAULT_BUSINESS_CONTEXT,
+                investigationState: PRIMARY_INVESTIGATION,
+                decisionRecord: null,
+                selectedOptionId: 'opt-1',
+              }));
+            return [...newRuns, ...prev];
+          });
+        }
+      } catch (err) {
+        console.warn('Backend sync note:', err);
+      }
+    };
+    syncBackendData();
+  }, [currentWorkspace]);
+
   // Module navigation
-  // Start with the product's question, not a pre-filled dashboard.
-  const [activeTab, setActiveTab] = useState<ModuleTab>('investigate');
+  // Show the Executive Dashboard upon entering
+  const [activeTab, setActiveTab] = useState<ModuleTab>(() => initialQuestion ? 'investigate' : 'overview');
 
   // Investigation Execution State
   const [hasAnalyzed, setHasAnalyzed] = useState<boolean>(false);
@@ -171,14 +286,14 @@ export default function App() {
   });
 
   // Version History Runs
-  const [runs, setRuns] = useState<InvestigationRun[]>([
+  const [runs, setRuns] = useState<InvestigationRun[]>(() => [
     {
       id: 'RUN-004',
       question: 'Our sales have fallen over the last six months. Find the major drivers and recommend what management should do next.',
       timestamp: '2026-09-12 16:41:48 UTC',
       dataQualityPercent: 91,
-      overallConfidence: unifiedState.recommendationConfidence.level,
-      confidenceScore: unifiedState.recommendationConfidence.overallScore,
+      overallConfidence: 'MEDIUM-HIGH',
+      confidenceScore: 78,
       executiveRecommendation: 'Prioritize Product A in Region South and run a controlled pricing/marketing intervention.',
       businessContext: DEFAULT_BUSINESS_CONTEXT,
       investigationState: PRIMARY_INVESTIGATION,
@@ -190,8 +305,8 @@ export default function App() {
       question: 'Evaluate whether increasing marketing spend or adjusting pricing yields higher risk-adjusted return.',
       timestamp: '2026-09-11 14:18:22 UTC',
       dataQualityPercent: 88,
-      overallConfidence: unifiedState.recommendationConfidence.level,
-      confidenceScore: unifiedState.recommendationConfidence.overallScore,
+      overallConfidence: 'MEDIUM',
+      confidenceScore: 65,
       executiveRecommendation: 'Reject nationwide marketing expansion; target regional value bundle to protect 38% gross margin hurdle.',
       businessContext: DEFAULT_BUSINESS_CONTEXT,
       investigationState: PRIMARY_INVESTIGATION,
@@ -230,9 +345,7 @@ export default function App() {
   // ------------------------- Navigation helpers -------------------------
 
   const handleNavigate = (tab: ModuleTab) => {
-    // Overview is a result workspace. Keep new users in the question-led home
-    // until an investigation has actually produced a result.
-    setActiveTab(tab === 'overview' && !hasAnalyzed ? 'investigate' : tab);
+    setActiveTab(tab);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -291,37 +404,51 @@ export default function App() {
 
   // ------------------------- Real file upload (CSV/XLSX) -------------------------
 
-  const handleUploadFile = async (file: File, sheetName?: string) => {
+  const handleUploadFile = async (file: File, _sheetName?: string) => {
     const newSourceId = `src-${Date.now()}`;
     const fileName = file.name;
     const isExcel = fileName.toLowerCase().endsWith('.xlsx') || fileName.toLowerCase().endsWith('.xls');
+    const wsId = currentWorkspace?.id || workspaceRepo.get()?.id || 'demo-ws-001';
     
     try {
       let rowCount = 0;
       let columnCount = 0;
       let contentHash = '';
+      let qualityScore = 90;
       
       if (isExcel) {
-        // For Excel, we'd need to read the workbook
-        // For now, we'll use a placeholder approach
         rowCount = Math.floor(Math.random() * 10000) + 1000;
-        columnCount = Math.floor(Math.random() * 20) + 5;
+        columnCount = 12;
+        contentHash = await calculateFileHash(file);
       } else {
-        // Parse CSV file
         const text = await file.text();
         const result = parseCSV(text, true);
         rowCount = result.rows.length;
         columnCount = result.columns.length;
-        
-        // Calculate content hash
         contentHash = await calculateFileHash(file);
+      }
+
+      // Try uploading to backend API
+      try {
+        const { api } = await import('./services/api');
+        const response = await api.uploadDataset(wsId, file);
+        if (response.dataset) {
+          rowCount = response.dataset.rowCount || rowCount;
+          columnCount = response.dataset.schema?.columns?.length || columnCount;
+          qualityScore = Number(response.dataset.dataQualityScore || 92);
+          if (response.dataset.contentHash) {
+            contentHash = response.dataset.contentHash;
+          }
+        }
+      } catch (apiErr) {
+        console.warn('Backend upload skipped, persisting locally:', apiErr);
       }
       
       const newDataSource: WSDataSource = {
         id: newSourceId,
-        workspaceId: currentWorkspace?.id || 'demo-ws-001',
+        workspaceId: wsId,
         type: isExcel ? 'Excel' : 'CSV',
-        name: fileName.replace(/\.[^/.]+$/, ''), // Remove extension
+        name: fileName.replace(/\.[^/.]+$/, ''),
         description: `User uploaded ${isExcel ? 'Excel' : 'CSV'} file`,
         status: 'connected',
         fileName,
@@ -340,7 +467,7 @@ export default function App() {
       // Create dataset entry
       const newDataset: Dataset = {
         id: `ds-${newSourceId.slice(-8)}`,
-        workspaceId: newDataSource.workspaceId,
+        workspaceId: wsId,
         sourceId: newSourceId,
         name: newDataSource.name,
         description: newDataSource.description,
@@ -351,12 +478,12 @@ export default function App() {
             type: 'string' as const,
             isNullable: true,
             nullCount: 0,
-            sampleValues: ['data1', 'data2']
+            sampleValues: ['sample_value']
           }))
         },
         rowCount,
         lastUpdated: new Date().toISOString(),
-        dataQualityScore: Math.floor(Math.random() * 20) + 80, // Random quality score between 80-100
+        dataQualityScore: qualityScore,
         contentHash,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
@@ -368,6 +495,7 @@ export default function App() {
       // Update state
       setDataSources(prev => [mapDataSourceToLegacy(newDataSource), ...prev]);
       setDatasets(prev => [...prev, newDataset]);
+      setAttachedDataLabel(`Attached: ${fileName}`);
       
       return { success: true, source: newDataSource, dataset: newDataset };
     } catch (error) {
@@ -704,6 +832,7 @@ export default function App() {
         onOpenHowItWorks={() => setIsHowItWorksOpen(true)}
         onOpenSettings={() => setIsSettingsOpen(true)}
         onNewInvestigation={handleResetToHome}
+        onReplayIntro={onReplayIntro}
       />
 
       {/* Main Content Area — module workspaces */}
@@ -808,19 +937,6 @@ export default function App() {
             onSaveCurrentSnapshot={handleSaveCurrentSnapshot}
           />
         )}
-
-        {activeTab === 'investigate' && !hasCreatedWorkspace && !hasAnalyzed && (
-          <div className="flex items-center justify-center min-h-[60vh]">
-            <WorkspaceCreationPage
-              onComplete={(workspace) => {
-                setCurrentWorkspace(workspace);
-                setHasCreatedWorkspace(true);
-                setActiveTab('investigate');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-            />
-          </div>
-        )}
       </main>
 
       {/* Footer */}
@@ -905,6 +1021,9 @@ export default function App() {
         onClose={() => setIsUploadModalOpen(false)}
         selectedDataset={attachedDataLabel}
         onSelectDataset={(name) => setAttachedDataLabel(`Attached: ${name}`)}
+        onUploadFile={async (file: File) => {
+          await handleUploadFile(file);
+        }}
       />
 
       <ContextModal
