@@ -1,0 +1,175 @@
+================================================================================
+CORPORATEBADDIE - REST API SPECIFICATION
+================================================================================
+
+Base URL: http://localhost:4000/api
+Content-Type: application/json
+Authentication: Local development (session / local environment)
+
+--------------------------------------------------------------------------------
+1. HEALTH & SYSTEM ENDPOINTS
+--------------------------------------------------------------------------------
+
+GET /api/health
+Description: System status, storage accessibility, active LLM providers.
+Response 200 OK:
+{
+  "ok": true,
+  "service": "corporatebaddie-api",
+  "timestamp": "2026-09-19T08:00:00.000Z",
+  "storage": "ready",
+  "providers": {
+    "grok": true,
+    "gemini": true,
+    "primary": "grok"
+  },
+  "version": "api-v4"
+}
+
+GET /api/ready
+Description: Readiness check for process monitors.
+Response 200 OK:
+{ "ready": true }
+
+--------------------------------------------------------------------------------
+2. WORKSPACE MANAGEMENT
+--------------------------------------------------------------------------------
+
+GET /api/workspaces
+Description: Retrieve list of all registered business workspaces.
+Response 200 OK:
+{ "workspaces": [ { "id": "...", "name": "...", "industry": "..." } ] }
+
+POST /api/workspaces
+Description: Register a new workspace.
+Request Body:
+{
+  "name": "NorthStar Retail Corp",
+  "industry": "Retail / E-Commerce",
+  "country": "United States",
+  "currency": "USD",
+  "region": "North America",
+  "description": "Omnichannel inventory and sales optimization",
+  "objective": "Reduce stockouts and improve gross margins",
+  "kpis": ["Revenue", "Gross Margin", "Stockout Rate"]
+}
+Response 201 Created:
+{ "workspace": { "id": "...", ... } }
+
+GET /api/workspaces/:workspaceId
+Description: Retrieve workspace details and associated datasets.
+
+PATCH /api/workspaces/:workspaceId
+Description: Update workspace attributes.
+Allowed fields: name, industry, country, region, currency, description, objective, kpis.
+
+--------------------------------------------------------------------------------
+3. DATASET INGESTION & MANAGEMENT
+--------------------------------------------------------------------------------
+
+GET /api/workspaces/:workspaceId/datasets
+Description: List all datasets attached to the workspace.
+
+POST /api/workspaces/:workspaceId/datasets/upload
+Description: Upload a file (CSV, XLSX, XLS) for ingestion.
+Content-Type: multipart/form-data
+Form Fields:
+  file: <Binary file content>
+Response 201 Created:
+{
+  "dataset": {
+    "id": "...",
+    "workspaceId": "...",
+    "name": "sales_q3_2026.csv",
+    "rowCount": 14200,
+    "columnCount": 12,
+    "columns": [...],
+    "storagePath": "server/data/tables/....jsonl",
+    "sha256": "...",
+    "uploadedAt": "2026-09-19T08:00:00.000Z"
+  }
+}
+
+GET /api/workspaces/:workspaceId/relationships
+Description: Detect candidate foreign keys and joinable columns across datasets.
+
+GET /api/datasets/:datasetId
+Description: Retrieve complete column statistics, types, and sample rows.
+
+DELETE /api/datasets/:datasetId
+Description: Delete dataset metadata and remove raw JSONL records from disk.
+Response 204 No Content.
+
+--------------------------------------------------------------------------------
+4. INVESTIGATION & REASONING PIPELINE
+--------------------------------------------------------------------------------
+
+POST /api/investigations
+Description: Execute an investigation run over workspace data.
+Request Body:
+{
+  "workspaceId": "...",
+  "question": "Why did gross margin decline 4.2% in Q3 despite revenue growth?",
+  "datasetIds": ["dataset-id-1", "dataset-id-2"] // optional
+}
+Response 201 Created:
+{
+  "runId": "inv-...",
+  "workspaceId": "...",
+  "question": "...",
+  "status": "complete",
+  "findings": [
+    {
+      "claim": "Logistics expediting surcharges increased 28% in August.",
+      "type": "empirical",
+      "evidence": "Dataset sales_q3: column 'shipping_expedited_cost'"
+    }
+  ],
+  "anomalies": [...],
+  "trends": [...],
+  "forecasts": [...],
+  "confidence": 88,
+  "recommendation": "Transition 35% of expedited air freight to regional distribution centers.",
+  "ai": {
+    "provider": "grok",
+    "model": "grok-4.6",
+    "response": "...",
+    "grounded": true
+  },
+  "audit": {
+    "llmUsed": true,
+    "evidenceCoverage": 94,
+    "dataQualityScore": 92,
+    "toolTrace": ["dataset_profiler", "metric_calculator", "planner_agent", "compiler"]
+  }
+}
+
+GET /api/investigations?workspaceId=:workspaceId
+Description: List historical investigation runs for a workspace.
+
+GET /api/investigations/:runId
+Description: Fetch full output for a specific investigation run.
+
+GET /api/investigations/:runId/evidence
+Description: Granular inspection of claims, anomalies, citations, and metrics.
+
+GET /api/investigations/:runId/audit
+Description: Inspection of tool execution trace, data signatures, and signals.
+
+POST /api/ask
+Description: Ask a grounded follow-up question regarding a completed investigation.
+Request Body:
+{
+  "workspaceId": "...",
+  "runId": "...",
+  "question": "What specific shipping routes drove the cost spike?"
+}
+Response 200 OK:
+{
+  "answer": "...",
+  "provider": "grok",
+  "model": "grok-4.6",
+  "sources": [...],
+  "grounded": true
+}
+================================================================================

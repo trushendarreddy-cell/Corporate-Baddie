@@ -1,7 +1,6 @@
 {
   "name": "CORPORATEBADDIE",
-  "description": "Agentic Decision Intelligence Platform — Making Sense of Corporate Nonsense",
+  "description": "Agentic Decision Intelligence Platform — Making Sense of Corporate Nonsense with 3D Decision Core, Analytica-AI Multi-Agent Reasoning, and Evidence-Backed Executive Analytics",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
-

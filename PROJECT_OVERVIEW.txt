@@ -1,0 +1,121 @@
+================================================================================
+CORPORATEBADDIE - PROJECT OVERVIEW & TECHNICAL SPECIFICATION
+================================================================================
+
+PROJECT NAME: CorporateBaddie
+TAGLINE: Agentic Decision Intelligence Platform — Evidence Over Eloquence
+VERSION: 0.1.0
+REPOSITORY: https://github.com/trushendarreddy-cell/Corporate-Baddie.git
+AUTHOR: T. Rushendar Reddy (trushendarreddy@gmail.com)
+
+--------------------------------------------------------------------------------
+1. EXECUTIVE SUMMARY
+--------------------------------------------------------------------------------
+CorporateBaddie is a full-stack, AI-powered decision intelligence platform
+engineered to convert messy enterprise data into clear, defensible, executive
+recommendations. Unlike generic chatbots that invent statistics or hallucinate
+market trends, CorporateBaddie enforces a strict "evidence over eloquence"
+doctrine: every claim, finding, risk, and metric must be anchored in verified
+internal datasets or validated external web sources with full auditability.
+
+The platform combines:
+- An interactive Three.js 3D Decision Core with orbiting intelligence satellites.
+- An autonomous multi-agent reasoning engine (Analytica-AI) via Python IPC bridge.
+- A resilient three-provider LLM fallback pipeline (Grok, Gemini, Z.ai).
+- A persistent local data lakehouse supporting CSV, XLSX, and XLS ingestion.
+- An executive dashboard featuring hypothesis trees, anomaly telemetry, and PDF export.
+
+--------------------------------------------------------------------------------
+2. SYSTEM ARCHITECTURE & COMPONENTS
+--------------------------------------------------------------------------------
+
+A. FRONTEND CLIENT (React 19 + TypeScript + Vite 6 + Tailwind CSS 4)
+   - Intro Experience (src/components/IntroExperience.tsx):
+     Three.js canvas featuring a dual-layer icosahedron sphere, vertex markers,
+     structural cardinal beams, 5 orbiting satellite intelligence nodes, and fluid
+     drag-to-rotate interaction with physics inertia.
+   - Workspace Creation (src/components/WorkspaceCreationPage.tsx):
+     Multi-step wizard for configuring business parameters (industry, currency,
+     KPIs, objectives) and uploading tabular datasets.
+   - Executive Dashboard (src/components/DataWorkspace.tsx):
+     High-level KPI summaries, dataset viewer, relationship detector, and real-time
+     multi-agent execution progress monitoring.
+   - Investigation Workbench (src/components/ui/InvestigateModule.tsx):
+     Interactive workspace for submitting executive inquiries, inspecting empirical
+     findings, viewing anomaly clusters, and reviewing evidence citations.
+   - Grounded Q&A Assistant (src/components/AskCorporateBaddie.tsx):
+     Interactive AI dialogue interface constrained strictly to the active run's
+     verified evidence records.
+
+B. BACKEND API SERVICE (Node.js + Express + TypeScript on port 4000)
+   - REST API Controller (server/index.ts):
+     Routes requests for workspaces, datasets, investigations, evidence audits,
+     and provider health.
+   - Persistent Store (server/store.ts):
+     Manages JSONL table storage under server/data/tables/ and system catalog
+     metadata in server/data/corporatebaddie.json.
+   - Data Ingestor (server/ingest.ts):
+     Handles multipart file uploads, detects column schemas, computes null counts,
+     and computes SHA-256 integrity hashes.
+   - LLM Provider Fallback (server/llm.ts):
+     Orchestrates multi-model execution across xAI Grok, Google Gemini, and Z.ai GLM.
+     Parses and validates structured JSON responses.
+
+C. MULTI-AGENT REASONING ENGINE (Python 3.11 + Analytica-AI)
+   - Agent Bridge (server/agent_bridge.py):
+     Subprocess IPC bridge executing Python multi-agent workflows over local tables.
+   - Planner Agent: Formulates quantitative hypotheses from business questions.
+   - Coding Agent: Executes Pandas code to extract metrics and detect anomalies.
+   - DuckDuckGo Search Agent: Gathers live external market intelligence and benchmarks.
+   - Critic Agent: Validates assertions against computed data and filters bias.
+   - Compiler Agent: Formats findings into the final investigation schema.
+
+--------------------------------------------------------------------------------
+3. DATA FLOW & INGESTION
+--------------------------------------------------------------------------------
+1. File Upload: CSV or Excel files uploaded via POST /api/workspaces/:id/datasets/upload.
+2. Ingestion: Server parses rows, assigns column types, calculates SHA-256 hash,
+   and writes raw records to server/data/tables/<datasetId>.jsonl.
+3. Profiling: Dataset metadata (row count, column stats, sample rows) saved to
+   server/data/corporatebaddie.json.
+4. Investigation Trigger: User poses a question in the UI; POST /api/investigations
+   is called.
+5. Deterministic Calculation: Metric summaries, trend detection, and anomaly
+   scoring are executed over local tables.
+6. Multi-Agent Reasoning: Python agent bridge executes Planner, Coder, Web Search,
+   Critic, and Compiler agents.
+7. LLM Reasoning & Fallback: If bridge is offline, request routes to Grok -> Gemini -> Z.ai.
+8. Enriched Result: Final payload containing summary, findings, anomalies,
+   recommendations, confidence score, and audit trail returned and persisted.
+
+--------------------------------------------------------------------------------
+4. ENVIRONMENT CONFIGURATION (.env)
+--------------------------------------------------------------------------------
+API_PORT=4000
+CORS_ORIGIN=http://localhost:3000
+DATA_DIR=./server/data
+VITE_API_URL=
+
+LLM_PRIMARY=grok
+LLM_TIMEOUT_MS=30000
+
+XAI_API_KEY=<your-key>
+XAI_MODEL=grok-4.6
+
+GEMINI_API_KEY=<your-key>
+GEMINI_MODEL=gemini-2.5-flash
+
+ZAI_API_KEY=<your-key>
+ZAI_MODEL=glm-5
+ZAI_BASE_URL=https://api.z.ai/api/paas/v4
+
+--------------------------------------------------------------------------------
+5. VERIFICATION & RUN COMMANDS
+--------------------------------------------------------------------------------
+- Full Stack: npm run dev:full (launches API on :4000 and Vite on :3000)
+- Frontend Only: npm run dev
+- Backend Only: npm run api
+- Code Validation: npm run lint (TypeScript compiler check)
+- Production Build: npm run build (Vite production bundle compilation)
+- Build Preview: npm run preview
+================================================================================

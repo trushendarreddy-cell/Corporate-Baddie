@@ -4,7 +4,7 @@
 
 **Repository:** https://github.com/trushendarreddy-cell/Corporate-Baddie.git  
 **Branch:** main  
-**Commit:** Enhanced 3D intro experience with immersive interactive sphere
+**Commit:** `52c34ec` - feat(ui): build 3D intro experience with interactive particle sphere and cinematic orbital nodes
 
 ---
 

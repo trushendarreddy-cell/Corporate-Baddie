@@ -2,6 +2,7 @@
   "name": "corporate-baddie",
   "private": true,
   "version": "0.1.0",
+  "description": "Agentic Decision Intelligence Platform featuring an interactive 3D decision core, Analytica-AI multi-agent reasoning, resilient multi-provider LLM fallback, and evidence-backed executive analytics.",
   "type": "module",
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",

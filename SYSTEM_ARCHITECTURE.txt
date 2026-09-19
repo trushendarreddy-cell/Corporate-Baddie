@@ -1,0 +1,61 @@
+================================================================================
+CORPORATEBADDIE - SYSTEM ARCHITECTURE & TOPOLOGY
+================================================================================
+
++-----------------------------------------------------------------------------+
+|                         CLIENT TIER (Browser / React 19)                    |
++-----------------------------------------------------------------------------+
+|  [3D Intro Sphere]        [Workspace Setup]         [Executive Dashboard]   |
+|   Three.js Canvas           Wizard & Uploader        KPI Grid & Datasets    |
+|   Orbital Nodes             Schema Inspector         Live Pipeline Monitor  |
+|                                                                             |
+|  [Investigation Workbench]                          [AskCorporateBaddie]    |
+|   Hypothesis Tree & Evidence Cards                   Grounded AI Q&A        |
+|   Anomaly & Trend Telemetry                          PDF Brief Generator    |
++-----------------------------------------------------------------------------+
+                                      |
+                         HTTP / JSON  | (Vite proxy :3000 -> :4000)
+                                      v
++-----------------------------------------------------------------------------+
+|                     APPLICATION & API TIER (Express / Node.js)              |
++-----------------------------------------------------------------------------+
+|  REST Controllers (server/index.ts)                                         |
+|    /api/workspaces, /api/datasets, /api/investigations, /api/ask            |
+|                                                                             |
+|  File Ingestion & Profiling (server/ingest.ts)                              |
+|    - CSV / XLSX / XLS parser with SHA-256 fingerprinting                    |
+|    - Automatic column type & null-rate inference                            |
+|                                                                             |
+|  Workspace & Investigation Repository (server/store.ts)                     |
+|    - Metadata: server/data/corporatebaddie.json                             |
+|    - Datasets: server/data/tables/*.jsonl                                   |
+|    - Deterministic metrics, trends, anomaly math                            |
+|                                                                             |
+|  Multi-Provider LLM Fallback Coordinator (server/llm.ts)                    |
+|    - Primary: xAI Grok (grok-4.6 / qwen)                                    |
+|    - Secondary: Google Gemini (gemini-2.5-flash via @google/genai)          |
+|    - Tertiary: Z.ai GLM (glm-5 via OpenAI client)                           |
++-----------------------------------------------------------------------------+
+                                      |
+                   JSON IPC Subprocess| (Child process stdin/stdout)
+                                      v
++-----------------------------------------------------------------------------+
+|                 MULTI-AGENT REASONING ENGINE (Python 3.11)                  |
++-----------------------------------------------------------------------------+
+|  Analytica-AI Bridge (server/agent_bridge.py)                               |
+|                                                                             |
+|   [Planner Agent]      -> Decomposes executive questions into sub-goals.    |
+|          |                                                                  |
+|          v                                                                  |
+|   [Coding Agent]       -> Generates & executes Pandas queries on JSONL.     |
+|          |                                                                  |
+|          v                                                                  |
+|   [Web Search Agent]   -> Fetches DuckDuckGo live market benchmarks.        |
+|          |                                                                  |
+|          v                                                                  |
+|   [Critic Agent]       -> Validates evidence sufficiency & removes bias.    |
+|          |                                                                  |
+|          v                                                                  |
+|   [Compiler Agent]     -> Formulates structured executive brief payload.    |
++-----------------------------------------------------------------------------+
+================================================================================
