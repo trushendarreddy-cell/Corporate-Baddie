@@ -79,21 +79,76 @@ The Decision Confidence metric is an **evidence sufficiency score**, not a stati
 
 ## 🧪 Verification & Release Workflow
 
-Run the validation suite before every commit:
+CorporateBaddie includes a comprehensive automated test suite and strict typecheck verification. Always run the validation suite before pushing commits:
 
 ```powershell
-# 1. Type check
+# 1. Typecheck (Zero-error invariant)
 npm run lint
 
-# 2. Production build validation
+# 2. Run all automated test suites
+npm run test:all
+
+# 3. Targeted test suites
+npm test                      # Pipeline execution & deterministic data engine
+npm run test:confidence       # Evidence sufficiency & degradation weighting
+npm run test:failure          # Catastrophic failure profiles & guardrails
+
+# 4. Production bundle build & chunk validation
 npm run build
 
-# 3. Test production preview
+# 5. Local production preview
 npm run preview
 ```
 
-Ensure that:
-- [x] TypeScript compiles without errors (`tsc --noEmit`).
-- [x] Vite builds the production bundle cleanly.
-- [x] No sensitive keys or `.env` files are tracked in git.
-- [x] New endpoints or state modifications are documented in `README.md` and `server/README.md`.
+### Automated Test Specifications
+- **Execution Pipeline Suite (`scripts/test-execution-engine.ts`)**:
+  - Validates deterministic state transitions (`IDLE` ➔ `ANALYTICS_STARTED` ➔ `SYNTHESIS_STARTED` ➔ `COMPLETE`).
+  - Verifies workspace-to-legacy data source ID mapping (`demo-src-*` ➔ `src-*`).
+  - Confirms multi-provider fallback resilience and hypothesis tree generation.
+- **Confidence Engine Suite (`scripts/test-confidence-engine.ts`)**:
+  - Asserts bounded evidence confidence scores `[0.0, 1.0]`.
+  - Ensures proper degradation penalties when warnings, data conflicts, or missing sources occur.
+  - Verifies factor weighting (data coverage, sample size, anomaly density).
+- **Failure Engine Suite (`scripts/test-failure-engine.ts`)**:
+  - Validates guardrails across all 3 strategic profiles (`opt-1` Safe, `opt-2` Aggressive, `opt-3` Blitz scale).
+  - Asserts tolerance thresholds against catastrophic failure modes (burn rate, churn cascade, compliance breaches).
+
+---
+
+## 📦 Production Rollup Chunk Splitting (`vite.config.ts`)
+
+To maintain sub-second load times and prevent massive single-bundle bottlenecks, Rollup manual chunking isolates heavy third-party dependencies:
+
+| Chunk Name | Included Libraries | Rationale |
+| :--- | :--- | :--- |
+| `vendor-three` | `three` | 3D visual canvas rendering isolated from business logic |
+| `vendor-icons` | `lucide-react` | Scalable vector icon system isolated for efficient caching |
+| `vendor-react` | `react`, `react-dom` | Core React runtime cacheable across deployments |
+| `vendor-docs` | `jspdf`, `html2canvas` | Heavy reporting and PDF generation loaded on-demand |
+| `vendor-analytics` | `d3`, `recharts` | Data visualization dependencies |
+
+---
+
+## 🌐 Isomorphic Runtime Architecture (`src/services/api.ts`)
+
+The codebase supports seamless execution across both browser client and Node.js testing environments:
+- **Environment Detection**: Safely resolves base URLs and configuration through `import.meta.env` in Vite and falls back gracefully to `process.env` in Node (`tsx`) without triggering `ReferenceError`.
+- **Isomorphic Timers**: Uses standard `setTimeout` intervals compatible with DOM and Node timer handles.
+- **Resilient Fallback**: If backend API endpoints are unreachable, API calls automatically fall back to deterministic mock generators so UI components remain fully interactive.
+
+---
+
+## 🎮 WebGL Context Loss & GPU Resilience (`DecisionCore3D.tsx`)
+
+3D visualization components subscribe to WebGL canvas lifecycle events:
+- Handles `webglcontextlost` by canceling animation frames and displaying a graceful fallback banner.
+- Handles `webglcontextrestored` by re-initializing scenes, cameras, materials, and geometries.
+- Properly disposes of all geometries, materials, and renderer contexts on unmount to prevent GPU memory leaks.
+
+---
+
+## 📄 Executive Reporting & Audit Export (`src/utils/pdfExport.ts`)
+
+- **High-Resolution Executive PDF**: Formats question hypotheses, decision options, evidence citations, and confidence telemetry into a multi-page executive brief.
+- **Structured JSON Export (`exportInvestigationToJSON`)**: Emits complete machine-readable audit trails and run metadata.
+- **Audit CSV Export (`exportInvestigationAuditCSV`)**: Conforms to the `AuditEvent` schema (`id`, `timestamp`, `eventName`, `component`, `inputTrigger`, `outputSummary`, `confidenceImpact`) for compliance ingestion.

@@ -58,4 +58,20 @@ CORPORATEBADDIE - SYSTEM ARCHITECTURE & TOPOLOGY
 |          v                                                                  |
 |   [Compiler Agent]     -> Formulates structured executive brief payload.    |
 +-----------------------------------------------------------------------------+
+                                      |
+                   Verification & QA  | (Automated deterministic tests)
+                                      v
++-----------------------------------------------------------------------------+
+|                 AUTOMATED TEST & VERIFICATION SUITES                        |
++-----------------------------------------------------------------------------+
+|  1. Execution Engine Suite (scripts/test-execution-engine.ts)               |
+|     - Pipeline stage transitions (IDLE -> ANALYTICS -> SYNTHESIS -> DONE)   |
+|     - Legacy & workspace dataset identifier normalizations                  |
+|  2. Confidence Engine Suite (scripts/test-confidence-engine.ts)             |
+|     - Bounded 0.0-1.0 confidence math, penalty degradation rules            |
+|  3. Failure Guardrail Suite (scripts/test-failure-engine.ts)                |
+|     - Strategic option profiles (opt-1 Safe, opt-2 Aggressive, opt-3 Blitz) |
+|     - Catastrophic risk tolerance checks & stress testing                   |
++-----------------------------------------------------------------------------+
 ================================================================================
+
