@@ -38,6 +38,7 @@ import {
 } from './state/executionEngine';
 import { exportInvestigationToPDF } from './utils/pdfExport';
 import { calculateDecisionConfidence } from './state/confidenceEngine';
+import { api } from './services/api';
 
 import { CommandHeader, ModuleTab } from './components/ui/CommandHeader';
 import type { CoreNodeAction } from './components/ui/DecisionCore3D';
@@ -174,7 +175,6 @@ export default function App({ initialQuestion, onReplayIntro }: AppProps = {}) {
   useEffect(() => {
     const syncBackendData = async () => {
       try {
-        const { api } = await import('./services/api');
         const wsId = currentWorkspace?.id || 'demo-ws-001';
         const remote = await api.datasets(wsId);
         if (remote.datasets && remote.datasets.length > 0) {
@@ -430,7 +430,6 @@ export default function App({ initialQuestion, onReplayIntro }: AppProps = {}) {
 
       // Try uploading to backend API
       try {
-        const { api } = await import('./services/api');
         const response = await api.uploadDataset(wsId, file);
         if (response.dataset) {
           rowCount = response.dataset.rowCount || rowCount;

@@ -13,6 +13,8 @@ import {
 } from 'lucide-react';
 import { GROUNDED_QA_PAIRS } from '../mockData';
 import { askGroundedQuestion } from '../services/providerRegistry';
+import { api } from '../services/api';
+import { workspaceRepo } from '../state/workspaceRepository';
 
 interface AskCorporateBaddieProps {
   onSelectClaim?: (claimId: string) => void;
@@ -70,8 +72,6 @@ export const AskCorporateBaddie: React.FC<AskCorporateBaddieProps> = ({
     setIsThinking(true);
 
     try {
-      const { api } = await import('../services/api');
-      const { workspaceRepo } = await import('../state/workspaceRepository');
       const workspaceId = workspaceRepo.get()?.id || 'demo-ws-001';
       
       const backendResponse = await api.ask(workspaceId, questionText);

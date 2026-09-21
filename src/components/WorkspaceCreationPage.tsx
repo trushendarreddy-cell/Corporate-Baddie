@@ -6,6 +6,7 @@
 import React, { useState } from 'react';
 import { Building2, ChevronRight, CheckCircle, Globe, TrendingUp } from 'lucide-react';
 import type { Workspace } from '../models/workspace';
+import { api } from '../services/api';
 
 interface WorkspaceCreationProps {
   onComplete: (workspace: Workspace) => void;
@@ -55,7 +56,6 @@ export const WorkspaceCreationPage: React.FC<WorkspaceCreationProps> = ({
     let workspaceId = `ws-${Date.now().toString().slice(-8)}`;
 
     try {
-      const { api } = await import('../services/api');
       const response = await api.createWorkspace({
         name: formData.companyName.trim(),
         industry: formData.industry.trim() || 'General',
