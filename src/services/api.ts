@@ -1,11 +1,43 @@
-const API_BASE = import.meta.env.VITE_API_URL || '';
+function resolveApiBase(): string {
+  try {
+    // @ts-ignore
+    if (typeof import.meta !== 'undefined' && import.meta?.env?.VITE_API_URL) {
+      // @ts-ignore
+      return String(import.meta.env.VITE_API_URL);
+    }
+  } catch {}
+  try {
+    if (typeof process !== 'undefined' && process?.env?.VITE_API_URL) {
+      return String(process.env.VITE_API_URL);
+    }
+  } catch {}
+  return '';
+}
+
+const API_BASE = resolveApiBase();
 const REQUEST_TIMEOUT_MS = 45000;
+
+const setTimer = (fn: () => void, ms: number) => {
+  if (typeof globalThis.setTimeout === 'function') {
+    return globalThis.setTimeout(fn, ms);
+  }
+  return setTimeout(fn, ms);
+};
+
+const clearTimer = (id: ReturnType<typeof setTimeout> | number | undefined) => {
+  if (id === undefined) return;
+  if (typeof globalThis.clearTimeout === 'function') {
+    globalThis.clearTimeout(id as any);
+  } else {
+    clearTimeout(id as any);
+  }
+};
 
 type ApiErrorBody = { error?: string; requestId?: string };
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const controller = new AbortController();
-  const timeout = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  const timeout = setTimer(() => controller.abort(), REQUEST_TIMEOUT_MS);
   try {
     const response = await fetch(`${API_BASE}${path}`, {
       ...init,
@@ -19,12 +51,16 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
       throw new Error(body.requestId ? `${detail} (request ${body.requestId})` : detail);
     }
     return body as T;
-  } catch (error) {
-    if (error instanceof DOMException && error.name === 'AbortError') throw new Error('The API request timed out. Check that the CorporateBaddie backend is running.');
-    if (error instanceof TypeError) throw new Error('Cannot reach the CorporateBaddie API. Start the backend with npm run api.');
+  } catch (error: any) {
+    if ((error instanceof DOMException && error.name === 'AbortError') || error?.name === 'AbortError') {
+      throw new Error('The API request timed out. Check that the CorporateBaddie backend is running.');
+    }
+    if (error instanceof TypeError) {
+      throw new Error('Cannot reach the CorporateBaddie API. Start the backend with npm run api.');
+    }
     throw error;
   } finally {
-    window.clearTimeout(timeout);
+    clearTimer(timeout);
   }
 }
 
