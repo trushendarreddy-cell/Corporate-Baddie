@@ -414,3 +414,42 @@ export const exportInvestigationToPDF = (params: PDFExportParams): void => {
   const cleanDate = new Date().toISOString().slice(0, 10);
   doc.save(`CorporateBaddie_Executive_Brief_${state.runId}_${cleanDate}.pdf`);
 };
+
+export const exportInvestigationToJSON = (state: UnifiedInvestigationState, filename?: string): void => {
+  if (typeof window === 'undefined') return;
+  const jsonStr = JSON.stringify(state, null, 2);
+  const blob = new Blob([jsonStr], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename || `CorporateBaddie_Investigation_${state.runId}_${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};
+
+export const exportInvestigationAuditCSV = (state: UnifiedInvestigationState, filename?: string): void => {
+  if (typeof window === 'undefined') return;
+  const headers = ['Event ID', 'Timestamp', 'Event Name', 'Component', 'Input Trigger', 'Output Summary', 'Confidence Impact'];
+  const rows = (state.auditEvents || []).map((ev) => [
+    `"${ev.id || ''}"`,
+    `"${ev.timestamp || ''}"`,
+    `"${(ev.eventName || '').replace(/"/g, '""')}"`,
+    `"${(ev.component || '').replace(/"/g, '""')}"`,
+    `"${(ev.inputTrigger || '').replace(/"/g, '""')}"`,
+    `"${(ev.outputSummary || '').replace(/"/g, '""')}"`,
+    `"${(ev.confidenceImpact || '').replace(/"/g, '""')}"`,
+  ]);
+  const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename || `CorporateBaddie_AuditTrail_${state.runId}_${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};
+
