@@ -1,252 +1,78 @@
-# Intro Layout Update - Reference Image Accurate
+# Intro Layout & Responsive Grid Architecture
 
-## Changes Made
+This specification details the structural layout, responsive breakpoint behaviors, and typographic system implemented in the CorporateBaddie onboarding interface.
 
-### 1. Two-Column Layout (Matches Reference)
+---
 
-**Before:** Full-screen overlay with floating content  
-**After:** Proper two-column grid layout
+## 1. Grid Composition & Spatial Hierarchy
 
-```
-┌─────────────────────────────────────────────┐
-│ Header                                       │
-├──────────────────┬──────────────────────────┤
-│                  │                          │
-│  LEFT COLUMN     │    RIGHT COLUMN          │
-│  - Kicker        │    - 3D Sphere           │
-│  - Headline      │    - 6 Nodes Orbiting    │
-│  - Description   │    - Detail Overlay      │
-│  - Question      │                          │
-│  - CTA Button    │                          │
-│                  │                          │
-├──────────────────┴──────────────────────────┤
-│ Bottom Intelligence System                   │
-└─────────────────────────────────────────────┘
-```
+The interface organizes the onboarding flow into an asymmetric two-column grid that balances editorial context with interactive 3D exploration:
 
-### 2. Six Nodes (Not Five)
-
-Added 6th node: **ANALYSIS**
-- Pattern recognition
-- Statistical analysis and trends
-
-**Node Distribution:**
-- DATA (0°)
-- ANALYSIS (60°)
-- MARKET (120°)
-- EVIDENCE (180°)
-- RISK (240°)
-- DECISION (300°)
-
-Evenly spaced around sphere at 60° intervals.
-
-### 3. Compact, Tighter Layout
-
-**Text Sizing:**
-- Headline: Reduced from 4.2rem to 3.4rem max
-- Body text: 13-14px (was 15px)
-- Spacing: Tighter gaps between elements
-- Padding: More compact vertical rhythm
-
-**Matches Reference:**
-- Left column max-width: 480px
-- Right column: Constrained to 600px sphere
-- Overall max-width: 1400px
-- Centered grid layout
-
-### 4. Reference-Accurate Styling
-
-**Top Header:**
-- Slimmer (py-4 vs py-6)
-- Smaller text (9px vs 10px)
-- Subtle border and backdrop blur
-- Cleaner separation
-
-**Bottom Bar:**
-- Shows 6 system steps: DATA, ANALYSIS, MARKET, EVIDENCE, RISK, DECISION
-- No numbering (cleaner)
-- Smaller text (8.5px)
-- First item (DATA) highlighted in sage green
-
-**Detail Panel:**
-- Now overlays bottom of sphere (reference style)
-- Appears for ALL screen sizes when node is hovered
-- Semi-transparent with backdrop blur
-- Compact padding
-
-### 5. Convergence Animation Enhanced
-
-When "ENTER DECISION INTELLIGENCE" is clicked:
-
-1. **All 6 nodes** accelerate toward sphere center
-2. Orbital rings tighten and fade
-3. Sphere compresses then expands
-4. Smooth 1.2s transition
-5. Fades to existing dashboard
-
-**Connects to existing app:**
-- Uses `onEnter()` callback from props
-- Sets sessionStorage key
-- Main App component takes over
-- No data/backend changes needed
-
-## File Changes
-
-### Modified: `src/components/IntroExperience.tsx`
-
-**Key changes:**
-- Layout: Changed from absolute positioning to CSS Grid
-- Nodes: Added 6th node (ANALYSIS)
-- Distribution: Even 60° spacing
-- Responsiveness: Proper column stacking on mobile
-- Detail panel: Now overlays sphere bottom
-- Text sizing: Reduced to match reference
-- Spacing: Tighter vertical rhythm
-
-### No Changes Required
-
-- `src/main.tsx` - Entry logic intact
-- `src/App.tsx` - Dashboard unchanged
-- `src/index.css` - Design system compatible
-- Backend/API - No modifications
-- Investigation engine - Untouched
-
-## Layout Breakdown
-
-### Desktop (1024px+)
-
-```
-┌────────────────────────────────────────────────────────────┐
-│ ● CORPORATEBADDIE    DECISION INTEL/01    SKIP INTRO →     │
-├─────────────────────────────┬──────────────────────────────┤
-│                             │                              │
-│ DECISION SYSTEM / ENTRY     │                              │
-│                             │         [SPHERE]             │
-│ Making Sense of Corp...     │      6 nodes orbiting        │
-│                             │                              │
-│ Turn business questions     │  ┌────────────────────┐      │
-│ into evidence-backed        │  │ EVIDENCE           │      │
-│ decisions.                  │  │ What supports...   │      │
-│                             │  │ Sources and claims │      │
-│ It investigates your...     │  └────────────────────┘      │
-│                             │                              │
-│ QUESTION                    │                              │
-│ "Why are our margins..."    │                              │
-│                             │                              │
-│ [ENTER DECISION INTEL ↗]    │                              │
-│                             │                              │
-├─────────────────────────────┴──────────────────────────────┤
-│ INTEL SYSTEM  DATA  ANALYSIS  MARKET  EVIDENCE  RISK...    │
-└────────────────────────────────────────────────────────────┘
+```text
+┌─────────────────────────────────────────────────────────────┐
+│ Header: Brand Identifier | Mode Indicator | Skip Action      │
+├──────────────────────────────┬──────────────────────────────┤
+│ Left Column (Editorial)      │ Right Column (Visual)        │
+│                              │                              │
+│ - Category Kicker            │ - WebGL 3D Decision Core     │
+│ - Primary Strategic Headline │ - Six Orbiting Nodes         │
+│ - Platform Description       │ - Projected Screen Badges    │
+│ - Sample Investigation Input │ - Contextual Detail Overlay  │
+│ - Primary Action Button      │                              │
+├──────────────────────────────┴──────────────────────────────┤
+│ Bottom Bar: Six-Phase Pipeline Indicator | Epistemic Ethos  │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-### Mobile (<768px)
+---
 
-```
-┌──────────────────────┐
-│ ● CB    SKIP INTRO → │
-├──────────────────────┤
-│                      │
-│ Making Sense of...   │
-│                      │
-│ Turn business        │
-│ questions into       │
-│ evidence-backed      │
-│ decisions.           │
-│                      │
-│ It investigates...   │
-│                      │
-│ QUESTION             │
-│ "Why are..."         │
-│                      │
-│ [ENTER INTEL ↗]      │
-│                      │
-├──────────────────────┤
-│     [SPHERE]         │
-│   6 nodes orbit      │
-│                      │
-│  ┌────────────┐      │
-│  │ Detail     │      │
-│  └────────────┘      │
-├──────────────────────┤
-│ INTEL SYSTEM         │
-└──────────────────────┘
-```
+## 2. Responsive Breakpoint Matrix
 
-## Validation
+The layout dynamically adjusts across three principal viewport tiers:
 
-✅ **Build Status:** Success  
-✅ **TypeScript:** 0 errors  
-✅ **Layout:** Two-column grid (matches reference)  
-✅ **Nodes:** 6 nodes evenly distributed  
-✅ **Spacing:** Compact and tight  
-✅ **Convergence:** All 6 nodes → center → dashboard  
-✅ **Responsive:** Mobile/tablet/desktop  
-✅ **Integration:** Connects to existing app
+### Desktop Viewports ($\ge 1024\text{px}$)
+- **Structure**: Asymmetric CSS Grid with `grid-template-columns: minmax(360px, 480px) 1fr`.
+- **Left Column**: Max-width capped at $480\text{px}$ to maintain comfortable reading measure ($55$–$75$ characters per line).
+- **Right Column**: Flexible canvas area centered around the $600\text{px}$ 3D decision core.
+- **Detail Overlay**: Positioned beneath the 3D sphere as a semi-transparent floating card.
 
-## How It Connects to Dashboard
+### Tablet Viewports ($768\text{px} \le \text{width} < 1024\text{px}$)
+- **Structure**: Two-column layout with reduced horizontal margins ($24\text{px}$).
+- **Canvas Scaling**: Camera distance adjusts automatically to preserve full orbit visibility without clipping text.
+- **Detail Overlay**: Compact single-line summary displayed when nodes are tapped or focused.
 
-### Flow:
+### Mobile Viewports ($< 768\text{px}$)
+- **Structure**: Single-column vertical stack with `flex-direction: column`.
+- **Stack Order**:
+  1. Header and skip action.
+  2. Headline and platform description.
+  3. 3D Decision Core canvas ($320\text{px}$–$380\text{px}$ height).
+  4. Sample question prompt.
+  5. Full-width primary CTA button.
+  6. Compact bottom pipeline bar.
+- **Touch Targets**: All interactive elements maintain a minimum $44\text{px} \times 44\text{px}$ tap target area.
 
-1. **Intro loads** (`IntroExperience` component)
-2. User interacts with 6 orbiting nodes
-3. User clicks **"ENTER DECISION INTELLIGENCE"**
-4. **Convergence animation plays:**
-   - All 6 nodes accelerate inward
-   - Converge at sphere center
-   - Sphere pulses
-   - Scene fades out (1.2s)
-5. **`onEnter()` callback fires**
-6. **SessionStorage updated:** `corporatebaddie:intro-completed = '1'`
-7. **`Root` component in `main.tsx`** detects completion
-8. **Renders `<App />` component** (main dashboard)
-9. **User sees existing CorporateBaddie workspace:**
-   - CommandHeader navigation
-   - Investigate module
-   - Data sources panel
-   - All existing functionality intact
+---
 
-### No Disconnects
+## 3. Typographic Hierarchy & Token Scale
 
-- Backend API calls work immediately
-- Investigation engine ready
-- Data upload functional
-- All existing features available
+The design uses a restrained, high-contrast typographic system pairing Plus Jakarta Sans for editorial clarity with JetBrains Mono for technical metadata:
 
-The intro is truly just an **entry experience** - it doesn't replace or modify anything, just provides a cinematic introduction before handing off to the real application.
+| Element | Font Family | Size / Leading | Weight | Letter Spacing | Styling |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Kicker** | Plus Jakarta Sans | 10px / 14px | Semi-Bold (600) | 0.32em | Uppercase, sage green (`#8eb397`) |
+| **Main Headline** | Plus Jakarta Sans | 38px / 44px | Bold (700) | -0.04em | Off-white (`#edf0eb`) with sage accent |
+| **Body Description**| Plus Jakarta Sans | 14px / 22px | Regular (400) | -0.01em | Muted gray (`#9da79f`) |
+| **Sample Input** | Plus Jakarta Sans | 13px / 18px | Medium (500) | Normal | Dark container with border accent |
+| **Action CTA** | Plus Jakarta Sans | 13px / 16px | Semi-Bold (600) | 0.08em | Uppercase, arrow glyph suffix |
+| **Node Badges** | JetBrains Mono | 9px / 12px | Medium (500) | 0.18em | Uppercase, high-contrast monospace |
+| **Pipeline Steps** | JetBrains Mono | 9px / 12px | Regular (400) | 0.14em | Horizontal numbered track |
 
-## Testing
+---
 
-```bash
-# Install dependencies
-npm install
+## 4. Workspace Transition Integration
 
-# Run dev server
-npm run dev
-
-# Visit http://localhost:3000
-# - See intro with 6 nodes
-# - Click nodes to see details
-# - Click "ENTER DECISION INTELLIGENCE"
-# - Watch convergence animation
-# - Land on existing dashboard
-
-# To replay intro:
-# Open DevTools Console:
-sessionStorage.removeItem('corporatebaddie:intro-completed');
-location.reload();
-```
-
-## Summary
-
-The intro now **accurately matches the reference images**:
-
-✅ Two-column layout (text left, sphere right)  
-✅ 6 nodes orbiting (not 5)  
-✅ Compact, tight spacing  
-✅ Reference-accurate typography  
-✅ Detail panel overlays sphere  
-✅ Convergence animation to dashboard  
-✅ Seamless integration with existing app  
-
-All backend and frontend connections remain intact. The intro is purely a visual entry layer that elegantly transitions into the existing CorporateBaddie investigation workspace.
+Activating **"ENTER DECISION INTELLIGENCE"** triggers an integrated handover to the executive analytics workspace:
+- **Choreographed Convergence**: The six orbiting nodes collapse into the central core, followed by a unified canvas fade.
+- **State Hand-off**: The `onEnter` callback sets `sessionStorage.setItem('corporatebaddie:intro-completed', '1')`.
+- **Zero Rerender Latency**: The root component mounts `<App />` with the selected workspace already initialized, avoiding duplicate API queries or layout jumps.
