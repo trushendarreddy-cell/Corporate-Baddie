@@ -20,6 +20,14 @@ const upload = multer({
 
 app.disable('x-powered-by');
 app.use(express.json({ limit: '2mb', strict: true }));
+
+app.use((req, res, next) => {
+  const reqId = (req.headers['x-request-id'] as string) || randomUUID().slice(0, 8);
+  res.setHeader('X-Request-ID', reqId);
+  (req as any).id = reqId;
+  next();
+});
+
 app.use((_req, res, next) => {
   const configured = process.env.CORS_ORIGIN || '*';
   const origin = _req.headers.origin;
@@ -27,7 +35,7 @@ app.use((_req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', configured === '*' ? '*' : origin!);
     res.setHeader('Vary', 'Origin');
   }
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Accept');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Accept, X-Request-ID');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PATCH,DELETE,OPTIONS');
   res.setHeader('Cache-Control', 'no-store');
   if (_req.method === 'OPTIONS') return res.sendStatus(204);
@@ -76,7 +84,21 @@ function parseReasoning(text: string) {
 app.get('/api/health', async (_req, res, next) => {
   try {
     await access(DATA_DIR);
-    res.json({ ok: true, service: 'corporatebaddie-api', timestamp: new Date().toISOString(), storage: 'ready', providers: { grok: Boolean(process.env.XAI_API_KEY), gemini: Boolean(process.env.GEMINI_API_KEY), primary: process.env.LLM_PRIMARY || 'grok' }, version: 'api-v4' });
+    res.json({
+      ok: true,
+      service: 'corporatebaddie-api',
+      timestamp: new Date().toISOString(),
+      uptimeSeconds: Math.round(process.uptime()),
+      memoryBytes: process.memoryUsage().rss,
+      storage: 'ready',
+      providers: {
+        grok: Boolean(process.env.XAI_API_KEY),
+        gemini: Boolean(process.env.GEMINI_API_KEY),
+        zai: Boolean(process.env.ZAI_API_KEY),
+        primary: process.env.LLM_PRIMARY || 'grok',
+      },
+      version: 'api-v4',
+    });
   } catch (error) { next(error); }
 });
 app.get('/api/ready', async (_req, res) => {
@@ -241,4 +263,19 @@ app.use((error: unknown, _req: express.Request, res: express.Response, _next: ex
 });
 
 await mkdir(path.join(DATA_DIR, 'tmp'), { recursive: true });
-app.listen(PORT, () => console.log(`CorporateBaddie API listening on http://localhost:${PORT}`));
+const server = app.listen(PORT, () => console.log(`CorporateBaddie API listening on http://localhost:${PORT}`));
+
+const shutdown = (signal: string) => {
+  console.log(`Received ${signal}, shutting down gracefully...`);
+  server.close(() => {
+    console.log('HTTP server closed.');
+    process.exit(0);
+  });
+  setTimeout(() => {
+    console.error('Forced shutdown after timeout.');
+    process.exit(1);
+  }, 5000).unref();
+};
+
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));

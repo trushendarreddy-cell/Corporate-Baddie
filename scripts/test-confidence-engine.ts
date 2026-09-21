@@ -4,7 +4,7 @@
 // ============================================================================
 
 import { calculateDecisionConfidence } from '../src/state/confidenceEngine';
-import { DEFAULT_DATA_SOURCES, DEFAULT_DATA_PROFILE } from '../src/mockData';
+import { DEFAULT_DATA_SOURCES } from '../src/mockData';
 import type { ExecutionGraphNode, EvidenceClaim, KeyFinding, InvestigationIssue } from '../src/types';
 
 let failures = 0;
@@ -44,7 +44,17 @@ console.log('=== TEST SUITE: Confidence Engine ===\n');
     { id: 'c2', title: 'Product A margin variance', type: 'FACT', evidence: 'SKU ledger', confidence: 92, source: 'ERP', verified: true, dependencies: [], verificationStatus: 'SUPPORTED' },
   ];
   const mockFindings: KeyFinding[] = [
-    { id: 'f1', label: 'Sales drop', value: '-14.2%', change: 'Observed', direction: 'down', subtext: 'ERP ledger', metricType: 'Revenue', evidenceClaimId: 'c1' },
+    {
+      id: 'f1',
+      label: 'Sales drop',
+      value: '-14.2%',
+      change: 'Observed',
+      direction: 'down',
+      subtext: 'ERP ledger',
+      metricType: 'Revenue',
+      evidenceClaimId: 'c1',
+      detailedData: { baseline: '3.6M', current: '2.8M', variance: '-14.2%', confidence: 95, dataSource: 'ERP' },
+    },
   ];
 
   const result = calculateDecisionConfidence({
@@ -73,7 +83,17 @@ console.log('=== TEST SUITE: Confidence Engine ===\n');
     { id: 'c2', title: 'Negative signal', type: 'FACT', evidence: '', confidence: 80, source: 'B', verified: true, dependencies: [], verificationStatus: 'CONFLICTED' },
   ];
   const mockFindings: KeyFinding[] = [
-    { id: 'f1', label: 'Variance', value: '10%', change: 'Observed', direction: 'flat', subtext: '', metricType: 'Ops', evidenceClaimId: 'c1' },
+    {
+      id: 'f1',
+      label: 'Variance',
+      value: '10%',
+      change: 'Observed',
+      direction: 'flat',
+      subtext: '',
+      metricType: 'Ops',
+      evidenceClaimId: 'c1',
+      detailedData: { baseline: '100', current: '110', variance: '10%', confidence: 80, dataSource: 'A' },
+    },
   ];
   const mockIssues: InvestigationIssue[] = [
     { status: 'EVIDENCE CONFLICT', failedComponent: 'Analytics', impact: 'Contradictory findings', confidenceDelta: -25, nextAction: 'Re-audit' },
@@ -100,7 +120,17 @@ console.log('=== TEST SUITE: Confidence Engine ===\n');
     dataSources: DEFAULT_DATA_SOURCES,
     plan: [],
     claims: [{ id: 'c1', title: 'Fact', type: 'FACT', evidence: '', confidence: 80, source: 'A', verified: true, dependencies: [] }],
-    findings: [{ id: 'f1', label: 'L', value: 'V', change: 'C', direction: 'flat', subtext: '', metricType: 'M', evidenceClaimId: 'c1' }],
+    findings: [{
+      id: 'f1',
+      label: 'L',
+      value: 'V',
+      change: 'C',
+      direction: 'flat',
+      subtext: '',
+      metricType: 'M',
+      evidenceClaimId: 'c1',
+      detailedData: { baseline: '0', current: '0', variance: '0', confidence: 80, dataSource: 'A' },
+    }],
     issues: [],
   });
 
