@@ -13,7 +13,7 @@
     "clean": "node -e \"import('node:fs').then(fs => fs.rmSync('dist', { recursive: true, force: true }))\"",
     "lint": "tsc --noEmit",
     "test": "tsx scripts/test-execution-engine.ts",
-    "test:all": "tsx scripts/test-execution-engine.ts"
+    "test:all": "tsx scripts/test-execution-engine.ts && tsx scripts/test-confidence-engine.ts && tsx scripts/test-failure-engine.ts"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
