@@ -9,9 +9,11 @@ import {
   HelpCircle,
   Clock,
   Eye,
-  Activity
+  Activity,
+  Flame,
+  Compass,
 } from 'lucide-react';
-import { FAILURE_PROFILES, OptionFailureProfile, FailureMode } from '../state/failureEngine';
+import { FAILURE_PROFILES, OptionFailureProfile, FailureMode, getFailureProfileForOption } from '../state/failureEngine';
 
 interface FailureModeInspectorProps {
   isOpen: boolean;
@@ -29,8 +31,7 @@ export const FailureModeInspector: React.FC<FailureModeInspectorProps> = ({
 
   if (!isOpen) return null;
 
-  const profile: OptionFailureProfile =
-    FAILURE_PROFILES[activeOptionId] || FAILURE_PROFILES['opt-1'];
+  const profile: OptionFailureProfile = getFailureProfileForOption(activeOptionId);
 
   const activeFailure =
     profile.failureModes.find((f) => f.id === selectedFailureId) ||

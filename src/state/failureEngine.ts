@@ -80,7 +80,44 @@ export const FAILURE_PROFILES: Record<string, OptionFailureProfile> = {
   },
   'opt-2': {
     optionId: 'opt-2',
-    optionName: 'Marketing Expansion (Broad-Scale Awareness)',
+    optionName: 'Company-wide Price Reduction',
+    overallVulnerabilityScore: 78,
+    primaryFailureMode: 'Enterprise-Wide Margin Destruction',
+    breakEvenProbability: 38,
+    worstCaseDownside:
+      'Uncontrolled margin contraction of 350-420 bps across all SKUs, forfeiting ₹45L in annualized profit without reviving churned cohorts.',
+    failureModes: [
+      {
+        id: 'fail-201',
+        category: 'FINANCIAL_EROSION',
+        title: 'Broad-Scale Margin Collapse',
+        severity: 'CRITICAL',
+        probabilityPercent: 74,
+        triggerCondition: 'Blended gross margin floor drops below 36% across non-contested territories.',
+        cascadingImpact: 'Permanent degradation of pricing power across Northern and Western enterprise accounts.',
+        preMortemNarrative:
+          'Prices were reduced nationally. Existing clients happily took discounts they never requested, accelerating margin erosion while defecting accounts still bought rival bundles.',
+        earlyWarningSignal: 'Average Order Value (AOV) dropping faster than unit volume growth.',
+        mitigationProtocol: 'Fence discount strictly behind localized distributor rebate tokens rather than global MSRP reductions.',
+      },
+      {
+        id: 'fail-202',
+        category: 'COMPETITOR_REACTION',
+        title: 'Retaliatory Industry Price War',
+        severity: 'HIGH',
+        probabilityPercent: 52,
+        triggerCondition: 'Category rivals view global discount as an aggressive attack on their market baseline.',
+        cascadingImpact: 'Competitors discount secondary product tiers, eroding stable product lines.',
+        preMortemNarrative:
+          'Rivals responded in kind, lowering prices by an additional 5%. The entire sector lost pricing power for two consecutive fiscal quarters.',
+        earlyWarningSignal: 'Competitor marketing campaigns announcing industry-wide price match guarantees.',
+        mitigationProtocol: 'Pivot value proposition immediately to certified uptime SLAs and bundled enterprise support.',
+      },
+    ],
+  },
+  'opt-3': {
+    optionId: 'opt-3',
+    optionName: 'Marketing Blitz Campaign',
     overallVulnerabilityScore: 68,
     primaryFailureMode: 'High Capital Burn with Low Conversion Velocity',
     breakEvenProbability: 44,
@@ -88,17 +125,30 @@ export const FAILURE_PROFILES: Record<string, OptionFailureProfile> = {
       'Burn of ₹25.5L over 90 days with customer churn continuing unaddressed, resulting in net cash flow depletion.',
     failureModes: [
       {
-        id: 'fail-201',
+        id: 'fail-301',
         category: 'FINANCIAL_EROSION',
         title: 'High CAC Dilution without Churn Resolution',
         severity: 'CRITICAL',
         probabilityPercent: 62,
         triggerCondition: 'Ad spend flows into generic nationwide channels while regional churn remains unaddressed.',
-        cascadingImpact: 'High cost per acquisition fail to replace defecting high-LTV repeat buyers.',
+        cascadingImpact: 'High cost per acquisition fails to replace defecting high-LTV repeat buyers.',
         preMortemNarrative:
           'Three months in, ₹25L has been spent. While web visits rose 22%, net revenue still declined because existing accounts in South continued buying competitor bundles.',
         earlyWarningSignal: 'Top-of-funnel conversions up, but repeat 90-day retention curve remains flat or negative.',
-        mitigationProtocol: 'Immediately cap digital ad spend at ₹3L/month and redirect to localized dealer co-op.',
+        mitigationProtocol: 'Immediately cap digital ad spend at ₹3L/month and redirect to localized dealer co-op programs.',
+      },
+      {
+        id: 'fail-302',
+        category: 'CHANNEL_FRICTION',
+        title: 'Channel Partner Alienation',
+        severity: 'MEDIUM',
+        probabilityPercent: 35,
+        triggerCondition: 'Direct-to-consumer ad campaigns bypass established regional dealer networks.',
+        cascadingImpact: 'Distributors deprioritize in-store floor space for Product A.',
+        preMortemNarrative:
+          'Distributors reacted negatively to direct digital ads, retaliating by promoting competitor units on store display shelves.',
+        earlyWarningSignal: 'Distributor order reorders slowing down despite increased brand impressions.',
+        mitigationProtocol: 'Provide distributors with exclusive co-branded landing pages and lead routing incentives.',
       },
     ],
   },
@@ -127,3 +177,38 @@ export const FAILURE_PROFILES: Record<string, OptionFailureProfile> = {
     ],
   },
 };
+
+/**
+ * Safely retrieve a failure profile for any option ID, synthesizing a grounded fallback
+ * if an option is not explicitly mapped.
+ */
+export function getFailureProfileForOption(optionId: string, fallbackName?: string): OptionFailureProfile {
+  if (FAILURE_PROFILES[optionId]) {
+    return FAILURE_PROFILES[optionId];
+  }
+
+  // Synthesize resilient fallback profile for custom or dynamic options
+  const defaultTitle = fallbackName || `Strategic Option ${optionId}`;
+  return {
+    optionId,
+    optionName: defaultTitle,
+    overallVulnerabilityScore: 50,
+    primaryFailureMode: 'Unmodeled Execution Friction',
+    breakEvenProbability: 55,
+    worstCaseDownside: 'Execution variance may deviate ±15% from forecasted targets prior to milestone validation.',
+    failureModes: [
+      {
+        id: `fail-custom-${optionId}-1`,
+        category: 'OPERATIONAL_BOTTLENECK',
+        title: 'Cross-Functional Implementation Lag',
+        severity: 'MEDIUM',
+        probabilityPercent: 30,
+        triggerCondition: 'Resource allocation across operational units takes >21 days.',
+        cascadingImpact: 'Implementation delayed, reducing early milestone achievement.',
+        preMortemNarrative: 'Cross-department handoffs delayed rollout by three weeks.',
+        earlyWarningSignal: 'Milestone tracking checkpoints missing preliminary signoffs.',
+        mitigationProtocol: 'Assign a designated operational owner with clear escalation protocols.',
+      },
+    ],
+  };
+}

@@ -1042,7 +1042,7 @@ export const applyExecutionOutcomeToState = (
   };
 
   next.recommendationConfidence = calculateDecisionConfidence({
-    dataQuality: base.dataProfile,
+    dataQuality: base.dataQuality,
     dataSources: base.activeDataSources,
     plan: investigationPlan,
     claims,
