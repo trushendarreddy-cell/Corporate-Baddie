@@ -1251,8 +1251,9 @@ export const DEFAULT_EVIDENCE_GRAPH: ExecutionGraphNode[] = [
 // ============================================================================
 
 function mapWSDataSourceToLegacy(source: WSDataSource): LegacyDataSource {
+  const legacyId = source.id.startsWith('demo-') ? source.id.replace('demo-', '') : source.id;
   return {
-    id: source.id,
+    id: legacyId,
     name: source.name,
     type: source.type,
     status: source.status,

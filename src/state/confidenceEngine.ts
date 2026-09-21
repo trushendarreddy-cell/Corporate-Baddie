@@ -31,7 +31,8 @@ export const calculateDecisionConfidence = (input: ConfidenceCalculationInput): 
   const missingEvidence = input.issues.filter((issue) => issue.status === 'DATA INSUFFICIENT' || issue.status === 'INVESTIGATION BLOCKED').length;
   const hasEvidence = input.claims.length > 0 || input.findings.length > 0;
 
-  const dataQuality = clamp((input.dataQuality.overallPercent + input.dataQuality.completeness + input.dataQuality.freshness + input.dataQuality.consistency) / 4);
+  const dq = input.dataQuality || { overallPercent: 85, completeness: 85, freshness: 85, consistency: 85 };
+  const dataQuality = clamp(((dq.overallPercent ?? 85) + (dq.completeness ?? 85) + (dq.freshness ?? 85) + (dq.consistency ?? 85)) / 4);
   const sourceCompleteness = requiredSourceIds.length === 0
     ? (selectedSources.length > 0 ? 100 : 0)
     : clamp(((requiredSourceIds.length - missingSourceIds.length) / requiredSourceIds.length) * 100);
