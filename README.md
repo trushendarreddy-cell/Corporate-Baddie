@@ -1,73 +1,73 @@
 # CorporateBaddie
 
 > **Agentic Decision Intelligence Platform — Evidence Over Eloquence**  
-> Making sense of corporate data through an interactive 3D decision core, Analytica-AI multi-agent reasoning, deterministic evidence verification, and executive-ready intelligence.
+> Turning complex corporate data into defensible strategic decisions through an interactive 3D decision core, Analytica-AI multi-agent reasoning, deterministic evidence verification, and executive intelligence reporting.
 
 ---
 
-## 🌟 Overview
+## Overview
 
-**CorporateBaddie** transforms raw, chaotic business data into defensible, executive-grade strategic decisions. Unlike traditional chat tools that fabricate narratives, CorporateBaddie pairs deterministic data analytics with an autonomous **multi-agent reasoning engine** (`Analytica-AI`), backed by an interactive Three.js 3D intelligence core.
+CorporateBaddie bridges the gap between raw business datasets and executive decision-making. Standard generative AI tools often produce plausible-sounding narratives without mathematical grounding or verifiable citations. CorporateBaddie takes the opposite approach: every recommendation, scenario, and risk score is strictly grounded in verified internal datasets, live market telemetry, and tamper-evident audit trails.
 
-Every insight, recommendation, and risk score is strictly grounded in verified internal datasets, verifiable market telemetry, and tamper-evident audit trails.
-
----
-
-## 🚀 Key Features
-
-### 1. 🌐 Immersive 3D Decision Core & Orbital Intelligence
-- **Interactive Three.js Sphere**: High-subdivision icosahedron wireframe with dynamic inner analytical layers, pulsing vertex markers, and cardinal structural beams.
-- **Orbital Intelligence Satellites**: 5 distinct orbiting intelligence nodes (Financial, Market, Operations, Risk, Compliance) moving in calibrated elliptical orbits.
-- **Cinematic Convergence & Drag Controls**: Smooth drag-to-rotate with fluid velocity inertia, hover focus states, and cinematic camera transitions into the workspace.
-
-### 2. 🤖 Analytica-AI Multi-Agent Reasoning Pipeline
-- **Python Agent Bridge (`server/agent_bridge.py`)**: Subprocess orchestration connecting the Node.js API to the Analytica-AI multi-agent reasoning framework.
-- **Autonomous Agent Roster**:
-  - **Planner Agent**: Decomposes complex executive business questions into targeted sub-investigations.
-  - **Coding Agent**: Generates and executes deterministic analytical code over local datasets.
-  - **DuckDuckGo Research Agent**: Scours live external web sources for market context and competitive signals.
-  - **Critic Agent**: Validates claims, stress-tests assumptions, and flags conflicting evidence.
-  - **Compiler Agent**: Synthesizes verified findings into executive summaries, risks, and actionable recommendations.
-
-### 3. 🛡️ Resilient Three-Provider LLM Fallback
-- **Multi-Provider Priority**: Seamless automatic failover between:
-  1. **xAI / Grok** (`grok-4.6` or `qwen/qwen3.8-27b`) with live web search integration
-  2. **Google Gemini** (`gemini-2.5-flash`) via `@google/genai`
-  3. **Z.ai** (`glm-5`) via standard OpenAI-compatible API
-- **Deterministic Independence**: If external providers fail or keys are absent, the system gracefully falls back to deterministic local statistical algorithms without dropping data.
-
-### 4. 📊 Executive Workspace & Live Pipeline Monitoring
-- **Real-Time Pipeline Status**: Live status tracking across every agent stage (`Profiling`, `Planning`, `Code Execution`, `Web Verification`, `Synthesis`).
-- **Interactive Q&A Assistant (`AskCorporateBaddie`)**: Direct natural-language dialogue grounded exclusively in the current workspace's verified investigation record.
-- **Dynamic KPI & Dataset Management**: Multi-format ingestion (CSV, XLSX, XLS), automatic schema profiling, candidate relationship detection, and dataset freshness tracking.
-
-### 5. 🔍 Deterministic Evidence Scoring & Audit Trails
-- **Decision Confidence Engine**: Evidence sufficiency calculation based on data coverage, sample size, anomaly density, and source credibility (never fabricated).
-- **Tamper-Evident Audit Trails**: SHA-256 dataset fingerprinting, tool execution traces, and audit logs.
-- **Executive PDF Export**: One-click generation of branded, publication-ready PDF executive briefs.
+The platform combines an interactive Three.js 3D intelligence core with an autonomous multi-agent reasoning pipeline (`Analytica-AI`). If external AI providers become unreachable or API keys are not supplied, CorporateBaddie falls back to deterministic local statistical algorithms so operations never halt.
 
 ---
 
-## 🏗️ Architecture
+## Key Capabilities
+
+### 1. Interactive 3D Decision Core & Orbital Intelligence
+- **Three.js Visual Engine**: Multi-layered icosahedron structure with analytical vertex markers, structural beams, and animated depth layers.
+- **Six Orbital Intelligence Nodes**: Visualizes the six continuous dimensions of strategic analysis: Data, Analysis, Market, Evidence, Risk, and Decision.
+- **Physics-Based Controls**: Fluid drag-to-rotate interaction with momentum damping, cursor parallax, and smooth camera convergence into the workspace.
+- **GPU Resilience**: Built-in recovery from WebGL context loss and automated resource disposal on unmount to eliminate memory leaks.
+
+### 2. Analytica-AI Multi-Agent Reasoning
+- **Subprocess Bridge (`server/agent_bridge.py`)**: Connects the Node.js API to the Python Analytica-AI reasoning framework.
+- **Specialized Agent Roster**:
+  - **Planner Agent**: Breaks complex business questions into quantitative sub-hypotheses.
+  - **Coding Agent**: Generates and runs deterministic analytical code directly against local JSONL tables.
+  - **Research Agent**: Collects live external benchmarks and market signals via DuckDuckGo.
+  - **Critic Agent**: Stress-tests assumptions, checks calculation bounds, and flags conflicting evidence.
+  - **Compiler Agent**: Assembles findings into executive summaries, risk breakdowns, and falsification boundaries.
+
+### 3. Resilient Multi-Provider LLM Fallback
+- **Tiered Failover Strategy**:
+  1. **xAI / Grok** (`grok-4.6`) with live web search capabilities
+  2. **Google Gemini** (`gemini-2.5-flash`) via the official `@google/genai` SDK
+  3. **Z.ai** (`glm-5`) via OpenAI-compatible API
+- **Deterministic Independence**: If external providers fail or credentials are omitted, the local engine computes exact metrics, anomaly bounds, and evidence summaries without dropping data.
+
+### 4. Decision Confidence Engine & Failure Modes
+- **Evidence Sufficiency Scoring**: Mathematically derives decision confidence from data coverage, sample size, anomaly density, and source verification. Never inflates scores artificially.
+- **Pre-Mortem Failure Analysis**: Evaluates strategic options against catastrophic failure profiles (such as burn rate spikes, customer churn cascades, and compliance risks) with concrete mitigation playbooks.
+
+### 5. Ingestion, Profiling & Auditability
+- **Multi-Format Ingestion**: Supports CSV, XLSX, and XLS file formats with automated schema inference, missing value detection, and SHA-256 fingerprinting.
+- **Candidate Relationship Detection**: Automatically identifies joinable keys and foreign relationships across workspace datasets.
+- **Executive Export**: Generates publication-ready PDF briefs, machine-readable JSON runs, and structured CSV audit logs.
+
+---
+
+## System Architecture
 
 ```mermaid
 flowchart TB
-    subgraph Frontend["Frontend Client (React 19 + Vite + Tailwind CSS)"]
+    subgraph Frontend["Frontend Client (React 19 + Vite 6 + Tailwind CSS 4)"]
         Intro["3D Intro Experience (Three.js)"]
-        Onboarding["Workspace Wizard"]
+        Wizard["Workspace Onboarding Wizard"]
         Workspace["Executive Workspace & KPIs"]
-        Investigate["Investigation Workbench"]
-        Ask["AskCorporateBaddie Q&A"]
+        Workbench["Investigation Workbench"]
+        AskCB["AskCorporateBaddie Grounded Q&A"]
     end
 
     subgraph Backend["Backend Server (Express + TypeScript :4000)"]
-        API["REST API Router (server/index.ts)"]
-        Store["Persistent Store (JSONL + corporatebaddie.json)"]
-        Ingest["Dataset Profiler & Ingestion Engine"]
-        LLM["LLM Fallback Manager (Grok / Gemini / Z.ai)"]
+        API["REST API Layer (server/index.ts)"]
+        Store["Persistent Store (JSONL Tables & Workspace Catalog)"]
+        Ingest["Dataset Profiler & Schema Inference"]
+        LLM["Multi-Provider Fallback (Grok / Gemini / Z.ai)"]
     end
 
-    subgraph MultiAgent["Multi-Agent Reasoning Bridge (Python 3.11)"]
+    subgraph Agents["Multi-Agent Reasoning Bridge (Python 3.11)"]
         Bridge["server/agent_bridge.py"]
         Planner["Planner Agent"]
         Coder["Coding Agent"]
@@ -76,33 +76,34 @@ flowchart TB
         Compiler["Compiler Agent"]
     end
 
-    Frontend <-->|"REST / Streaming JSON"| API
+    Frontend <-->|"REST API / Streaming JSON"| API
     API --> Store
     API --> Ingest
     API --> LLM
-    API <-->|"JSON Subprocess IPC"| Bridge
+    API <-->|"Subprocess IPC"| Bridge
     Bridge --> Planner --> Coder --> Search --> Critic --> Compiler
 ```
 
 ---
 
-## 💻 Tech Stack
+## Tech Stack
 
 - **Frontend**: React 19, TypeScript, Vite 6, Tailwind CSS 4, Motion (Framer Motion), Three.js, Lucide Icons, jsPDF
-- **Backend**: Node.js, Express, TypeScript, tsx, Multer, XLSX parsing
-- **Agent Intelligence**: Python 3.11, Analytica-AI, DuckDuckGo Search, Pandas/NumPy
-- **AI Models**: xAI Grok, Google Gemini 2.5 Flash, Z.ai GLM-5
+- **Backend**: Node.js, Express, TypeScript, tsx, Multer, XLSX
+- **Agent Intelligence**: Python 3.11, Analytica-AI, DuckDuckGo Search, Pandas, NumPy
+- **Supported AI Models**: xAI Grok, Google Gemini 2.5 Flash, Z.ai GLM-5
+- **Testing & Tooling**: tsx, native Node assertion suites, ESLint, TypeScript compiler
 
 ---
 
-## ⚡ Quick Start
+## Quick Start
 
 ### Prerequisites
 - **Node.js**: v20.0.0 or higher
 - **npm**: v10.0.0 or higher
-- **Python**: v3.11 or higher (optional, for full Analytica-AI multi-agent bridge)
+- **Python**: v3.11 or higher (optional, required for the Python multi-agent bridge)
 
-### 1. Clone & Install
+### 1. Installation
 
 ```bash
 git clone https://github.com/trushendarreddy-cell/Corporate-Baddie.git
@@ -110,9 +111,9 @@ cd Corporate-Baddie
 npm install
 ```
 
-### 2. Configure Environment
+### 2. Environment Setup
 
-Copy the example environment file:
+Copy the sample environment file:
 
 ```bash
 # Windows PowerShell
@@ -122,7 +123,7 @@ Copy-Item .env.example .env
 cp .env.example .env
 ```
 
-Configure your `.env` file with your desired LLM providers (deterministic mode works even without keys):
+Configure your preferred API keys in `.env` (the platform functions in deterministic mode even without external keys):
 
 ```env
 API_PORT=4000
@@ -144,15 +145,15 @@ ZAI_MODEL=glm-5
 ZAI_BASE_URL=https://api.z.ai/api/paas/v4
 ```
 
-### 3. Launch Development Servers
+### 3. Running Locally
 
-You can run both frontend and backend concurrently:
+To run both backend and frontend concurrently:
 
 ```bash
 npm run dev:full
 ```
 
-Or run them individually in separate terminals:
+Or run them in separate terminals:
 
 ```bash
 # Terminal 1: Backend API (:4000)
@@ -166,83 +167,90 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ---
 
-## 📡 REST API Reference
+## REST API Reference
 
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
-| `GET` | `/api/health` | Health status, storage availability, and configured LLM providers |
-| `GET` | `/api/ready` | Readiness probe for container or process managers |
-| `GET` | `/api/workspaces` | List all existing business workspaces |
-| `POST` | `/api/workspaces` | Create a new workspace with industry, currency, and KPIs |
-| `GET` | `/api/workspaces/:workspaceId` | Retrieve workspace details and associated datasets |
-| `PATCH` | `/api/workspaces/:workspaceId` | Update workspace metadata and objectives |
-| `GET` | `/api/workspaces/:workspaceId/datasets` | List all ingested datasets for a workspace |
-| `POST` | `/api/workspaces/:workspaceId/datasets/upload` | Upload and ingest a CSV, XLSX, or XLS dataset |
-| `GET` | `/api/workspaces/:workspaceId/relationships` | Detect candidate cross-dataset relationships |
-| `GET` | `/api/datasets/:datasetId` | Fetch dataset profile, columns, and sample rows |
-| `DELETE` | `/api/datasets/:datasetId` | Remove a dataset and its persisted JSONL records |
-| `POST` | `/api/investigations` | Execute an investigation run (triggers Analytica-AI & LLMs) |
-| `GET` | `/api/investigations?workspaceId=...` | List historical investigation runs for a workspace |
-| `GET` | `/api/investigations/:runId` | Get full investigation output, findings, and metrics |
-| `GET` | `/api/investigations/:runId/evidence` | Inspect claims, anomalies, trends, and citations |
+| `GET` | `/api/health` | Service health status, storage availability, and configured LLM providers |
+| `GET` | `/api/ready` | Readiness probe for container orchestration and process managers |
+| `GET` | `/api/workspaces` | List all registered workspaces |
+| `POST` | `/api/workspaces` | Create a workspace with industry, currency, objectives, and KPIs |
+| `GET` | `/api/workspaces/:workspaceId` | Retrieve workspace metadata and attached dataset references |
+| `PATCH` | `/api/workspaces/:workspaceId` | Update workspace parameters or strategic objectives |
+| `GET` | `/api/workspaces/:workspaceId/datasets` | List all ingested datasets for a given workspace |
+| `POST` | `/api/workspaces/:workspaceId/datasets/upload` | Upload and profile CSV, XLSX, or XLS dataset files |
+| `GET` | `/api/workspaces/:workspaceId/relationships` | Analyze candidate joins and cross-dataset relationships |
+| `GET` | `/api/datasets/:datasetId` | Retrieve detailed column statistics, data types, and preview rows |
+| `DELETE` | `/api/datasets/:datasetId` | Delete dataset metadata and clean up stored JSONL tables |
+| `POST` | `/api/investigations` | Run a new investigation (triggers deterministic analytics, agents, and LLMs) |
+| `GET` | `/api/investigations?workspaceId=...` | List past investigation runs for a workspace |
+| `GET` | `/api/investigations/:runId` | Retrieve full investigation output, findings, metrics, and confidence |
+| `GET` | `/api/investigations/:runId/evidence` | Inspect verified claims, detected anomalies, trends, and citations |
 | `GET` | `/api/investigations/:runId/audit` | View audit trail, tool execution traces, and telemetry |
-| `POST` | `/api/ask` | Ask grounded follow-up questions to CorporateBaddie |
+| `POST` | `/api/ask` | Ask grounded follow-up questions restricted to active evidence |
 
 ---
 
-## 📂 Project Structure
+## Repository Structure
 
 ```text
 Corporate-Baddie/
-├── .env.example                # Template for environment configuration
-├── server/                     # Backend API & data persistence
+├── .env.example                # Sample environment template
+├── server/                     # Backend API & storage services
 │   ├── agent_bridge.py         # Analytica-AI Python multi-agent bridge
-│   ├── index.ts                # Express server & API endpoints
-│   ├── ingest.ts               # File ingestion & schema profiler
+│   ├── index.ts                # Express server and route handlers
+│   ├── ingest.ts               # File parser, profiler, and SHA-256 hasher
 │   ├── llm.ts                  # Multi-provider LLM fallback engine
 │   ├── store.ts                # JSONL file store & workspace repository
-│   └── data/                   # Persisted data directory
-│       ├── corporatebaddie.json# Workspaces & investigation metadata
-│       └── tables/             # Ingested dataset JSONL tables
-├── src/                        # Frontend React application
-│   ├── App.tsx                 # Root application shell & view router
-│   ├── main.tsx                # React mount entrypoint
-│   ├── components/             # UI components & views
-│   │   ├── IntroExperience.tsx # Interactive Three.js 3D intro
+│   └── data/                   # Local persistence directory
+│       ├── corporatebaddie.json# Workspaces and investigation catalog
+│       └── tables/             # Stored dataset JSONL tables
+├── src/                        # Frontend application source
+│   ├── App.tsx                 # Root layout and application view router
+│   ├── main.tsx                # Entry point and intro lifecycle controller
+│   ├── components/             # React views and interface modules
+│   │   ├── DecisionCore3D.tsx  # Interactive 3D intelligence core
+│   │   ├── IntroExperience.tsx # Cinematic Three.js intro and onboarding
 │   │   ├── DataWorkspace.tsx   # Executive analytics dashboard
 │   │   ├── AskCorporateBaddie.tsx # Grounded AI Q&A panel
-│   │   ├── WorkspaceCreationPage.tsx # Onboarding wizard
-│   │   ├── ContextUploadModals.tsx   # Dataset & context file upload
-│   │   └── ui/                 # Reusable UI primitives & modules
-│   │       ├── CommandHeader.tsx     # Navigation & provider status
+│   │   ├── WorkspaceCreationPage.tsx # Guided workspace onboarding wizard
+│   │   ├── ContextUploadModals.tsx   # File and context ingestion modals
+│   │   └── ui/                 # Reusable UI primitives and modules
+│   │       ├── CommandHeader.tsx     # Navigation and system status header
 │   │       └── InvestigateModule.tsx # Investigation workbench
-│   ├── services/               # Frontend API client
-│   ├── state/                  # State management & deterministic engines
-│   │   ├── confidenceEngine.ts # Evidence sufficiency scorer
-│   │   └── executionEngine.ts  # Multi-agent execution coordinator
-│   └── utils/                  # PDF export and formatting utilities
-├── scripts/                    # Development & verification scripts
-├── package.json                # Dependencies and run scripts
-└── vite.config.ts              # Vite bundler & API proxy configuration
+│   ├── services/               # API client with isomorphic runtime handling
+│   ├── state/                  # State management & analytical logic
+│   │   ├── confidenceEngine.ts # Evidence sufficiency scoring engine
+│   │   ├── failureEngine.ts    # Pre-mortem risk & failure profile engine
+│   │   └── executionEngine.ts  # Multi-stage investigation coordinator
+│   └── utils/                  # PDF generation, formatting, and audit export
+├── scripts/                    # Test suites and development utilities
+│   ├── test-execution-engine.ts# Pipeline execution and fallback tests
+│   ├── test-confidence-engine.ts# Evidence scoring and penalty tests
+│   └── test-failure-engine.ts  # Pre-mortem profile guardrail tests
+├── package.json                # Project dependencies and script declarations
+└── vite.config.ts              # Vite configuration and Rollup chunk splitting
 ```
 
 ---
 
-## 🛠️ Verification & Build Commands
+## Testing & Quality Assurance
+
+CorporateBaddie includes automated test suites covering pipeline execution, confidence computation, and risk guardrails:
 
 ```bash
-# Type check and zero-error validation
+# Type check the entire codebase
 npm run lint
 
-# Run all automated test suites
+# Run all test suites
 npm run test:all
 
 # Run individual test suites
-npm test                      # Pipeline execution & deterministic data engine
-npm run test:confidence       # Evidence sufficiency & degradation weighting
-npm run test:failure          # Catastrophic failure profiles & guardrails
+npm test                      # Pipeline execution and deterministic data engine
+npm run test:confidence       # Evidence sufficiency and degradation weighting
+npm run test:failure          # Failure profiles and pre-mortem guardrails
 
-# Production build with optimized Rollup chunk splitting
+# Production build and bundle chunk validation
 npm run build
 
 # Preview production build locally
@@ -251,7 +259,7 @@ npm run preview
 
 ---
 
-## 🛡️ Principles & Governance
+## Governance & Operating Principles
 
 1. **Evidence Over Eloquence**: No recommendation is produced without verifiable quantitative backing.
 2. **Deterministic Independence**: If AI models are unavailable, deterministic math and logic still deliver complete data profiles.
@@ -261,7 +269,7 @@ npm run preview
 
 ---
 
-## 👤 Author
+## Author
 
 **T. Rushendar Reddy**  
 AI/ML Engineer & Full-Stack Architect  
