@@ -47,16 +47,28 @@ export const CommandHeader: React.FC<CommandHeaderProps> = ({
   onNewInvestigation,
   onReplayIntro,
 }) => {
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        onAsk();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onAsk]);
+
   return (
-    <header className="sticky top-0 z-40 w-full border-b cb-hairline bg-[#191b1a]/95 backdrop-blur-xl">
+    <header className="sticky top-0 z-40 w-full border-b cb-hairline bg-[#191b1a]/95 backdrop-blur-xl" role="banner">
       <div className="max-w-[1380px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="min-h-[52px] py-2 flex flex-wrap items-center justify-between gap-2 sm:gap-4">
           {/* Brand */}
           <button
             type="button"
             onClick={() => onNavigate('investigate')}
-            className="flex items-center gap-2.5 group shrink-0 cb-btn"
+            className="flex items-center gap-2.5 group shrink-0 cb-btn focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8eb397]/80 focus-visible:ring-offset-2 focus-visible:ring-offset-[#191b1a] rounded-lg"
             title="Start an investigation"
+            aria-label="CorporateBaddie Decision Intelligence - navigate to investigation"
           >
             <BrainCircuit className="w-[18px] h-[18px] text-[#8eb397]" />
             <span className="flex items-baseline gap-2 min-w-0">
@@ -75,11 +87,12 @@ export const CommandHeader: React.FC<CommandHeaderProps> = ({
                   key={item.id}
                   type="button"
                   onClick={() => onNavigate(item.id)}
-                  className={`cb-nav-underline whitespace-nowrap pb-0.5 text-[11.5px] xl:text-[12.5px] font-medium transition-colors ${
+                  className={`cb-nav-underline whitespace-nowrap pb-0.5 text-[11.5px] xl:text-[12.5px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8eb397]/80 rounded ${
                     activeTab === item.id ? 'text-slate-100' : 'text-slate-500 hover:text-slate-300'
                   }`}
                   data-active={activeTab === item.id}
                   title={item.meaning}
+                  aria-label={`${item.label} module - ${item.meaning}`}
                   aria-current={activeTab === item.id ? 'page' : undefined}
                 >
                   {item.label}
@@ -93,67 +106,75 @@ export const CommandHeader: React.FC<CommandHeaderProps> = ({
             <button
               type="button"
               onClick={() => onNavigate('investigate')}
-              className="hidden lg:flex items-center gap-1.5 text-[11.5px] text-slate-500 hover:text-slate-300 transition-colors cb-btn"
+              className="hidden lg:flex items-center gap-1.5 text-[11.5px] text-slate-500 hover:text-slate-300 transition-colors cb-btn focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#8eb397] rounded"
               title={`Data quality ${dataQuality}% · ${activeSources}/${totalSources} sources live`}
+              aria-label={`System status: data quality ${dataQuality}%, ${activeSources} of ${totalSources} data sources live`}
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-[#8eb397]" />
+              <span className="w-1.5 h-1.5 rounded-full bg-[#8eb397]" aria-hidden="true" />
               <span className="cb-metric text-[11.5px] text-slate-400">{dataQuality}%</span>
-              <span className="text-slate-600">·</span>
+              <span className="text-slate-600" aria-hidden="true">·</span>
               <span className="cb-metric text-[11.5px] text-slate-400">{activeSources}/{totalSources}</span>
             </button>
 
-            <span className="hidden xl:inline font-mono text-[11.5px] text-slate-500" title="Active run">
+            <span className="hidden xl:inline font-mono text-[11.5px] text-slate-500" title="Active run" aria-label={`Active run ID: ${runId}`}>
               {runId}
             </span>
 
             <button
               type="button"
               onClick={onAsk}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[12px] font-medium text-slate-300 hover:text-white hover:bg-white/[0.05] cb-btn"
-              title="Ask CorporateBaddie"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[12px] font-medium text-slate-300 hover:text-white hover:bg-white/[0.05] cb-btn focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8eb397]/80"
+              title="Ask CorporateBaddie (Ctrl+K)"
+              aria-label="Ask CorporateBaddie AI assistant (Shortcut: Ctrl+K)"
+              aria-keyshortcuts="Control+k Meta+k"
             >
-              <Sparkles className="w-3.5 h-3.5 text-[#8eb397]" />
+              <Sparkles className="w-3.5 h-3.5 text-[#8eb397]" aria-hidden="true" />
               <span className="hidden xl:inline">Ask</span>
+              <kbd className="hidden xl:inline-block ml-1 px-1.5 py-0.2 text-[9px] font-mono text-slate-400 bg-slate-800/80 rounded border border-slate-700">⌘K</kbd>
             </button>
 
             <button
               type="button"
               onClick={onExport}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[12px] font-medium text-slate-300 hover:text-white hover:bg-white/[0.05] cb-btn"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[12px] font-medium text-slate-300 hover:text-white hover:bg-white/[0.05] cb-btn focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8eb397]/80"
               title="Export executive brief (PDF)"
+              aria-label="Export executive brief as PDF document"
             >
-              <Download className="w-3.5 h-3.5 text-slate-400" />
+              <Download className="w-3.5 h-3.5 text-slate-400" aria-hidden="true" />
               <span className="hidden xl:inline">Export</span>
             </button>
 
-            <span className="w-px h-4 bg-slate-800 hidden sm:block" />
+            <span className="w-px h-4 bg-slate-800 hidden sm:block" aria-hidden="true" />
 
             <button
               type="button"
               onClick={onOpenHowItWorks}
-              className="p-1.5 text-slate-600 hover:text-slate-300 rounded-md hover:bg-white/[0.04] cb-btn"
+              className="p-1.5 text-slate-600 hover:text-slate-300 rounded-md hover:bg-white/[0.04] cb-btn focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8eb397]/80"
               title="How it works"
+              aria-label="View how CorporateBaddie works documentation"
             >
-              <HelpCircle className="w-4 h-4" />
+              <HelpCircle className="w-4 h-4" aria-hidden="true" />
             </button>
 
             <button
               type="button"
               onClick={onOpenSettings}
-              className="hidden sm:block p-1.5 text-slate-600 hover:text-slate-300 rounded-md hover:bg-white/[0.04] cb-btn"
+              className="hidden sm:block p-1.5 text-slate-600 hover:text-slate-300 rounded-md hover:bg-white/[0.04] cb-btn focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8eb397]/80"
               title="Workflow settings"
+              aria-label="Open pipeline and architecture workflow settings"
             >
-              <Settings2 className="w-4 h-4" />
+              <Settings2 className="w-4 h-4" aria-hidden="true" />
             </button>
 
             {onReplayIntro && (
               <button
                 type="button"
                 onClick={onReplayIntro}
-                className="flex items-center gap-1.5 px-2.5 py-1 text-slate-400 hover:text-emerald-300 rounded-md hover:bg-white/[0.04] border border-white/10 text-xs transition cb-btn"
+                className="flex items-center gap-1.5 px-2.5 py-1 text-slate-400 hover:text-emerald-300 rounded-md hover:bg-white/[0.04] border border-white/10 text-xs transition cb-btn focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8eb397]/80"
                 title="View 3D Intro Experience"
+                aria-label="View 3D intro presentation experience"
               >
-                <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                <Sparkles className="w-3.5 h-3.5 text-emerald-400" aria-hidden="true" />
                 <span className="hidden sm:inline">Intro</span>
               </button>
             )}
@@ -161,8 +182,9 @@ export const CommandHeader: React.FC<CommandHeaderProps> = ({
             <button
               type="button"
               onClick={onNewInvestigation}
-              className="cb-primary-action px-3 py-1.5 rounded-md text-[12px] font-semibold cb-btn"
+              className="cb-primary-action px-3 py-1.5 rounded-md text-[12px] font-semibold cb-btn focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8eb397]/80"
               title="New investigation"
+              aria-label="Start a new investigation"
             >
               New
             </button>

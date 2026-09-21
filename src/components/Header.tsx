@@ -34,10 +34,11 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="flex items-center gap-3">
           <button 
             onClick={onReset}
-            className="flex items-center gap-2.5 text-left group transition-all"
+            className="flex items-center gap-2.5 text-left group transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 rounded-lg"
             title="Reset to home"
+            aria-label="Reset application to home view"
           >
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500/20 via-orange-500/20 to-rose-500/20 border border-amber-500/30 flex items-center justify-center group-hover:border-amber-400/60 transition-colors shadow-inner">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500/20 via-orange-500/20 to-rose-500/20 border border-amber-500/30 flex items-center justify-center group-hover:border-amber-400/60 transition-colors shadow-inner" aria-hidden="true">
               <BrainCircuit className="w-5 h-5 text-amber-400 group-hover:scale-110 transition-transform duration-200" />
             </div>
             <div>
@@ -57,25 +58,27 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* Center / Navigation items */}
-        <nav className="hidden md:flex items-center gap-1 text-xs font-medium text-slate-300">
+        <nav className="hidden md:flex items-center gap-1 text-xs font-medium text-slate-300" aria-label="Main Navigation">
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900/60 border border-slate-800 text-slate-300">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" aria-hidden="true" />
             <span>Decision support</span>
           </div>
 
           <button
             onClick={onOpenHowItWorks}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-slate-800/60 hover:text-white transition-colors text-slate-400"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-slate-800/60 hover:text-white transition-colors text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+            aria-label="Open How It Works guide"
           >
-            <HelpCircle className="w-3.5 h-3.5" />
+            <HelpCircle className="w-3.5 h-3.5" aria-hidden="true" />
             <span>How it works</span>
           </button>
 
           <button
             onClick={onOpenSettings}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-slate-800/60 hover:text-white transition-colors text-slate-400"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-slate-800/60 hover:text-white transition-colors text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+            aria-label="Open architecture workflow settings"
           >
-            <Settings2 className="w-3.5 h-3.5" />
+            <Settings2 className="w-3.5 h-3.5" aria-hidden="true" />
             <span>Workflow</span>
           </button>
         </nav>
@@ -85,10 +88,11 @@ export const Header: React.FC<HeaderProps> = ({
           {onOpenVersionHistory && (
             <button
               onClick={onOpenVersionHistory}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 rounded-lg transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
               title="View session investigation version history"
+              aria-label={`View version history, ${versionCount} versions available`}
             >
-              <RotateCcw className="w-3.5 h-3.5 rotate-45 text-amber-400" />
+              <RotateCcw className="w-3.5 h-3.5 rotate-45 text-amber-400" aria-hidden="true" />
               <span>History ({versionCount})</span>
             </button>
           )}
@@ -96,27 +100,30 @@ export const Header: React.FC<HeaderProps> = ({
           {hasAnalyzed && !isAnalyzing && (
             <button
               onClick={onReset}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-300 bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 rounded-lg transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-300 bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+              aria-label="Start new question analysis"
             >
-              <RotateCcw className="w-3.5 h-3.5 text-slate-400" />
+              <RotateCcw className="w-3.5 h-3.5 text-slate-400" aria-hidden="true" />
               <span className="hidden sm:inline">New Question</span>
             </button>
           )}
 
           <button
             onClick={onOpenHowItWorks}
-            className="md:hidden p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800"
+            className="md:hidden p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
             title="How it works"
+            aria-label="Open How It Works guide"
           >
-            <HelpCircle className="w-4 h-4" />
+            <HelpCircle className="w-4 h-4" aria-hidden="true" />
           </button>
 
           <button
             onClick={onOpenSettings}
-            className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
+            className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
             title="Pipeline & Architecture Settings"
+            aria-label="Pipeline and architecture settings"
           >
-            <Settings2 className="w-4 h-4" />
+            <Settings2 className="w-4 h-4" aria-hidden="true" />
           </button>
         </div>
       </div>
