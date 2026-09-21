@@ -1,328 +1,80 @@
-# CorporateBaddie Intro Experience - User Guide
+# CorporateBaddie Onboarding & 3D Experience: User Guide
 
-## Quick Start
-
-The intro experience automatically shows when you first visit CorporateBaddie. It provides an interactive visualization of the decision intelligence system.
-
-## What You See
-
-### The Central Sphere
-
-The large sphere at the center represents the CorporateBaddie decision engine. It contains:
-- Internal data structure (vertical bars)
-- Translucent analytical layers
-- Wireframe geometry
-- Slow ambient rotation
-
-This is NOT decorative - it represents the multi-layered analytical system that processes your business questions.
-
-### Five Intelligence Nodes
-
-Five nodes orbit the central sphere, each representing a key dimension of decision intelligence:
-
-1. **DATA** (neutral gray)
-   - Your business data
-   - Internal records and analytics
-   
-2. **MARKET** (neutral gray)
-   - What's happening outside
-   - External market conditions
-   
-3. **EVIDENCE** (sage green)
-   - What supports the decision
-   - Claims, calculations, sources
-   
-4. **RISK** (muted terracotta)
-   - What could go wrong
-   - Uncertainty and downside
-   
-5. **DECISION** (sage green)
-   - What we should do
-   - Recommended action
-
-### Orbital Rings
-
-Three thin rings show the different orbital paths of the intelligence streams. They represent the continuous flow of information through the system.
-
-## How to Interact
-
-### Explore Nodes
-
-**Hover** over any orbiting node:
-- Node scales up and brightens
-- Connection line becomes more visible
-- Detail panel appears on the right (desktop)
-- Cursor changes to pointer
-
-**Click** on any node:
-- Selects the node
-- Shows full description
-- Node stays highlighted
-- Click elsewhere or press Escape to deselect
-
-### Move the View
-
-**Mouse Movement**:
-- The entire scene responds to your cursor position
-- Creates subtle parallax effect
-- Gives depth perception
-
-**Touch (Mobile)**:
-- Touch and drag to rotate the view
-- Pinch to zoom (if enabled)
-- Tap nodes to select them
-
-### Enter the Application
-
-When you're ready, click the large button:
-
-**"ENTER DECISION INTELLIGENCE ↗"**
-
-This triggers a cinematic transition:
-1. Nodes accelerate toward the sphere
-2. Orbital rings tighten and fade
-3. Sphere compresses then expands
-4. Scene fades to the main workspace
-
-Duration: ~1.2 seconds
-
-### Skip the Intro
-
-If you want to bypass the intro entirely:
-
-Click **"SKIP INTRO →"** in the top-right corner
-
-This provides a quick fade (300ms) directly to the main application.
-
-## Layout Guide
-
-### Desktop Layout
-
-```
-┌─────────────────────────────────────────────────────────┐
-│ ● CORPORATEBADDIE | INTRO    DECISION INTEL / 01  SKIP→ │
-│                                                           │
-│  MAKING SENSE OF CORPORATE NONSENSE.                     │
-│                                                           │
-│  Turn business questions into                     [NODE  │
-│  evidence-backed decisions.                       DETAIL]│
-│                                          [SPHERE]         │
-│  It investigates your data...                            │
-│                                                           │
-│  EXAMPLE QUESTION                                        │
-│  "Why are our margins falling?" →                        │
-│                                                           │
-│  [ENTER DECISION INTELLIGENCE ↗]                         │
-│                                                           │
-│  INTELLIGENCE SYSTEM   01 DATA   02 ANALYSIS...          │
-└─────────────────────────────────────────────────────────┘
-```
-
-### Mobile Layout
-
-```
-┌──────────────────────┐
-│ ● CORPORATEBADDIE    │
-│           SKIP INTRO→│
-│                      │
-│ MAKING SENSE OF...   │
-│                      │
-│ Turn business        │
-│ questions into       │
-│ evidence-backed      │
-│ decisions.           │
-│                      │
-│     [SPHERE]         │
-│                      │
-│ EXAMPLE QUESTION     │
-│ "Why are our..."     │
-│                      │
-│ [ENTER DECISION...]  │
-│                      │
-│ INTELLIGENCE SYSTEM  │
-└──────────────────────┘
-```
-
-## Keyboard Controls
-
-- **Tab**: Navigate between interactive elements
-- **Enter**: Activate focused button
-- **Escape**: Clear node selection
-- **Space**: Activate focused button
-
-## Accessibility Features
-
-### Reduced Motion
-
-If you have motion sensitivity or have enabled "Reduce Motion" in your system preferences, the intro automatically:
-
-- Disables orbital animation
-- Disables sphere rotation
-- Uses a simple fade transition instead of convergence
-- Keeps all interactive features working
-
-### Screen Readers
-
-The intro provides:
-- Descriptive ARIA labels
-- Semantic HTML structure
-- Keyboard-accessible controls
-- Clear focus indicators
-
-### Keyboard-Only Navigation
-
-You can navigate the entire intro using only keyboard:
-1. Tab to "SKIP INTRO" or "ENTER DECISION INTELLIGENCE"
-2. Press Enter to activate
-3. Tab to example question (if implemented as button)
-
-## Example Question
-
-The bordered field showing:
-
-**"Why are our margins falling?" →**
-
-This is an example to illustrate the type of question you can ask CorporateBaddie. It's NOT actual data from your company.
-
-In the main application, you'll be able to:
-- Enter your own questions
-- Upload your own data
-- Get evidence-backed recommendations
-
-## Bottom Intelligence System
-
-The bottom bar shows the six phases of investigation:
-
-1. **DATA** - Gathering business information
-2. **ANALYSIS** - Understanding the numbers
-3. **MARKET** - External research
-4. **EVIDENCE** - Building claims
-5. **RISK** - Assessing uncertainty
-6. **DECISION** - Forming recommendation
-
-This gives you a preview of what happens when you run an investigation.
-
-## Tagline
-
-**"EVIDENCE OVER ELOQUENCE."**
-
-This appears in the bottom-right and captures the CorporateBaddie philosophy: decisions should be based on evidence, not just persuasive arguments.
-
-## Replay the Intro
-
-If you want to see the intro again after entering the application:
-
-**Method 1: Browser DevTools**
-1. Open DevTools (F12)
-2. Go to Console
-3. Type: `sessionStorage.removeItem('corporatebaddie:intro-completed')`
-4. Press Enter
-5. Refresh the page
-
-**Method 2: Clear Browser Data**
-1. Clear site data for localhost:3000
-2. Refresh the page
-
-## Technical Notes
-
-### System Requirements
-
-- **Browser**: Modern browser with WebGL support
-  - Chrome 90+
-  - Firefox 88+
-  - Safari 14+
-  - Edge 90+
-
-- **Hardware**: 
-  - Dedicated GPU recommended
-  - 4GB RAM minimum
-  - Modern CPU (2015+)
-
-### Performance
-
-The intro is optimized for:
-- 60fps on modern hardware
-- 30fps on older devices
-- Automatic quality reduction on mobile
-- Pauses when tab is inactive
-
-### Mobile Devices
-
-Works on:
-- iPhone (iOS 14+)
-- iPad (iOS 14+)
-- Android phones (Chrome 90+)
-- Android tablets (Chrome 90+)
-
-May have reduced visual quality on older devices to maintain smooth performance.
-
-## Troubleshooting
-
-### Intro Doesn't Load
-
-**Check:**
-- WebGL is enabled in browser
-- JavaScript is enabled
-- Browser is up to date
-- No ad blockers interfering
-
-### Poor Performance
-
-**Try:**
-- Close other browser tabs
-- Close other applications
-- Update graphics drivers
-- Use a different browser
-
-### Nodes Not Responding
-
-**Check:**
-- Mouse/touch events are working
-- No browser extensions blocking
-- Canvas is fully loaded (wait 2-3 seconds)
-
-### Animation Stutters
-
-**Common causes:**
-- Other tabs using resources
-- Background applications
-- Older hardware
-- Enable reduced motion (system preferences)
-
-## What Happens Next
-
-After clicking "ENTER DECISION INTELLIGENCE", you'll arrive at the main CorporateBaddie workspace:
-
-- **Investigate Module**: Ask business questions
-- **Data Sources**: Connect your business data
-- **Evidence Engine**: See how conclusions are reached
-- **Risk Assessment**: Understand uncertainty
-- **Decision Room**: Compare strategic options
-
-The intro gives you a visual preview of this analytical system. Each orbiting node corresponds to a workspace module you can explore.
-
-## Design Philosophy
-
-The intro experience is designed to communicate:
-
-1. **Analytical Rigor**: Not flashy, but engineered
-2. **Multi-dimensional**: Evidence comes from many streams
-3. **Interconnected**: Data, market, evidence, risk, decision all relate
-4. **Continuous**: The orbital motion represents ongoing intelligence gathering
-5. **Elegant**: Sophisticated without being overwhelming
-
-This is NOT a typical AI dashboard. It's a decision intelligence system that shows you WHY recommendations can be trusted.
-
-## Questions?
-
-Once you enter the main application, you can:
-- Click the **Help** icon in the header
-- Read the "How It Works" documentation
-- Explore the Settings panel
-- Start with the example questions
+Welcome to **CorporateBaddie**. This guide explains how to navigate the 3D onboarding experience, understand the six dimensions of decision intelligence, and transition seamlessly into your executive workspace.
 
 ---
 
-**Ready to get started?**
+## 1. What You Are Seeing
 
-Click **"ENTER DECISION INTELLIGENCE ↗"** to begin.
+When you first open CorporateBaddie, you are greeted by an interactive visualization of the platform's decision engine:
+
+- **Central Decision Core**: A multi-layered geodesic sphere representing the analytical engine. The vertex colors transition from sage green at the top (verified decisions) through sky blue (objective data calculations) to terracotta at the base (risk and failure boundaries).
+- **Six Orbiting Satellites**: Each satellite node represents a mandatory stage in formulating evidence-backed corporate strategy.
+- **Orbital Tracks**: The elliptical rings illustrate continuous, independent data streams feeding into the decision core.
+
+---
+
+## 2. The Six Intelligence Nodes
+
+Rather than producing ungrounded narrative summaries, CorporateBaddie processes corporate questions through six rigorous stages:
+
+1. **DATA**: Your internal business records, transactions, and uploaded datasets (CSV, XLSX, XLS). This is the factual bedrock of every investigation.
+2. **ANALYSIS**: Deterministic statistical operations—mean variances, distribution skews, baseline anomalies, and seasonal trends.
+3. **MARKET**: Real-time external intelligence gathered from web research connectors, providing macro trends, competitor signals, and industry benchmarks.
+4. **EVIDENCE**: Quantitative claims backed by strict mathematical verification and source citations.
+5. **RISK**: Pre-mortem failure analysis, downside sensitivity tests, and regulatory compliance constraints.
+6. **DECISION**: Defensible executive recommendations complete with trade-offs, resource allocations, and falsification boundaries.
+
+---
+
+## 3. How to Interact
+
+### Mouse & Trackpad
+- **Rotate the Core**: Click and drag anywhere in the 3D viewport to inspect the sphere and orbital rings from any angle. When released, rotation continues with natural momentum.
+- **Inspect Nodes**: Hover your cursor over any orbiting satellite node to highlight its path, enlarge its badge, and open its detailed investigative scope card.
+- **Lock Selection**: Click a node to keep its summary open. Click anywhere outside or press `Escape` to dismiss.
+
+### Touchscreens (Mobile & Tablet)
+- **Swipe**: Drag with one finger to rotate the 3D core.
+- **Tap**: Tap any node badge to display its information card below the canvas.
+
+### Keyboard Shortcuts & Accessibility
+- **Tab**: Cycles focus through interactive elements (`Skip Intro`, example prompt, node badges, and `Enter Decision Intelligence`).
+- **Enter / Space**: Activates the currently focused button or node.
+- **Escape**: Clears any active node selection card.
+- **Reduced Motion**: If your operating system has *Reduce Motion* enabled, all continuous spinning and orbital rotations pause automatically, and transitions use a gentle fade.
+
+---
+
+## 4. Entering the Workspace
+
+When you are ready to explore your datasets and launch strategic investigations:
+
+- **"ENTER DECISION INTELLIGENCE"**: Launches a cinematic 1.2-second convergence sequence where the six orbital streams consolidate into the decision core before opening your workspace.
+- **"SKIP INTRO"**: Immediately opens the executive dashboard with a fast 300ms transition.
+
+Your completion status is remembered in your browser session, so you will proceed directly to your workspace on future visits.
+
+---
+
+## 5. What Happens Next
+
+Inside the main CorporateBaddie workspace, you can:
+- **Create Workspaces**: Organize investigations by company, business unit, or strategic initiative.
+- **Upload Datasets**: Ingest operational tables with automated schema profiling and SHA-256 fingerprinting.
+- **Launch Investigations**: Pose complex strategic questions and watch the multi-agent pipeline decompose, analyze, and synthesize evidence.
+- **Consult AskCorporateBaddie**: Ask follow-up questions strictly confined to verified findings.
+- **Export Executive Briefs**: Download publication-ready PDFs or structured CSV/JSON audit logs for board presentations and governance records.
+
+---
+
+## 6. How to Replay the Intro
+
+If you want to view the 3D onboarding experience again:
+1. Open your browser's Developer Tools (`F12` or `Cmd+Option+I`).
+2. Navigate to the **Console** tab.
+3. Execute:
+   ```javascript
+   sessionStorage.removeItem('corporatebaddie:intro-completed');
+   ```
+4. Refresh the page.
