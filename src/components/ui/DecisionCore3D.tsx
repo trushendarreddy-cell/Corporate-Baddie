@@ -86,6 +86,7 @@ export const DecisionCore3D: React.FC<DecisionCore3DProps> = ({
   const [displayedConfidence, setDisplayedConfidence] = useState(confidence);
   const [labelPos, setLabelPos] = useState<Record<string, { x: number; y: number }>>({});
   const [stageSize, setStageSize] = useState({ width: 480, height: 480 });
+  const [webGlError, setWebGlError] = useState(false);
 
   const nodes: NodeSpec[] = useMemo(
     () => [
@@ -128,6 +129,10 @@ export const DecisionCore3D: React.FC<DecisionCore3DProps> = ({
   }, [confidence, scenarioOverride, state]);
 
   useEffect(() => {
+    hoveredRef.current = hovered;
+  }, [hovered]);
+
+  useEffect(() => {
     focusedRef.current = focused;
   }, [focused]);
 
@@ -158,7 +163,20 @@ export const DecisionCore3D: React.FC<DecisionCore3DProps> = ({
     const width = mount.clientWidth;
     const height = mount.clientHeight;
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'low-power' });
+    let renderer: THREE.WebGLRenderer;
+    try {
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'low-power' });
+    } catch {
+      setWebGlError(true);
+      return;
+    }
+
+    const onContextLost = (e: Event) => {
+      e.preventDefault();
+      cancelAnimationFrame(frameRef.current);
+    };
+    renderer.domElement.addEventListener('webglcontextlost', onContextLost);
+
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(width, height);
     renderer.setClearColor(0x000000, 0);
@@ -523,6 +541,7 @@ export const DecisionCore3D: React.FC<DecisionCore3DProps> = ({
       mount.removeEventListener('pointerup', handlePointerUp);
       mount.removeEventListener('click', handleClick);
       mount.removeEventListener('pointerleave', handlePointerLeave);
+      renderer.domElement.removeEventListener('webglcontextlost', onContextLost);
       renderer.dispose();
       scene.traverse((obj) => {
         const mesh = obj as THREE.Mesh;
