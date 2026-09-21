@@ -30,4 +30,7 @@ jobs:
         with:
           name: typecheck-log
           path: lint.log
-      - run: npm run build
+      - name: Run Automated Test Suites
+        run: npm run test:all
+      - name: Build Application
+        run: npm run build
