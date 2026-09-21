@@ -11,13 +11,17 @@ Authentication: Local development (session / local environment)
 --------------------------------------------------------------------------------
 
 GET /api/health
-Description: System status, storage accessibility, active LLM providers.
+Description: System status, storage accessibility, uptime, and active LLM providers.
+Response Headers:
+  X-Request-ID: <uuidv4>
 Response 200 OK:
 {
   "ok": true,
   "service": "corporatebaddie-api",
-  "timestamp": "2026-09-19T08:00:00.000Z",
+  "timestamp": "2026-09-21T08:00:00.000Z",
   "storage": "ready",
+  "uptime": 142.5,
+  "environment": "development",
   "providers": {
     "grok": true,
     "gemini": true,

@@ -231,10 +231,18 @@ Corporate-Baddie/
 ## 🛠️ Verification & Build Commands
 
 ```bash
-# Type check and linting
+# Type check and zero-error validation
 npm run lint
 
-# Production build
+# Run all automated test suites
+npm run test:all
+
+# Run individual test suites
+npm test                      # Pipeline execution & deterministic data engine
+npm run test:confidence       # Evidence sufficiency & degradation weighting
+npm run test:failure          # Catastrophic failure profiles & guardrails
+
+# Production build with optimized Rollup chunk splitting
 npm run build
 
 # Preview production build locally
