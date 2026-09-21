@@ -4,7 +4,7 @@ The backend service is the persistent data layer, deterministic analytics engine
 
 ---
 
-## 🏛️ System Architecture
+## System Architecture
 
 ```text
 Browser Client (React 19)
@@ -22,7 +22,7 @@ Express REST API (:4000)
     │
     ├── Multi-Agent Reasoning Bridge (server/agent_bridge.py)
     │     ├── Subprocess invocation via Python 3.11
-    │     └── Planner ➔ Coder ➔ DuckDuckGo Search ➔ Critic ➔ Compiler
+    │     └── Planner -> Coder -> DuckDuckGo Search -> Critic -> Compiler
     │
     └── Multi-Provider LLM Fallback (server/llm.ts)
           ├── Priority 1: xAI / Grok (with optional live web search)
@@ -32,11 +32,11 @@ Express REST API (:4000)
 
 ---
 
-## 🚀 Running the Server
+## Running the Server
 
 ### Requirements
 - **Node.js**: v20 or newer
-- **Python**: v3.11 or newer (for Analytica-AI agent bridge)
+- **Python**: v3.11 or newer (for the Analytica-AI agent bridge)
 
 ### Setup & Run
 From the project root:
@@ -60,7 +60,7 @@ npm run dev:full
 
 ---
 
-## ⚙️ Provider Configuration (`.env`)
+## Provider Configuration (`.env`)
 
 ```env
 API_PORT=4000
@@ -90,21 +90,21 @@ ZAI_BASE_URL=https://api.z.ai/api/paas/v4
 
 ---
 
-## 🤖 Analytica-AI Python Bridge (`agent_bridge.py`)
+## Analytica-AI Python Bridge (`agent_bridge.py`)
 
-When an investigation is submitted via `POST /api/investigations`, the server automatically checks if dataset files exist and attempts to invoke `server/agent_bridge.py` via a Python subprocess:
+When an investigation is submitted via `POST /api/investigations`, the server automatically verifies stored dataset files and attempts to invoke `server/agent_bridge.py` through a Python subprocess:
 
 1. **Planner Agent**: Analyzes the business question and workspace context to define quantitative hypotheses.
 2. **Coding Agent**: Generates and executes Python/Pandas code against the local JSONL dataset tables to extract empirical metrics and detect anomalies.
 3. **DuckDuckGo Research Agent**: Queries live web sources for external market benchmarks and industry comparisons.
 4. **Critic Agent**: Cross-verifies code outputs against hypotheses, filtering out ungrounded assertions.
-5. **Compiler Agent**: Assembles the findings into structured JSON conforming to CorporateBaddie's investigation schema.
+5. **Compiler Agent**: Assembles findings into structured JSON conforming to CorporateBaddie's investigation schema.
 
-If the Python environment is unavailable or encounters an error, the API automatically falls back to deterministic local metric calculation and the direct TypeScript LLM fallback layer.
+If the Python environment is unavailable or encounters an unhandled exception, the API automatically falls back to deterministic local metric calculation and the TypeScript LLM fallback layer.
 
 ---
 
-## 📡 Complete REST API Endpoints
+## Complete REST API Endpoints
 
 ### System & Health
 - `GET /api/health` — Returns service status, storage readiness, and active LLM provider configurations.
@@ -133,9 +133,9 @@ If the Python environment is unavailable or encounters an error, the API automat
 
 ---
 
-## 🔒 Governance & Invariant Rules
+## Governance & Invariant Rules
 
 1. **No Evidence, No Recommendation**: An investigation with missing or insufficient data returns `data_insufficient` status and withholds definitive recommendations.
-2. **Deterministic Data Integrity**: Calculated metrics are computed directly from the source rows before LLM reasoning; models are instructed never to invent numbers.
+2. **Deterministic Data Integrity**: Calculated metrics are computed directly from source rows before LLM reasoning; models are instructed never to invent numbers.
 3. **Transparent Market Status**: If market web search returns no sources, market intelligence is marked `MARKET INTELLIGENCE UNAVAILABLE`.
 4. **Failure Resiliency**: Provider outages or timeouts do not crash runs; fallback providers or deterministic summaries are returned safely.
