@@ -39,6 +39,7 @@ export default function IntroExperience({ onEnter }: IntroExperienceProps) {
   const mountRef = useRef<HTMLDivElement>(null);
   const enterRef = useRef(onEnter);
   const [active, setActive] = useState<NodeKey | null>(null);
+  const [isConverging, setIsConverging] = useState(false);
   const [exiting, setExiting] = useState(false);
   const [labels, setLabels] = useState<Record<string, { x: number; y: number; visible: boolean }>>({});
   const selectedQuestionRef = useRef<string | undefined>(undefined);
@@ -48,21 +49,22 @@ export default function IntroExperience({ onEnter }: IntroExperienceProps) {
   }, [onEnter]);
 
   const start = useCallback((q?: string) => {
-    if (exiting) return;
+    if (exiting || isConverging) return;
     selectedQuestionRef.current = q;
+    setIsConverging(true);
     const mount = mountRef.current as (HTMLDivElement & { __startConvergence?: (selectedQuestion?: string) => void }) | null;
     if (mount?.__startConvergence) {
       mount.__startConvergence(q);
     } else {
       setExiting(true);
-      window.setTimeout(() => enterRef.current(q), 180);
+      window.setTimeout(() => enterRef.current(q), 360);
     }
-  }, [exiting]);
+  }, [exiting, isConverging]);
 
   const skip = useCallback(() => {
     if (exiting) return;
     setExiting(true);
-    window.setTimeout(() => enterRef.current(), 120);
+    window.setTimeout(() => enterRef.current(), 350);
   }, [exiting]);
 
   // Keyboard navigation shortcuts
@@ -239,6 +241,10 @@ export default function IntroExperience({ onEnter }: IntroExperienceProps) {
     }
 
     const projectLabels = () => {
+      if (converging) {
+        setLabels({});
+        return;
+      }
       const next: Record<string, { x: number; y: number; visible: boolean }> = {};
       const w = mount.clientWidth || 1;
       const h = mount.clientHeight || 1;
@@ -269,8 +275,13 @@ export default function IntroExperience({ onEnter }: IntroExperienceProps) {
         });
       }
 
-      const raw = converging ? Math.min(1, (performance.now() - convergenceStart) / 1050) : 0;
+      const raw = converging ? Math.min(1, (performance.now() - convergenceStart) / 880) : 0;
       const eased = raw * raw * (3 - 2 * raw);
+
+      if (converging) {
+        sphere.scale.setScalar(1 + Math.sin(eased * Math.PI) * 0.12);
+        (outer.material as THREE.MeshBasicMaterial).opacity = Math.max(0, 0.34 * (1 - eased * 0.8));
+      }
 
       nodeGroups.forEach((item, index) => {
         const config = ORBITS[index];
@@ -281,28 +292,35 @@ export default function IntroExperience({ onEnter }: IntroExperienceProps) {
           Math.sin(t) * config.radius * config.yScale
         );
         if (converging) target.multiplyScalar(1 - eased);
-        item.group.position.lerp(target, 0.16);
+        item.group.position.lerp(target, converging ? 0.22 : 0.16);
 
         const isHovered = hovered === NODES[index].key;
-        const scale = (isHovered ? 1.22 : 1) * (converging ? 1 - eased * 0.28 : 1);
+        const scale = (isHovered ? 1.22 : 1) * (converging ? Math.max(0.1, 1 - eased * 0.65) : 1);
         item.group.scale.lerp(new THREE.Vector3(scale, scale, scale), 0.16);
 
         const positions = connectors[index].geometry.attributes.position as THREE.BufferAttribute;
         positions.setXYZ(0, item.group.position.x, item.group.position.y, item.group.position.z);
         positions.setXYZ(1, 0, 0, 0);
         positions.needsUpdate = true;
-        (connectors[index].material as THREE.LineBasicMaterial).opacity = isHovered ? 0.38 : 0.11;
+        (connectors[index].material as THREE.LineBasicMaterial).opacity = converging
+          ? Math.max(0, 0.15 * (1 - eased))
+          : (isHovered ? 0.38 : 0.11);
       });
 
-      raycaster.setFromCamera(pointer, camera);
-      const hit = raycaster.intersectObjects(
-        nodeGroups.map((item) => item.mesh),
-        false
-      )[0];
-      const nextHover = hit?.object.userData.node as NodeKey | undefined;
-      if (hovered !== (nextHover ?? null)) {
-        hovered = nextHover ?? null;
-        setActive(hovered);
+      if (!converging) {
+        raycaster.setFromCamera(pointer, camera);
+        const hit = raycaster.intersectObjects(
+          nodeGroups.map((item) => item.mesh),
+          false
+        )[0];
+        const nextHover = hit?.object.userData.node as NodeKey | undefined;
+        if (hovered !== (nextHover ?? null)) {
+          hovered = nextHover ?? null;
+          setActive(hovered);
+        }
+      } else if (hovered !== null) {
+        hovered = null;
+        setActive(null);
       }
 
       root.position.x = 0.35 + pointerX * 0.12;
@@ -317,8 +335,16 @@ export default function IntroExperience({ onEnter }: IntroExperienceProps) {
       if (converging) return;
       converging = true;
       convergenceStart = performance.now();
-      setExiting(true);
-      window.setTimeout(() => enterRef.current(targetQuestion || selectedQuestionRef.current), 180);
+      setIsConverging(true);
+      setLabels({});
+      // Initiate smooth visual fade out of intro scene
+      window.setTimeout(() => {
+        setExiting(true);
+      }, 680);
+      // Hand off smoothly to main app
+      window.setTimeout(() => {
+        enterRef.current(targetQuestion || selectedQuestionRef.current);
+      }, 920);
     };
     (mount as HTMLDivElement & { __startConvergence?: (targetQuestion?: string) => void }).__startConvergence = startConvergence;
 
@@ -343,7 +369,7 @@ export default function IntroExperience({ onEnter }: IntroExperienceProps) {
 
   return (
     <main className={`cb-intro-v2 ${exiting ? 'is-exiting' : ''}`} aria-label="CorporateBaddie introduction">
-      <header className="cb-intro-v2__header">
+      <header className={`cb-intro-v2__header ${isConverging ? 'is-converging' : ''}`}>
         <div className="cb-intro-v2__brand">
           <span className="cb-intro-v2__dot" />
           <strong>CORPORATEBADDIE</strong>
@@ -357,7 +383,7 @@ export default function IntroExperience({ onEnter }: IntroExperienceProps) {
       </header>
 
       <section className="cb-intro-v2__body">
-        <div className="cb-intro-v2__copy">
+        <div className={`cb-intro-v2__copy ${isConverging ? 'is-converging' : ''}`}>
           <div className="cb-intro-v2__kicker">MAKING SENSE OF CORPORATE NONSENSE.</div>
           <h1>
             Turn business
@@ -382,7 +408,7 @@ export default function IntroExperience({ onEnter }: IntroExperienceProps) {
             <span className="cb-intro-v2__question-arrow">→</span>
           </button>
           <div className="cb-intro-v2__actions">
-            <button className="cb-intro-v2__enter" type="button" onClick={() => start()} disabled={exiting}>
+            <button className="cb-intro-v2__enter" type="button" onClick={() => start()} disabled={exiting || isConverging}>
               ENTER DECISION INTELLIGENCE <span>↗</span>
             </button>
             <button className="cb-intro-v2__secondary" type="button" onClick={skip}>
@@ -393,7 +419,7 @@ export default function IntroExperience({ onEnter }: IntroExperienceProps) {
 
         <div className="cb-intro-v2__visual">
           <div ref={mountRef} className="cb-intro-v2__canvas" />
-          {NODES.map((node) => {
+          {!isConverging && NODES.map((node) => {
             const position = labels[node.key];
             const selected = active === node.key;
             return position ? (
@@ -410,7 +436,7 @@ export default function IntroExperience({ onEnter }: IntroExperienceProps) {
               </button>
             ) : null;
           })}
-          {active && (
+          {!isConverging && active && (
             <div className="cb-intro-v2__node-info">
               <span>{active}</span>
               <strong>{NODES.find((node) => node.key === active)?.detail}</strong>
@@ -420,7 +446,7 @@ export default function IntroExperience({ onEnter }: IntroExperienceProps) {
         </div>
       </section>
 
-      <footer className="cb-intro-v2__footer">
+      <footer className={`cb-intro-v2__footer ${isConverging ? 'is-converging' : ''}`}>
         <div>
           <div className="cb-intro-v2__footer-kicker">INTELLIGENCE SYSTEM</div>
           <div className="cb-intro-v2__steps">
@@ -449,11 +475,32 @@ export default function IntroExperience({ onEnter }: IntroExperienceProps) {
           color: #e7e9e4;
           overflow: hidden;
           font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-          transition: opacity 0.28s ease, transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+          transition: opacity 0.38s cubic-bezier(0.16, 1, 0.3, 1), transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
         }
         .cb-intro-v2.is-exiting {
           opacity: 0;
-          transform: scale(1.025);
+          transform: scale(1.02);
+          pointer-events: none;
+        }
+        .cb-intro-v2__header,
+        .cb-intro-v2__copy,
+        .cb-intro-v2__footer {
+          transition: opacity 0.28s ease, transform 0.32s ease;
+        }
+        .cb-intro-v2__header.is-converging {
+          opacity: 0;
+          transform: translateY(-8px);
+          pointer-events: none;
+        }
+        .cb-intro-v2__copy.is-converging {
+          opacity: 0;
+          transform: translateY(-10px);
+          pointer-events: none;
+        }
+        .cb-intro-v2__footer.is-converging {
+          opacity: 0;
+          transform: translateY(8px);
+          pointer-events: none;
         }
         .cb-intro-v2__header {
           height: 66px;

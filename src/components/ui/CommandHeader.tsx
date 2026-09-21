@@ -65,10 +65,10 @@ export const CommandHeader: React.FC<CommandHeaderProps> = ({
           {/* Brand */}
           <button
             type="button"
-            onClick={() => onNavigate('investigate')}
+            onClick={() => onNavigate('overview')}
             className="flex items-center gap-2.5 group shrink-0 cb-btn focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8eb397]/80 focus-visible:ring-offset-2 focus-visible:ring-offset-[#191b1a] rounded-lg"
-            title="Start an investigation"
-            aria-label="CorporateBaddie Decision Intelligence - navigate to investigation"
+            title="Executive Dashboard"
+            aria-label="CorporateBaddie Decision Intelligence - navigate to executive dashboard"
           >
             <BrainCircuit className="w-[18px] h-[18px] text-[#8eb397]" />
             <span className="flex items-baseline gap-2 min-w-0">

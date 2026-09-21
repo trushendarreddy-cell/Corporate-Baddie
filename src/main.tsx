@@ -65,6 +65,13 @@ function Root() {
       return true;
     }
   });
+  const [introMounted, setIntroMounted] = useState(() => {
+    try {
+      return sessionStorage.getItem(INTRO_KEY) !== '1';
+    } catch {
+      return false;
+    }
+  });
 
   const enterApp = (selectedQuestion?: string) => {
     try {
@@ -76,16 +83,42 @@ function Root() {
       setInitialQuestion(selectedQuestion);
     }
     setShowIntro(false);
+    // Keep intro mounted briefly while it fades out, then unmount so GPU memory is 100% freed
+    window.setTimeout(() => {
+      setIntroMounted(false);
+    }, 450);
   };
 
   const replayIntro = () => {
-    setShowIntro(true);
+    setIntroMounted(true);
+    window.setTimeout(() => {
+      setShowIntro(true);
+    }, 20);
   };
 
-  if (showIntro) return <IntroExperience onEnter={enterApp} />;
   return (
     <ErrorBoundary>
-      <App initialQuestion={initialQuestion} onReplayIntro={replayIntro} />
+      <div className="relative min-h-screen bg-[#0a0d0c] text-slate-100 overflow-x-hidden">
+        {/* Main Dashboard Application with smooth cross-fade */}
+        <div
+          className={`min-h-screen transition-opacity duration-500 ease-out ${
+            showIntro ? 'opacity-0 pointer-events-none' : 'opacity-100'
+          }`}
+        >
+          <App initialQuestion={initialQuestion} onReplayIntro={replayIntro} />
+        </div>
+
+        {/* 3D Intro Experience Overlay */}
+        {introMounted && (
+          <div
+            className={`fixed inset-0 z-50 transition-opacity duration-400 ease-in-out ${
+              showIntro ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+            }`}
+          >
+            <IntroExperience onEnter={enterApp} />
+          </div>
+        )}
+      </div>
     </ErrorBoundary>
   );
 }

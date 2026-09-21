@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   UnifiedInvestigationState,
   InvestigationState,
@@ -79,11 +79,18 @@ export default function App({ initialQuestion, onReplayIntro }: AppProps = {}) {
   ]);
   
   const [question, setQuestion] = useState<string>(() => initialQuestion || '');
+  const lastInitialQuestionRef = useRef<string | undefined>(undefined);
+  const handleStartAnalysisRef = useRef<(overrideQuestion?: string) => void>(() => {});
 
   useEffect(() => {
-    if (initialQuestion) {
+    if (initialQuestion && initialQuestion !== lastInitialQuestionRef.current) {
+      lastInitialQuestionRef.current = initialQuestion;
       setQuestion(initialQuestion);
       setActiveTab('investigate');
+      const timer = window.setTimeout(() => {
+        handleStartAnalysisRef.current(initialQuestion);
+      }, 120);
+      return () => window.clearTimeout(timer);
     }
   }, [initialQuestion]);
   
@@ -537,7 +544,12 @@ export default function App({ initialQuestion, onReplayIntro }: AppProps = {}) {
 
   // ------------------------- Investigation execution (real engine) -------------------------
 
-  const handleStartAnalysis = () => {
+  const handleStartAnalysis = (overrideQuestion?: string) => {
+    const q = (overrideQuestion ?? question).trim();
+    if (!q) return;
+    if (overrideQuestion) {
+      setQuestion(overrideQuestion);
+    }
     setIsAnalyzing(true);
     setHasAnalyzed(false);
     setCurrentToolIndex(0);
@@ -552,7 +564,7 @@ export default function App({ initialQuestion, onReplayIntro }: AppProps = {}) {
       setTerminalLogs((prev) => [...prev, { timestamp: timeStr, text: msg }]);
     };
 
-    addLog(`[ORCHESTRATOR] Received Inquiry: "${question}"`);
+    addLog(`[ORCHESTRATOR] Received Inquiry: "${q}"`);
 
     // Plan is built inside the engine's REQUIREMENT_ANALYSIS stage; run the
     // real execution pipeline end-to-end.
@@ -560,7 +572,7 @@ export default function App({ initialQuestion, onReplayIntro }: AppProps = {}) {
       // Build the base unified state first (drives artifact gating + plan).
       const plannedState = buildUnifiedInvestigationState({
         runId: newRunId,
-        userQuestion: question,
+        userQuestion: q,
         businessContext,
         dataSources,
         selectedOptionId: unifiedState.selectedOptionId,
@@ -574,7 +586,7 @@ export default function App({ initialQuestion, onReplayIntro }: AppProps = {}) {
       // Execute the real stage pipeline with structured logging.
       const outcome = await executeInvestigation({
         runId: newRunId,
-        question,
+        question: q,
         dataSources,
         stageDelayMs: 650,
         onStage: (result, entry) => {
@@ -602,13 +614,14 @@ export default function App({ initialQuestion, onReplayIntro }: AppProps = {}) {
         }
       }
 
-      finishAnalysis(newRunId, plannedState, outcome);
+      finishAnalysis(newRunId, plannedState, outcome, undefined, q);
     })().catch((err) => {
       // Engine-level exception: surface as explicit TOOL FAILED, never fake success.
       addLog(`[PIPELINE] TOOL FAILED: ${err instanceof Error ? err.message : String(err)}`);
-      finishAnalysis(newRunId, undefined, undefined, err instanceof Error ? err.message : String(err));
+      finishAnalysis(newRunId, undefined, undefined, err instanceof Error ? err.message : String(err), q);
     });
   };
+  handleStartAnalysisRef.current = handleStartAnalysis;
 
   const handleSkipAnalysis = () => {
     const newRunId = `RUN-00${runs.length + 1}`;
@@ -620,14 +633,16 @@ export default function App({ initialQuestion, onReplayIntro }: AppProps = {}) {
     completedState?: UnifiedInvestigationState,
     outcome?: import('./state/executionEngine').ExecutionOutcome,
     engineError?: string,
+    questionText?: string,
   ) => {
     setIsAnalyzing(false);
     setHasAnalyzed(true);
     setCurrentStageIndex(stages.length);
 
+    const activeQuestion = questionText || question;
     const baseState = completedState || buildUnifiedInvestigationState({
       runId: newRunId,
-      userQuestion: question,
+      userQuestion: activeQuestion,
       businessContext,
       dataSources,
     });
@@ -698,7 +713,7 @@ export default function App({ initialQuestion, onReplayIntro }: AppProps = {}) {
 
     const newRun: InvestigationRun = {
       id: newRunId,
-      question,
+      question: activeQuestion,
       timestamp: new Date().toISOString().replace('T', ' ').slice(0, 19) + ' UTC',
       dataQualityPercent: finalState.dataQuality.overallPercent,
       overallConfidence: finalState.recommendationConfidence.level,
