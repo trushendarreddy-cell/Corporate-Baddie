@@ -87,7 +87,8 @@ export type ApiInvestigation = {
 };
 
 export const api = {
-  health: () => request<{ ok: boolean; service: string; timestamp: string; providers?: Record<string, unknown>; version?: string }>('/api/health'),
+  health: () => request<{ ok: boolean; service: string; timestamp: string; uptimeSeconds?: number; storage?: string; providers?: { grok?: boolean; gemini?: boolean; zai?: boolean; primary?: string }; version?: string }>('/api/health'),
+  ready: () => request<{ ready: boolean }>('/api/ready'),
   workspaces: () => request<{ workspaces: ApiWorkspace[] }>('/api/workspaces'),
   createWorkspace: (input: Record<string, unknown>) => request<{ workspace: ApiWorkspace }>('/api/workspaces', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(input) }),
   workspace: (id: string) => request<{ workspace: ApiWorkspace; datasets: ApiDataset[] }>(`/api/workspaces/${encodeURIComponent(id)}`),

@@ -39,6 +39,7 @@ import {
 import { exportInvestigationToPDF } from './utils/pdfExport';
 import { calculateDecisionConfidence } from './state/confidenceEngine';
 import { api } from './services/api';
+import { useBackendHealth } from './services/useBackendHealth';
 
 import { CommandHeader, ModuleTab } from './components/ui/CommandHeader';
 import type { CoreNodeAction } from './components/ui/DecisionCore3D';
@@ -82,8 +83,14 @@ export default function App({ initialQuestion, onReplayIntro }: AppProps = {}) {
   const lastInitialQuestionRef = useRef<string | undefined>(undefined);
   const handleStartAnalysisRef = useRef<(overrideQuestion?: string) => void>(() => {});
 
+  // Workspace state - starts empty; a real workspace must exist before the
+  // dashboard unlocks. The backend is adopted as source-of-truth when present.
+  const [currentWorkspace, setCurrentWorkspace] = useState<Workspace | null>(() => workspaceRepo.get());
+  const [hasCreatedWorkspace, setHasCreatedWorkspace] = useState<boolean>(() => Boolean(workspaceRepo.get()));
+  const backend = useBackendHealth();
+
   useEffect(() => {
-    if (initialQuestion && initialQuestion !== lastInitialQuestionRef.current) {
+    if (initialQuestion && initialQuestion !== lastInitialQuestionRef.current && hasCreatedWorkspace) {
       lastInitialQuestionRef.current = initialQuestion;
       setQuestion(initialQuestion);
       setActiveTab('investigate');
@@ -92,34 +99,53 @@ export default function App({ initialQuestion, onReplayIntro }: AppProps = {}) {
       }, 120);
       return () => window.clearTimeout(timer);
     }
-  }, [initialQuestion]);
-  
-  // Workspace state - loaded from localStorage with default demo workspace fallback
-  const [currentWorkspace, setCurrentWorkspace] = useState<Workspace>(() => {
-    const stored = workspaceRepo.get();
-    if (stored) return stored;
-    const defaultWs: Workspace = {
-      id: 'demo-ws-001',
-      name: 'Acme Retail Group',
-      slug: 'acme-retail-group',
-      description: 'Multi-region omnichannel retail distributor',
-      industry: 'Retail & Consumer Goods',
-      country: 'United States',
-      region: 'North America',
-      currency: 'USD',
-      businessObjective: 'Diagnose margin contraction and protect H2 operating profitability',
-      currentStrategy: '',
-      knownConstraints: '',
-      importantKpis: ['Revenue', 'Gross Margin', 'Customer Retention', 'AOV'],
-      managementPriorities: '',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      isDemo: false,
+  }, [initialQuestion, hasCreatedWorkspace]);
+
+  // Adopt the server-persisted workspace as source-of-truth when the backend
+  // is reachable and it is newer than the local copy (or none exists locally).
+  useEffect(() => {
+    if (backend.status !== 'online') return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { workspaces } = await api.workspaces();
+        if (cancelled || !workspaces || workspaces.length === 0) return;
+        const latest = [...workspaces].sort(
+          (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+        )[0];
+        const local = workspaceRepo.get();
+        const localNewer = local && new Date(local.updatedAt).getTime() > new Date(latest.updatedAt).getTime();
+        if (localNewer) return;
+        const adopted: Workspace = {
+          id: latest.id,
+          name: latest.name,
+          slug: latest.name.toLowerCase().replace(/\s+/g, '-'),
+          description: latest.description || '',
+          industry: latest.industry,
+          country: latest.country,
+          region: latest.region || '',
+          currency: latest.currency,
+          businessObjective: latest.objective || '',
+          currentStrategy: '',
+          knownConstraints: '',
+          importantKpis: latest.kpis || [],
+          managementPriorities: '',
+          createdAt: latest.createdAt,
+          updatedAt: latest.updatedAt,
+          isDemo: false,
+        };
+        workspaceRepo.save(adopted);
+        setCurrentWorkspace(adopted);
+        setHasCreatedWorkspace(true);
+      } catch {
+        // Server unreachable mid-session — keep the local workspace.
+      }
+    })();
+    return () => {
+      cancelled = true;
     };
-    workspaceRepo.save(defaultWs);
-    return defaultWs;
-  });
-  const [hasCreatedWorkspace, setHasCreatedWorkspace] = useState<boolean>(true);
+  }, [backend.status]);
+  
   
   // Data sources state - loaded from localStorage
   const [dataSources, setDataSources] = useState<DataSource[]>(() => {
@@ -356,6 +382,15 @@ export default function App({ initialQuestion, onReplayIntro }: AppProps = {}) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // ------------------------- Workspace creation flow -------------------------
+
+  const handleWorkspaceCreated = (workspace: Workspace) => {
+    setCurrentWorkspace(workspace);
+    setHasCreatedWorkspace(true);
+    setActiveTab('overview');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleCoreNode = (action: CoreNodeAction) => {
     switch (action) {
       case 'data':
@@ -385,15 +420,23 @@ export default function App({ initialQuestion, onReplayIntro }: AppProps = {}) {
   const handleToggleDataSource = (sourceId: string) => {
     const updated = dataSources.map((s) => (s.id === sourceId ? { ...s, selected: !s.selected } : s));
     
-    // Update localStorage
-    const newDataSourceList = dataSourceRepo.getAll();
-    const updatedDs = newDataSourceList.map(ds => {
-      if (ds.id === sourceId) {
-        return { ...ds, selected: !ds.selected };
-      }
-      return ds;
-    });
-    dataSourceRepo.save(updatedDs[0]); // Save first one to update selected state
+    // Persist the full selection set (previously only the first record was
+    // saved, so toggling any other source silently lost its selection).
+    const allSources = dataSourceRepo.getAll();
+    const toggled = updated.find((s) => s.id === sourceId);
+    const persisted = allSources.length > 0
+      ? allSources.map((ds) => {
+          if (ds.id === sourceId) return { ...ds, selected: Boolean(toggled?.selected) };
+          const legacy = updated.find((s) => s.id === ds.id);
+          return legacy ? { ...ds, selected: legacy.selected } : ds;
+        })
+      : allSources;
+    if (persisted.length > 0) {
+      // Repository stores one record per call — rewrite the full set via the
+      // first record and mirror the rest through individual saves.
+      dataSourceRepo.save(persisted[0]);
+      for (let i = 1; i < persisted.length; i += 1) dataSourceRepo.save(persisted[i]);
+    }
     
     setDataSources(updated);
     
@@ -831,6 +874,19 @@ export default function App({ initialQuestion, onReplayIntro }: AppProps = {}) {
 
   const activeSourcesCount = dataSources.filter((s) => s.selected).length;
 
+  // First-run gate: no workspace yet → render the guided creation page
+  // instead of the dashboard. The 3D intro hands off to this page.
+  if (!hasCreatedWorkspace || !currentWorkspace) {
+    return (
+      <div className="min-h-screen bg-[#0a0d0c] text-slate-100">
+        <WorkspaceCreationPage
+          onComplete={handleWorkspaceCreated}
+          onReplayIntro={onReplayIntro}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen cb-ambient text-slate-100 flex flex-col selection:bg-amber-500/30 selection:text-amber-200">
       {/* Command Header — global navigation */}
@@ -847,6 +903,8 @@ export default function App({ initialQuestion, onReplayIntro }: AppProps = {}) {
         onOpenSettings={() => setIsSettingsOpen(true)}
         onNewInvestigation={handleResetToHome}
         onReplayIntro={onReplayIntro}
+        backendStatus={backend.status}
+        onRetryBackend={backend.retry}
       />
 
       {/* Main Content Area — module workspaces */}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrainCircuit, Sparkles, Download, HelpCircle, Settings2 } from 'lucide-react';
+import { BrainCircuit, Sparkles, Download, HelpCircle, Settings2, Wifi, WifiOff } from 'lucide-react';
 
 export type ModuleTab = 'overview' | 'investigate' | 'decisions' | 'evidence' | 'signals' | 'data' | 'history';
 
@@ -16,6 +16,8 @@ interface CommandHeaderProps {
   onOpenSettings: () => void;
   onNewInvestigation: () => void;
   onReplayIntro?: () => void;
+  backendStatus?: 'checking' | 'online' | 'offline';
+  onRetryBackend?: () => void;
 }
 
 const NAV: Array<{ id: ModuleTab; label: string; meaning: string }> = [
@@ -46,6 +48,8 @@ export const CommandHeader: React.FC<CommandHeaderProps> = ({
   onOpenSettings,
   onNewInvestigation,
   onReplayIntro,
+  backendStatus = 'checking',
+  onRetryBackend,
 }) => {
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -103,6 +107,35 @@ export const CommandHeader: React.FC<CommandHeaderProps> = ({
 
           {/* Right cluster */}
           <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0 flex-wrap justify-end">
+            {/* Backend connection status */}
+            <button
+              type="button"
+              onClick={onRetryBackend}
+              disabled={backendStatus === 'checking' || !onRetryBackend}
+              className={`flex items-center gap-1.5 px-2 py-1.5 rounded-md text-[11px] font-medium cb-btn focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8eb397]/80 ${
+                backendStatus === 'online'
+                  ? 'text-[#8eb397]'
+                  : backendStatus === 'offline'
+                  ? 'text-amber-400 hover:text-amber-300'
+                  : 'text-slate-500'
+              }`}
+              title={
+                backendStatus === 'online'
+                  ? 'Backend API connected — investigations run server-side'
+                  : backendStatus === 'offline'
+                  ? 'Backend unreachable — running in deterministic local mode. Click to retry.'
+                  : 'Checking backend connection…'
+              }
+              aria-label={`Backend status: ${backendStatus}. ${backendStatus === 'offline' ? 'Click to retry connection.' : ''}`}
+            >
+              {backendStatus === 'offline' ? (
+                <WifiOff className="w-3.5 h-3.5" aria-hidden="true" />
+              ) : (
+                <Wifi className={`w-3.5 h-3.5 ${backendStatus === 'checking' ? 'animate-pulse' : ''}`} aria-hidden="true" />
+              )}
+              <span className="hidden xl:inline cb-mono">{backendStatus === 'online' ? 'API LIVE' : backendStatus === 'offline' ? 'LOCAL MODE' : '…'}</span>
+            </button>
+
             <button
               type="button"
               onClick={() => onNavigate('investigate')}

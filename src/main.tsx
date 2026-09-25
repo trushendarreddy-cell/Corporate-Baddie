@@ -88,7 +88,6 @@ function Root() {
       setIntroMounted(false);
     }, 450);
   };
-
   const replayIntro = () => {
     setIntroMounted(true);
     window.setTimeout(() => {

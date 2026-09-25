@@ -11,11 +11,13 @@ import { api } from '../services/api';
 interface WorkspaceCreationProps {
   onComplete: (workspace: Workspace) => void;
   onCancel?: () => void;
+  onReplayIntro?: () => void;
 }
 
 export const WorkspaceCreationPage: React.FC<WorkspaceCreationProps> = ({
   onComplete,
   onCancel,
+  onReplayIntro,
 }) => {
   const [formData, setFormData] = useState({
     companyName: '',
@@ -54,6 +56,8 @@ export const WorkspaceCreationPage: React.FC<WorkspaceCreationProps> = ({
 
     const now = new Date().toISOString();
     let workspaceId = `ws-${Date.now().toString().slice(-8)}`;
+    let serverCreatedAt = now;
+    let serverUpdatedAt = now;
 
     try {
       const response = await api.createWorkspace({
@@ -68,6 +72,8 @@ export const WorkspaceCreationPage: React.FC<WorkspaceCreationProps> = ({
       });
       if (response.workspace?.id) {
         workspaceId = response.workspace.id;
+        serverCreatedAt = response.workspace.createdAt || now;
+        serverUpdatedAt = response.workspace.updatedAt || now;
       }
     } catch (apiErr) {
       console.warn('API workspace creation failed, falling back to local workspace:', apiErr);
@@ -88,8 +94,8 @@ export const WorkspaceCreationPage: React.FC<WorkspaceCreationProps> = ({
       knownConstraints: '',
       importantKpis: kpis,
       managementPriorities: '',
-      createdAt: now,
-      updatedAt: now,
+      createdAt: serverCreatedAt,
+      updatedAt: serverUpdatedAt,
       isDemo: false,
     };
 
@@ -271,6 +277,17 @@ export const WorkspaceCreationPage: React.FC<WorkspaceCreationProps> = ({
               </>
             )}
           </button>
+
+          {/* Replay the 3D intro */}
+          {onReplayIntro && (
+            <button
+              type="button"
+              onClick={onReplayIntro}
+              className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3.5 text-sm font-medium text-slate-500 hover:text-slate-300 transition-colors"
+            >
+              ↺ Replay intro
+            </button>
+          )}
 
           {/* Optional Cancel */}
           {onCancel && (
