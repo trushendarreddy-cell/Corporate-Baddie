@@ -1,7 +1,13 @@
 import React from 'react';
-import { BrainCircuit, Sparkles, Download, HelpCircle, Settings2, Wifi, WifiOff } from 'lucide-react';
+import { BrainCircuit, Sparkles, Download, HelpCircle, Settings2, Wifi, WifiOff, Building2, ChevronDown } from 'lucide-react';
 
 export type ModuleTab = 'overview' | 'investigate' | 'decisions' | 'evidence' | 'signals' | 'data' | 'history';
+
+interface WorkspaceOption {
+  id: string;
+  name: string;
+  industry?: string;
+}
 
 interface CommandHeaderProps {
   activeTab: ModuleTab;
@@ -18,6 +24,11 @@ interface CommandHeaderProps {
   onReplayIntro?: () => void;
   backendStatus?: 'checking' | 'online' | 'offline';
   onRetryBackend?: () => void;
+  llmProviders?: { grok: boolean; gemini: boolean; zai: boolean; primary: string };
+  workspaceName?: string;
+  workspaces?: WorkspaceOption[];
+  activeWorkspaceId?: string;
+  onSwitchWorkspace?: (id: string) => void;
 }
 
 const NAV: Array<{ id: ModuleTab; label: string; meaning: string }> = [
@@ -50,7 +61,23 @@ export const CommandHeader: React.FC<CommandHeaderProps> = ({
   onReplayIntro,
   backendStatus = 'checking',
   onRetryBackend,
+  llmProviders,
+  workspaceName,
+  workspaces = [],
+  activeWorkspaceId,
+  onSwitchWorkspace,
 }) => {
+  const [wsMenuOpen, setWsMenuOpen] = React.useState(false);
+  const wsMenuRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (!wsMenuOpen) return;
+    const close = (e: MouseEvent) => {
+      if (wsMenuRef.current && !wsMenuRef.current.contains(e.target as Node)) setWsMenuOpen(false);
+    };
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, [wsMenuOpen]);
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
@@ -67,25 +94,81 @@ export const CommandHeader: React.FC<CommandHeaderProps> = ({
       <div className="max-w-[1380px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="min-h-[52px] py-2 flex flex-wrap items-center justify-between gap-2 sm:gap-4">
           {/* Brand */}
-          <button
-            type="button"
-            onClick={() => onNavigate('overview')}
-            className="flex items-center gap-2.5 group shrink-0 cb-btn focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8eb397]/80 focus-visible:ring-offset-2 focus-visible:ring-offset-[#191b1a] rounded-lg"
-            title="Executive Dashboard"
-            aria-label="CorporateBaddie Decision Intelligence - navigate to executive dashboard"
-          >
-            <BrainCircuit className="w-[18px] h-[18px] text-[#8eb397]" />
-            <span className="flex items-baseline gap-2 min-w-0">
-              <span className="font-bold tracking-tight text-[14px] text-slate-100 truncate">
-                CorporateBaddie
+          <div className="flex items-center gap-3 shrink-0 min-w-0">
+            <button
+              type="button"
+              onClick={() => onNavigate('overview')}
+              className="flex items-center gap-2.5 group cb-btn focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8eb397]/80 focus-visible:ring-offset-2 focus-visible:ring-offset-[#191b1a] rounded-lg"
+              title="Executive Dashboard"
+              aria-label="CorporateBaddie Decision Intelligence - navigate to executive dashboard"
+            >
+              <BrainCircuit className="w-[18px] h-[18px] text-[#8eb397]" />
+              <span className="flex items-baseline gap-2 min-w-0">
+                <span className="font-bold tracking-tight text-[14px] text-slate-100 truncate">
+                  CorporateBaddie
+                </span>
+                <span className="cb-meta hidden 2xl:inline">Decision Intelligence</span>
               </span>
-              <span className="cb-meta hidden xl:inline">Decision Intelligence</span>
-            </span>
-          </button>
+            </button>
+
+            {/* Workspace switcher */}
+            {workspaceName && (
+              <div className="relative hidden lg:block" ref={wsMenuRef}>
+                <button
+                  type="button"
+                  onClick={() => (onSwitchWorkspace && workspaces.length > 0 ? setWsMenuOpen((o) => !o) : undefined)}
+                  disabled={!onSwitchWorkspace || workspaces.length === 0}
+                  className="flex items-center gap-1 max-w-[190px] px-1.5 py-1 rounded-md text-[11.5px] text-slate-400 hover:text-slate-200 hover:bg-white/[0.05] cb-btn disabled:cursor-default focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8eb397]/80"
+                  title={onSwitchWorkspace && workspaces.length > 0 ? 'Switch workspace' : workspaceName}
+                  aria-label={`Active workspace: ${workspaceName}. ${onSwitchWorkspace && workspaces.length > 0 ? 'Click to switch.' : ''}`}
+                  aria-expanded={wsMenuOpen}
+                  aria-haspopup="menu"
+                >
+                  <Building2 className="w-3.5 h-3.5 text-[#8eb397]/70 shrink-0" aria-hidden="true" />
+                  <span className="truncate font-medium max-w-[140px]">{workspaceName}</span>
+                  {onSwitchWorkspace && workspaces.length > 0 && (
+                    <ChevronDown className={`w-3 h-3 shrink-0 transition-transform ${wsMenuOpen ? 'rotate-180' : ''}`} aria-hidden="true" />
+                  )}
+                </button>
+
+                {wsMenuOpen && onSwitchWorkspace && workspaces.length > 0 && (
+                  <div
+                    role="menu"
+                    aria-label="Switch workspace"
+                    className="absolute left-0 top-full mt-1.5 min-w-[240px] max-w-[300px] rounded-lg border border-slate-700/80 bg-[#1d201f] shadow-2xl shadow-black/60 py-1 z-50 animate-in fade-in zoom-in-[0.98] duration-150"
+                  >
+                    {workspaces.map((ws) => (
+                      <button
+                        key={ws.id}
+                        type="button"
+                        role="menuitem"
+                        onClick={() => {
+                          setWsMenuOpen(false);
+                          if (ws.id !== activeWorkspaceId) onSwitchWorkspace(ws.id);
+                        }}
+                        className={`w-full flex items-center justify-between gap-3 px-3 py-2 text-left text-[12px] transition-colors hover:bg-white/[0.05] ${
+                          ws.id === activeWorkspaceId ? 'text-[#a9c0ad]' : 'text-slate-300'
+                        }`}
+                        aria-current={ws.id === activeWorkspaceId ? 'true' : undefined}
+                      >
+                        <span className="min-w-0">
+                          <span className="block truncate font-medium">{ws.name}</span>
+                          {ws.industry && <span className="block text-[10.5px] text-slate-500 truncate">{ws.industry}</span>}
+                        </span>
+                        {ws.id === activeWorkspaceId && (
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#8eb397] shrink-0" aria-label="Active" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
           {/* Center nav — plain text, no absolute positioning so it can wrap and stay readable */}
           <nav className="hidden md:flex flex-1 justify-center min-w-0" aria-label="Modules">
-            <div className="flex items-center gap-2 xl:gap-4 min-w-0 overflow-visible">
+            <div className="flex items-center gap-2 xl:gap-3 min-w-0 overflow-x-auto scrollbar-none">
               {NAV.map((item) => (
                 <button
                   key={item.id}
@@ -106,7 +189,7 @@ export const CommandHeader: React.FC<CommandHeaderProps> = ({
           </nav>
 
           {/* Right cluster */}
-          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0 flex-wrap justify-end">
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0 flex-wrap justify-end">
             {/* Backend connection status */}
             <button
               type="button"
@@ -134,12 +217,24 @@ export const CommandHeader: React.FC<CommandHeaderProps> = ({
                 <Wifi className={`w-3.5 h-3.5 ${backendStatus === 'checking' ? 'animate-pulse' : ''}`} aria-hidden="true" />
               )}
               <span className="hidden xl:inline cb-mono">{backendStatus === 'online' ? 'API LIVE' : backendStatus === 'offline' ? 'LOCAL MODE' : '…'}</span>
+              {backendStatus === 'online' && llmProviders && (
+                <span className="hidden 2xl:inline-flex items-center gap-1 ml-1 pl-2 border-l border-slate-700/70">
+                  {(['grok', 'gemini', 'zai'] as const).map((p) => (
+                    <span
+                      key={p}
+                      className={`w-1.5 h-1.5 rounded-full ${llmProviders[p] ? 'bg-[#8eb397]' : 'bg-slate-700'}`}
+                      title={`${p}: ${llmProviders[p] ? 'key configured' : 'not configured'} (primary: ${llmProviders.primary})`}
+                      aria-label={`${p} provider ${llmProviders[p] ? 'configured' : 'unavailable'}`}
+                    />
+                  ))}
+                </span>
+              )}
             </button>
 
             <button
               type="button"
               onClick={() => onNavigate('investigate')}
-              className="hidden lg:flex items-center gap-1.5 text-[11.5px] text-slate-500 hover:text-slate-300 transition-colors cb-btn focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#8eb397] rounded"
+              className="hidden xl:flex items-center gap-1.5 text-[11.5px] text-slate-500 hover:text-slate-300 transition-colors cb-btn focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#8eb397] rounded"
               title={`Data quality ${dataQuality}% · ${activeSources}/${totalSources} sources live`}
               aria-label={`System status: data quality ${dataQuality}%, ${activeSources} of ${totalSources} data sources live`}
             >
@@ -149,7 +244,7 @@ export const CommandHeader: React.FC<CommandHeaderProps> = ({
               <span className="cb-metric text-[11.5px] text-slate-400">{activeSources}/{totalSources}</span>
             </button>
 
-            <span className="hidden xl:inline font-mono text-[11.5px] text-slate-500" title="Active run" aria-label={`Active run ID: ${runId}`}>
+            <span className="hidden 2xl:inline font-mono text-[11.5px] text-slate-500" title="Active run" aria-label={`Active run ID: ${runId}`}>
               {runId}
             </span>
 

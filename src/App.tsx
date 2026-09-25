@@ -87,6 +87,7 @@ export default function App({ initialQuestion, onReplayIntro }: AppProps = {}) {
   // dashboard unlocks. The backend is adopted as source-of-truth when present.
   const [currentWorkspace, setCurrentWorkspace] = useState<Workspace | null>(() => workspaceRepo.get());
   const [hasCreatedWorkspace, setHasCreatedWorkspace] = useState<boolean>(() => Boolean(workspaceRepo.get()));
+  const [availableWorkspaces, setAvailableWorkspaces] = useState<Array<{ id: string; name: string; industry?: string; updatedAt: string }>>([]);
   const backend = useBackendHealth();
 
   useEffect(() => {
@@ -103,13 +104,23 @@ export default function App({ initialQuestion, onReplayIntro }: AppProps = {}) {
 
   // Adopt the server-persisted workspace as source-of-truth when the backend
   // is reachable and it is newer than the local copy (or none exists locally).
+  // Also populates the workspace switcher list.
   useEffect(() => {
     if (backend.status !== 'online') return;
     let cancelled = false;
     (async () => {
       try {
         const { workspaces } = await api.workspaces();
-        if (cancelled || !workspaces || workspaces.length === 0) return;
+        if (cancelled) return;
+        if (workspaces && workspaces.length > 0) {
+          setAvailableWorkspaces(workspaces.map((w) => ({
+            id: w.id,
+            name: w.name,
+            industry: w.industry,
+            updatedAt: w.updatedAt,
+          })));
+        }
+        if (!workspaces || workspaces.length === 0) return;
         const latest = [...workspaces].sort(
           (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
         )[0];
@@ -388,7 +399,75 @@ export default function App({ initialQuestion, onReplayIntro }: AppProps = {}) {
     setCurrentWorkspace(workspace);
     setHasCreatedWorkspace(true);
     setActiveTab('overview');
+    setAvailableWorkspaces((prev) => (
+      prev.some((w) => w.id === workspace.id)
+        ? prev
+        : [{ id: workspace.id, name: workspace.name, industry: workspace.industry, updatedAt: workspace.updatedAt }, ...prev]
+    ));
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleSwitchWorkspace = async (workspaceId: string) => {
+    if (workspaceId === currentWorkspace?.id) return;
+    try {
+      const { workspace, datasets } = await api.workspace(workspaceId);
+      const adopted: Workspace = {
+        id: workspace.id,
+        name: workspace.name,
+        slug: workspace.name.toLowerCase().replace(/\s+/g, '-'),
+        description: workspace.description || '',
+        industry: workspace.industry,
+        country: workspace.country,
+        region: workspace.region || '',
+        currency: workspace.currency,
+        businessObjective: workspace.objective || '',
+        currentStrategy: '',
+        knownConstraints: '',
+        importantKpis: workspace.kpis || [],
+        managementPriorities: '',
+        createdAt: workspace.createdAt,
+        updatedAt: workspace.updatedAt,
+        isDemo: false,
+      };
+      workspaceRepo.save(adopted);
+      setCurrentWorkspace(adopted);
+      setHasAnalyzed(false);
+      setQuestion('');
+      setActiveTab('overview');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      // Hydrate the data-source list from the newly active workspace.
+      if (datasets && datasets.length > 0) {
+        setDatasets((prev) => {
+          const otherWs = prev.filter((d) => d.workspaceId !== adopted.id);
+          const mapped = datasets.map((d) => ({
+            id: d.id,
+            workspaceId: d.workspaceId,
+            sourceId: d.id,
+            name: d.name,
+            description: `Server dataset with ${d.rowCount} records`,
+            status: (d.status === 'ready' ? 'ready' : 'processing') as 'ready' | 'processing',
+            rowCount: d.rowCount,
+            lastUpdated: d.updatedAt || d.createdAt || new Date().toISOString(),
+            dataQualityScore: d.dataQualityScore || 100,
+            contentHash: d.contentHash || '',
+            createdAt: d.createdAt,
+            updatedAt: d.updatedAt,
+            schema: {
+              columns: (d.schema?.columns || []).map((c: any) => ({
+                name: c.name,
+                type: (c.type === 'number' ? 'number' : 'string') as any,
+                isNullable: c.nullable ?? false,
+                nullCount: c.nullCount ?? 0,
+                sampleValues: c.sampleValues || [],
+              })),
+            },
+          }));
+          return [...mapped, ...otherWs];
+        });
+      }
+    } catch (err) {
+      console.warn('Workspace switch failed:', err);
+    }
   };
 
   const handleCoreNode = (action: CoreNodeAction) => {
@@ -905,6 +984,11 @@ export default function App({ initialQuestion, onReplayIntro }: AppProps = {}) {
         onReplayIntro={onReplayIntro}
         backendStatus={backend.status}
         onRetryBackend={backend.retry}
+        llmProviders={backend.providers}
+        workspaceName={currentWorkspace.name}
+        workspaces={availableWorkspaces}
+        activeWorkspaceId={currentWorkspace.id}
+        onSwitchWorkspace={handleSwitchWorkspace}
       />
 
       {/* Main Content Area — module workspaces */}

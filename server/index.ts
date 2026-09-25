@@ -153,11 +153,15 @@ app.post('/api/investigations', async (req, res, next) => {
       const dataPath = datasetObj?.storagePath || '';
       if (dataPath) {
         agentResult = await new Promise<any>((resolve) => {
-          const pythonExe = 'D:\\Analytica-AI\\.venv\\Scripts\\python.exe';
+          // Bridge is optional infrastructure: when AGENT_PYTHON is not set or
+          // the interpreter is missing, the LLM tier and deterministic engine
+          // take over without touching the response contract.
+          const pythonExe = process.env.AGENT_PYTHON || '';
+          if (!pythonExe) return resolve(null);
           const scriptPath = path.resolve('./server/agent_bridge.py');
           const child = spawn(pythonExe, [scriptPath], {
             stdio: ['pipe', 'pipe', 'pipe'],
-            env: { ...process.env, PYTHONPATH: 'D:\\Analytica-AI' }
+            env: { ...process.env, PYTHONPATH: process.env.AGENT_HOME || '' }
           });
           let stdout = '';
           child.stdout.on('data', (d) => { stdout += d.toString(); });

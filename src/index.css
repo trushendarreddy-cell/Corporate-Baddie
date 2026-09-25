@@ -387,6 +387,14 @@ body[class*="bg-"], .cb-ambient {
   background: #2a3245;
 }
 
+/* Scrollable regions that should hide the bar until hovered (nav rails, etc.) */
+.scrollbar-none {
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
 /* ----------------------------------------------------------------------------
    Reduced motion — decoration stops, state remains instant
    ---------------------------------------------------------------------------- */
