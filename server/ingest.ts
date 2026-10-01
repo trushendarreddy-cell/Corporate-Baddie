@@ -1,7 +1,5 @@
-import { createReadStream } from 'node:fs';
-import { appendFile, mkdir, unlink } from 'node:fs/promises';
+import { appendFile, mkdir, readFile, unlink } from 'node:fs/promises';
 import path from 'node:path';
-import readline from 'node:readline';
 import crypto from 'node:crypto';
 import * as XLSX from 'xlsx';
 
@@ -21,22 +19,56 @@ function inferType(values: string[]) {
 function toRecord(header: string[], row: unknown[]) {
   return Object.fromEntries(header.map((name, index) => [name, row[index] ?? '']));
 }
-async function readCsv(filePath: string) {
+
+/**
+ * Split CSV text into rows of cells.
+ *
+ * This walks the whole string rather than splitting on newlines, because a
+ * quoted field may legally contain a newline. The previous readline-based
+ * version broke such a row in two and lost the tail of the cell.
+ * Exported for the ingest test suite.
+ */
+export function parseCsvForTest(text: string): string[][] {
   const rows: string[][] = [];
-  const rl = readline.createInterface({ input: createReadStream(filePath), crlfDelay: Infinity });
-  for await (const line of rl) {
-    const row: string[] = []; let cell = ''; let quoted = false;
-    for (let i = 0; i < line.length; i++) {
-      const c = line[i];
-      if (c === '"') { if (quoted && line[i + 1] === '"') { cell += '"'; i++; } else quoted = !quoted; }
-      else if (c === ',' && !quoted) { row.push(cell); cell = ''; }
-      else cell += c;
+  let row: string[] = [];
+  let cell = '';
+  let quoted = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+
+    if (quoted) {
+      if (c === '"') {
+        if (text[i + 1] === '"') { cell += '"'; i++; }
+        else quoted = false;
+      } else {
+        cell += c;
+      }
+      continue;
     }
+
+    if (c === '"') { quoted = true; continue; }
+    if (c === ',') { row.push(cell); cell = ''; continue; }
+    if (c === '\r') continue;
+    if (c === '\n') { row.push(cell); cell = ''; if (row.some(v => v.trim())) rows.push(row); row = []; continue; }
+    cell += c;
+  }
+
+  // Flush the final cell and row when the file has no trailing newline.
+  if (cell.length || row.length) {
     row.push(cell);
     if (row.some(v => v.trim())) rows.push(row);
   }
+
   return rows;
 }
+
+async function readCsv(filePath: string) {
+  return parseCsvForTest(await readFile(filePath, 'utf8'));
+}
+
+/** Exposed for the ingest test suite. */
+export const inferTypeForTest = inferType;
 
 export async function ingestFile(workspace: Workspace, file: UploadedFile, id: string) {
   let rows: unknown[][] = [];
