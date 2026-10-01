@@ -69,10 +69,8 @@ def run_agent_investigation(question: str, data_path: str, workspace_context: di
         warnings.append(f"Could not load the dataset: {exc}")
 
     llm, llm_error = _load_agent_llm()
-    if llm is None:
-        if llm_error:
-            warnings.append(llm_error)
-        return {"ok": True, "findings": [], "anomalies": [], "sampleRecords": sample_records, "externalTasks": [], "internalTasks": [], "webSources": [], "ai": None, "warnings": warnings}
+    if llm is None and llm_error:
+        warnings.append(llm_error)
 
     columns = list(df.columns) if df is not None else []
     planner_prompt = f"""You are the planning layer for CorporateBaddie.
@@ -83,13 +81,14 @@ Return JSON only: {{"internal_tasks": ["..."], "external_tasks": ["..."]}}"""
 
     internal_tasks = []
     external_tasks = []
-    try:
-        plan = _parse_json(llm.invoke(planner_prompt).content)
-        if isinstance(plan, dict):
-            internal_tasks = plan.get("internal_tasks", [])
-            external_tasks = plan.get("external_tasks", [])
-    except Exception as exc:
-        warnings.append(f"Planner skipped: {exc}")
+    if llm is not None:
+        try:
+            plan = _parse_json(llm.invoke(planner_prompt).content)
+            if isinstance(plan, dict):
+                internal_tasks = plan.get("internal_tasks", [])
+                external_tasks = plan.get("external_tasks", [])
+        except Exception as exc:
+            warnings.append(f"Planner skipped: {exc}")
 
     findings = []
     anomalies = []
@@ -133,14 +132,15 @@ Anomalies: {json.dumps(anomalies)}
 Return JSON only with summary, why, recommendation, alternatives, risks, assumptions, confidence, and claimType."""
 
     ai_result = None
-    try:
-        response = llm.invoke(compiler_prompt)
-        text = response.content.strip()
-        parsed = _parse_json(text)
-        if parsed:
-            ai_result = {"provider": "analytica-ai", "model": os.getenv("LLM_MODEL", "configured model"), "response": text, "parsed": parsed, "sources": [], "grounded": bool(findings)}
-    except Exception as exc:
-        warnings.append(f"Compiler skipped: {exc}")
+    if llm is not None:
+        try:
+            response = llm.invoke(compiler_prompt)
+            text = response.content.strip()
+            parsed = _parse_json(text)
+            if parsed:
+                ai_result = {"provider": "analytica-ai", "model": os.getenv("LLM_MODEL", "configured model"), "response": text, "parsed": parsed, "sources": [], "grounded": bool(findings)}
+        except Exception as exc:
+            warnings.append(f"Compiler skipped: {exc}")
 
     return {"ok": True, "findings": findings, "anomalies": anomalies, "sampleRecords": sample_records, "externalTasks": external_tasks, "internalTasks": internal_tasks, "webSources": [], "ai": ai_result, "warnings": warnings}
 
