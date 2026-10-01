@@ -5,6 +5,21 @@ import { randomUUID } from 'node:crypto';
 const DATA_DIR = path.resolve(process.env.DATA_DIR || './server/data');
 const DB_FILE = path.join(DATA_DIR, 'corporatebaddie.json');
 
+// Every mutation is load() -> modify -> save(). Without a lock, two overlapping
+// requests read the same snapshot and the slower save() overwrites the newer
+// data. The temp filename also collided, so the loser's rename() failed with
+// ENOENT and took the process down. Serialising the whole cycle keeps the
+// read-modify-write atomic with respect to other callers.
+let writeChain: Promise<unknown> = Promise.resolve();
+
+function withLock<T>(operation: () => Promise<T>): Promise<T> {
+  const run = writeChain.then(operation, operation);
+  // Keep the chain alive even when this operation rejects, otherwise one
+  // failed write would reject every queued write behind it.
+  writeChain = run.catch(() => undefined);
+  return run;
+}
+
 type Workspace = Record<string, unknown> & { id: string; createdAt: string; updatedAt: string };
 type Dataset = Record<string, any> & { id: string; workspaceId: string; createdAt: string; updatedAt: string };
 interface DB { workspaces: Workspace[]; datasets: Dataset[]; investigations: Record<string, any>[] }
@@ -35,7 +50,9 @@ async function load(): Promise<DB> {
 
 async function save(db: DB) {
   await mkdir(DATA_DIR, { recursive: true });
-  const temp = `${DB_FILE}.${process.pid}.${Date.now()}.tmp`;
+  // randomUUID rather than pid+timestamp: two saves in the same millisecond
+  // from the same process would otherwise reuse one temp path.
+  const temp = `${DB_FILE}.${randomUUID()}.tmp`;
   await writeFile(temp, JSON.stringify(db, null, 2), 'utf8');
   await rename(temp, DB_FILE);
 }
@@ -48,12 +65,12 @@ export async function getWorkspace(id: string) {
   if (id === 'demo-ws-001') return DEFAULT_DEMO_WS;
   return null;
 }
-export async function createWorkspace(input: Record<string, unknown>) { const db = await load(); const now = new Date().toISOString(); const id = input.id ? String(input.id) : `ws-${randomUUID()}`; const workspace = { ...input, id, createdAt: now, updatedAt: now } as Workspace; const existingIdx = db.workspaces.findIndex(w => w.id === id); if (existingIdx >= 0) { db.workspaces[existingIdx] = workspace; } else { db.workspaces.push(workspace); } await save(db); return workspace; }
-export async function updateWorkspace(id: string, patch: Record<string, unknown>) { const db = await load(); const index = db.workspaces.findIndex(w => w.id === id); if (index < 0) return null; db.workspaces[index] = { ...db.workspaces[index], ...patch, id, updatedAt: new Date().toISOString() }; await save(db); return db.workspaces[index]; }
+export async function createWorkspace(input: Record<string, unknown>) { return withLock(async () => { const db = await load(); const now = new Date().toISOString(); const id = input.id ? String(input.id) : `ws-${randomUUID()}`; const workspace = { ...input, id, createdAt: now, updatedAt: now } as Workspace; const existingIdx = db.workspaces.findIndex(w => w.id === id); if (existingIdx >= 0) { db.workspaces[existingIdx] = workspace; } else { db.workspaces.push(workspace); } await save(db); return workspace; }); }
+export async function updateWorkspace(id: string, patch: Record<string, unknown>) { return withLock(async () => { const db = await load(); const index = db.workspaces.findIndex(w => w.id === id); if (index < 0) return null; db.workspaces[index] = { ...db.workspaces[index], ...patch, id, updatedAt: new Date().toISOString() }; await save(db); return db.workspaces[index]; }); }
 export async function listDatasets(workspaceId: string) { return (await load()).datasets.filter(d => d.workspaceId === workspaceId); }
 export async function getDataset(id: string) { return (await load()).datasets.find(d => d.id === id) ?? null; }
-export async function addDataset(dataset: Dataset) { const db = await load(); db.datasets.push(dataset); await save(db); return dataset; }
-export async function deleteDataset(id: string) { const db = await load(); const dataset = db.datasets.find(d => d.id === id); if (!dataset) return false; db.datasets = db.datasets.filter(d => d.id !== id); if (dataset.storagePath) await unlink(dataset.storagePath).catch(() => undefined); await save(db); return true; }
+export async function addDataset(dataset: Dataset) { return withLock(async () => { const db = await load(); db.datasets.push(dataset); await save(db); return dataset; }); }
+export async function deleteDataset(id: string) { return withLock(async () => { const db = await load(); const dataset = db.datasets.find(d => d.id === id); if (!dataset) return false; db.datasets = db.datasets.filter(d => d.id !== id); if (dataset.storagePath) await unlink(dataset.storagePath).catch(() => undefined); await save(db); return true; }); }
 
 async function readRows(dataset: Dataset): Promise<Record<string, unknown>[]> {
   if (!dataset.storagePath) return [];
