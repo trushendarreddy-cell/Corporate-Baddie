@@ -11,26 +11,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
-      - run: npm install --no-audit --no-fund
+
+      - run: npm ci
+
       - name: Typecheck
-        shell: bash
-        run: |
-          set +e
-          npm run lint > lint.log 2>&1
-          code=$?
-          cat lint.log
-          exit $code
-      - name: Upload typecheck log
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: typecheck-log
-          path: lint.log
-      - name: Run Automated Test Suites
+        run: npm run lint
+
+      - name: Run tests
         run: npm run test:all
-      - name: Build Application
+
+      - name: Build application
         run: npm run build
