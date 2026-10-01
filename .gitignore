@@ -7,3 +7,11 @@ coverage/
 .env*
 !.env.example
 .env
+
+# Python (agent bridge)
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+testvenv/
+.pytest_cache/
