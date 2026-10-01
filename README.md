@@ -259,6 +259,21 @@ npm run preview
 
 ---
 
+## Documentation
+
+Architecture specs and reference material live in [`docs/`](docs/README.md):
+
+| Document | Covers |
+|---|---|
+| [DEVELOPMENT.md](docs/DEVELOPMENT.md) | Local setup and workflow |
+| [SYSTEM_ARCHITECTURE.txt](docs/SYSTEM_ARCHITECTURE.txt) | Component and data-flow map |
+| [API_SPECIFICATION.txt](docs/API_SPECIFICATION.txt) | REST endpoint reference |
+| [PROJECT_OVERVIEW.txt](docs/PROJECT_OVERVIEW.txt) | Product framing |
+| [INTRO_USER_GUIDE.md](docs/INTRO_USER_GUIDE.md) | 3D onboarding walkthrough |
+| [server/README.md](server/README.md) | Backend and agent bridge internals |
+
+---
+
 ## Governance & Operating Principles
 
 1. **Evidence Over Eloquence**: No recommendation is produced without verifiable quantitative backing.
