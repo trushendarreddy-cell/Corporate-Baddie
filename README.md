@@ -284,6 +284,12 @@ Architecture specs and reference material live in [`docs/`](docs/README.md):
 
 ---
 
+## License
+
+MIT — see [LICENSE](LICENSE).
+
+---
+
 ## Author
 
 **T. Rushendar Reddy**  
