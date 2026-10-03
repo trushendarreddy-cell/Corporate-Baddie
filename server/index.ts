@@ -61,25 +61,10 @@ function cleanDatasetIds(value: unknown) {
   return [...new Set(value)].slice(0, 50);
 }
 
-function parseReasoning(text: string) {
-  const cleaned = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
-  const start = cleaned.indexOf('{');
-  const end = cleaned.lastIndexOf('}');
-  if (start < 0 || end <= start) return null;
-  try {
-    const value = JSON.parse(cleaned.slice(start, end + 1));
-    if (!value || typeof value !== 'object') return null;
-    const asStrings = (input: unknown) => Array.isArray(input) ? input.filter((item): item is string => typeof item === 'string').slice(0, 8) : [];
-    const confidence = Number((value as Record<string, unknown>).confidence);
-    return {
-      summary: typeof value.summary === 'string' ? value.summary.slice(0, 2000) : '',
-      why: asStrings(value.why), recommendation: typeof value.recommendation === 'string' ? value.recommendation.slice(0, 2000) : '',
-      alternatives: asStrings(value.alternatives), risks: asStrings(value.risks), assumptions: asStrings(value.assumptions),
-      confidence: Number.isFinite(confidence) ? Math.max(0, Math.min(100, Math.round(confidence))) : null,
-      claimType: value.claimType === 'RECOMMENDATION' ? 'RECOMMENDATION' : 'INFERENCE',
-    };
-  } catch { return null; }
-}
+// parseReasoning lives in server/llmParsing.ts so it can be unit tested without
+// booting the API or reaching a provider.
+import { parseReasoning } from './llmParsing';
+
 
 app.get('/api/health', async (_req, res, next) => {
   try {
