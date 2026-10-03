@@ -3,6 +3,14 @@
 > **Agentic Decision Intelligence Platform — Evidence Over Eloquence**  
 > Turning complex corporate data into defensible strategic decisions through an interactive 3D decision core, Analytica-AI multi-agent reasoning, deterministic evidence verification, and executive intelligence reporting.
 
+![The 3D decision core and onboarding experience](docs/images/intro.jpg)
+
+An investigation result. The recommendation is derived from the computed
+drivers, and the confidence score reflects evidence coverage rather than
+model certainty:
+
+![An investigation result with a recommendation, driver analysis, and evidence coverage](docs/images/dashboard.jpg)
+
 ---
 
 ## Overview
